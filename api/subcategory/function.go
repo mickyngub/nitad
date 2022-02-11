@@ -8,15 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func isValidObjectId(id string) (primitive.ObjectID, errors.CustomError) {
-	objectId, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return objectId, errors.NewBadRequestError("Invalid objectId")
-	}
-	return objectId, nil
-}
-
-func findById(id primitive.ObjectID) (bson.M, errors.CustomError) {
+func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	var result bson.M
@@ -33,7 +25,7 @@ func findById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	return result, nil
 }
 
-func findAll() ([]bson.M, errors.CustomError) {
+func FindAll() ([]bson.M, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	var result []bson.M
@@ -44,6 +36,29 @@ func findAll() ([]bson.M, errors.CustomError) {
 
 	if err = cursor.All(ctx, &result); err != nil {
 		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
+}
+
+func Add(s *Subcategory) (map[string]interface{}, errors.CustomError) {
+	collection, ctx := database.GetCollection(collectionName)
+
+	var result map[string]interface{}
+
+	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
+		{Key: "title", Value: s.Title},
+		{Key: "image", Value: s.Image},
+	})
+
+	if insertErr != nil {
+		return result, errors.NewBadRequestError(insertErr.Error())
+	}
+
+	result = map[string]interface{}{
+		"id":    insertRes.InsertedID,
+		"title": s.Title,
+		"image": s.Image,
 	}
 
 	return result, nil

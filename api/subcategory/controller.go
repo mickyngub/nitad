@@ -1,8 +1,6 @@
 package subcategory
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -42,7 +40,7 @@ func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 	}
 
 	var result bson.M
-	if result, err = findById(objectId); err != nil {
+	if result, err = FindById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 
@@ -51,7 +49,7 @@ func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 
 // list all subcategories
 func (contc *Controller) Listsubcategory(c *fiber.Ctx) error {
-	subcategories, err := findAll()
+	subcategories, err := FindAll()
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -64,26 +62,17 @@ func (contc *Controller) Addsubcategory(c *fiber.Ctx) error {
 
 	p := new(Subcategory)
 
+	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return err
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
 
-	collection, ctx := database.GetCollection(collectionName)
-
-	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
-		{Key: "title", Value: p.Title},
-		{Key: "image", Value: p.Image},
-	})
-	if insertErr != nil {
-		log.Fatal(insertErr)
+	result, err := Add(p)
+	if err != nil {
+		return errors.Throw(c, err)
 	}
 
-	res := map[string]interface{}{
-		"id":    insertRes.InsertedID,
-		"title": p.Title,
-		"image": p.Image,
-	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": res})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": result})
 
 }
 
