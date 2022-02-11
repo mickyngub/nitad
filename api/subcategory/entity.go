@@ -2,7 +2,7 @@ package subcategory
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
-type subcategory struct {
+type Subcategory struct {
 	ID     primitive.ObjectID `bson:"_id,omitempty`
 	Title  string             `bson:"title,omitempty`
 	Images string             `bson:"images,omitempty`

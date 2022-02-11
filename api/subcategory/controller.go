@@ -82,7 +82,7 @@ func (contc *Controller) Listsubcategory(c *fiber.Ctx) error {
 // add a subcategory
 func (contc *Controller) Addsubcategory(c *fiber.Ctx) error {
 
-	p := new(subcategory)
+	p := new(Subcategory)
 
 	if err := c.BodyParser(p); err != nil {
 		return err
