@@ -1,11 +1,11 @@
 package subcategory
 
 import (
-	"context"
 	"fmt"
 	"log"
 
 	"github.com/birdglove2/nitad-backend/database"
+	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -29,23 +29,19 @@ func NewController(
 }
 
 type Controller struct {
-	service Service
+	// service Service
 }
 
-func GetDbAttrs() (*mongo.Collection, context.Context) {
-	collection, ctx := database.GetCollection(database.COLLECTIONS["SUBCATEGORY"])
-	return collection, ctx
-
-}
+var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
 // Get subcategory by id
 func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 
-	collection, ctx := GetDbAttrs()
+	collection, ctx := database.GetCollection(collectionName)
 
 	id, err := primitive.ObjectIDFromHex(c.Params("subcategoryId"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"result": "id is not valid"})
+		return errors.Throw(c, errors.NewNotFoundError("id is in valid 2"))
 	}
 
 	var result bson.M
@@ -53,7 +49,7 @@ func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"result": "subcategoryId Not Found"})
+			return errors.Throw(c, errors.NewNotFoundError("subcategoryId"))
 		}
 	}
 
@@ -64,7 +60,7 @@ func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 // list all subcategories
 func (contc *Controller) Listsubcategory(c *fiber.Ctx) error {
 
-	collection, ctx := GetDbAttrs()
+	collection, ctx := database.GetCollection(collectionName)
 
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -92,7 +88,7 @@ func (contc *Controller) Addsubcategory(c *fiber.Ctx) error {
 		return err
 	}
 
-	collection, ctx := GetDbAttrs()
+	collection, ctx := database.GetCollection(collectionName)
 
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: p.Title},
