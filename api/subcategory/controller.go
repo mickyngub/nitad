@@ -5,6 +5,7 @@ import (
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -35,7 +36,7 @@ var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
 
-	objectId, err := isValidObjectId(subcategoryId)
+	objectId, err := functions.IsValidObjectId(subcategoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
