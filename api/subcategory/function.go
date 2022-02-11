@@ -32,3 +32,19 @@ func findById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 
 	return result, nil
 }
+
+func findAll() ([]bson.M, errors.CustomError) {
+	collection, ctx := database.GetCollection(collectionName)
+
+	var result []bson.M
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
+}

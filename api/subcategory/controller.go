@@ -1,7 +1,6 @@
 package subcategory
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -47,26 +46,13 @@ func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": result})
-
 }
 
 // list all subcategories
 func (contc *Controller) Listsubcategory(c *fiber.Ctx) error {
-
-	collection, ctx := database.GetCollection(collectionName)
-
-	cursor, err := collection.Find(ctx, bson.M{})
+	subcategories, err := findAll()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	var subcategories []bson.M
-	if err = cursor.All(ctx, &subcategories); err != nil {
-		log.Fatal(err)
-	}
-
-	for i, subcategory := range subcategories {
-		fmt.Println(i+1, subcategory)
+		return errors.Throw(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": subcategories})
