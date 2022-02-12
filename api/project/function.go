@@ -7,7 +7,62 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func GetLookupStage() []bson.D {
+	lookupCategoryStage := bson.D{{"$lookup", bson.D{{"from", "category"},
+		{"localField", "category"}, {"foreignField", "_id"}, {"as", "category"}}}}
+
+	unsetStage := bson.D{{"$unset", "category.subcategory"}}
+
+	lookupSubcategoryStage := bson.D{{"$lookup", bson.D{{"from", "subcategory"}, {"localField", "subcategory"}, {"foreignField", "_id"}, {"as", "subcategory"}}}}
+
+	return []bson.D{lookupCategoryStage, unsetStage, lookupSubcategoryStage}
+}
+
+func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
+	projectCategory, ctx := database.GetCollection(collectionName)
+
+	lookupStage := GetLookupStage()
+	matchStage := bson.D{{"$match", bson.D{{"_id", id}}}}
+
+	stages := append(lookupStage, matchStage)
+
+	cursor, err := projectCategory.Aggregate(ctx, stages)
+	var result []bson.M
+	if err != nil {
+		return bson.M{}, errors.NewBadRequestError(err.Error())
+	}
+	if err = cursor.All(ctx, &result); err != nil {
+		return bson.M{}, errors.NewBadRequestError(err.Error())
+	}
+
+	if len(result) == 0 {
+		return bson.M{}, errors.NewNotFoundError("projectId")
+
+	}
+
+	return result[0], nil
+}
+
+func FindAll() ([]bson.M, errors.CustomError) {
+	projectCollection, ctx := database.GetCollection(collectionName)
+
+	lookupStage := GetLookupStage()
+
+	cursor, err := projectCollection.Aggregate(ctx, lookupStage)
+	var result []bson.M
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+
+	}
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
+}
 
 func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
 	var result map[string]interface{}
