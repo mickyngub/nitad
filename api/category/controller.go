@@ -3,7 +3,9 @@ package category
 import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func NewController(
@@ -12,8 +14,8 @@ func NewController(
 
 	controller := &Controller{}
 
-	// categoryRoute.Get("/", controller.Listcategory)
-	// categoryRoute.Get("/:categoryId", controller.Getcategory)
+	categoryRoute.Get("/", controller.Listcategory)
+	categoryRoute.Get("/:categoryId", controller.Getcategory)
 
 	//TODO add AUTH for POST/PUT/DELETE
 
@@ -27,6 +29,23 @@ type Controller struct {
 }
 
 var collectionName = database.COLLECTIONS["CATEGORY"]
+
+// get category by id
+func (contc *Controller) Getcategory(c *fiber.Ctx) error {
+	categoryId := c.Params("categoryId")
+
+	objectId, err := functions.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	var result primitive.M
+	if result, err = FindById(objectId); err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": result})
+}
 
 // add a category
 func (contc *Controller) Addcategory(c *fiber.Ctx) error {
