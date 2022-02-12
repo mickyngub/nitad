@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
@@ -32,7 +33,7 @@ func main() {
 	v1 := app.Group(API_PREFIX)
 
 	subcategory.NewController(v1.Group("/subcategory"))
-	// category.NewController(v1.Group("/category"))
+	category.NewController(v1.Group("/category"))
 	// project.NewController(v1.Group("/project"))
 
 	app.Get("/", func(c *fiber.Ctx) error {
