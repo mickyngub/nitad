@@ -12,3 +12,19 @@ func IsValidObjectId(id string) (primitive.ObjectID, errors.CustomError) {
 	}
 	return objectId, nil
 }
+
+func RemoveDuplicateObjectIds(oids []primitive.ObjectID) []primitive.ObjectID {
+	keys := make(map[primitive.ObjectID]bool)
+	list := []primitive.ObjectID{}
+
+	// If the key(values of the slice) is not equal
+	// to the already present value in new slice (list)
+	// then we append it. else we jump on another element.
+	for _, entry := range oids {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
