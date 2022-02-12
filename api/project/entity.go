@@ -15,6 +15,7 @@ type Project struct {
 	Keywords    []string             `bson:"keywords,omitempty`
 	Category    []primitive.ObjectID `bson:"category,omitempty" json:"category,omitempty"`
 	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
+	Views       int                  `bson:"views,omitempty" json:"views,omitempty"`
 }
 
 type ProjectRequest struct {

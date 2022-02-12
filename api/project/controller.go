@@ -27,6 +27,7 @@ type Controller struct {
 var collectionName = database.COLLECTIONS["PROJECT"]
 
 // list all projects
+// TODO: sorting & filtering
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
 	projects, err := FindAll()
 	if err != nil {
@@ -49,6 +50,8 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	if result, err = FindById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
+
+	defer IncrementView(objectId)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }

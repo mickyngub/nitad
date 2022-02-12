@@ -1,6 +1,8 @@
 package project
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
@@ -21,15 +23,32 @@ func GetLookupStage() []bson.D {
 	return []bson.D{lookupCategoryStage, unsetStage, lookupSubcategoryStage}
 }
 
+func IncrementView(id primitive.ObjectID) {
+	projectCollection, ctx := database.GetCollection(collectionName)
+
+	_, err := projectCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": id},
+		bson.D{
+			{"$inc", bson.D{{"views", 1}}},
+		},
+	)
+
+	// NOTE: logging ??
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
-	projectCategory, ctx := database.GetCollection(collectionName)
+	projectCollection, ctx := database.GetCollection(collectionName)
 
 	lookupStage := GetLookupStage()
 	matchStage := bson.D{{"$match", bson.D{{"_id", id}}}}
 
 	stages := append(lookupStage, matchStage)
 
-	cursor, err := projectCategory.Aggregate(ctx, stages)
+	cursor, err := projectCollection.Aggregate(ctx, stages)
 	var result []bson.M
 	if err != nil {
 		return bson.M{}, errors.NewBadRequestError(err.Error())
@@ -93,6 +112,7 @@ func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
 		{Key: "keywords", Value: c.Keywords},
 		{Key: "category", Value: categoryIds},
 		{Key: "subcategory", Value: subcategoryIds},
+		{Key: "views", Value: 0},
 	})
 
 	if insertErr != nil {
@@ -112,6 +132,7 @@ func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
 		"keywords":    c.Keywords,
 		"category":    categoryIds,
 		"subcategory": subcategoryIds,
+		"views":       0,
 	}
 
 	return result, nil
