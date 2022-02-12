@@ -5,7 +5,7 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func NewController(
@@ -39,12 +39,22 @@ func (contc *Controller) Getcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	var result primitive.M
+	var result bson.M
 	if result, err = FindById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": result})
+}
+
+// list all categories
+func (contc *Controller) Listcategory(c *fiber.Ctx) error {
+	categories, err := FindAll()
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": categories})
 }
 
 // add a category

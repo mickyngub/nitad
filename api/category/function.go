@@ -10,34 +10,35 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindById(id primitive.ObjectID) (primitive.M, errors.CustomError) {
+func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
 	matchStage := bson.D{{"$match", bson.D{{"_id", id}}}}
 	lookupStage := bson.D{{"$lookup", bson.D{{"from", "subcategory"}, {"localField", "subcategory"}, {"foreignField", "_id"}, {"as", "subcategory"}}}}
 
-	showInfoCursor, err := categoryCollection.Aggregate(ctx, mongo.Pipeline{matchStage, lookupStage})
-	var showsWithInfo []bson.M
+	cursor, err := categoryCollection.Aggregate(ctx, mongo.Pipeline{matchStage, lookupStage})
+	var result []bson.M
 	if err != nil {
-		return showsWithInfo[0], errors.NewBadRequestError(err.Error())
+		return result[0], errors.NewBadRequestError(err.Error())
 	}
-	if err = showInfoCursor.All(ctx, &showsWithInfo); err != nil {
-		return showsWithInfo[0], errors.NewBadRequestError(err.Error())
+	if err = cursor.All(ctx, &result); err != nil {
+		return result[0], errors.NewBadRequestError(err.Error())
 	}
 
-	return showsWithInfo[0], nil
+	return result[0], nil
 }
 
-//TODO: populate subcategoryIds
 func FindAll() ([]bson.M, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
+	categoryCollection, ctx := database.GetCollection(collectionName)
 
+	lookupStage := bson.D{{"$lookup", bson.D{{"from", "subcategory"}, {"localField", "subcategory"}, {"foreignField", "_id"}, {"as", "subcategory"}}}}
+
+	cursor, err := categoryCollection.Aggregate(ctx, mongo.Pipeline{lookupStage})
 	var result []bson.M
-	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
 		return result, errors.NewBadRequestError(err.Error())
-	}
 
+	}
 	if err = cursor.All(ctx, &result); err != nil {
 		return result, errors.NewBadRequestError(err.Error())
 	}
