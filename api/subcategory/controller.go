@@ -14,14 +14,14 @@ func NewController(
 
 	controller := &Controller{}
 
-	subcategoryRoute.Get("/", controller.Listsubcategory)
-	subcategoryRoute.Get("/:subcategoryId", controller.Getsubcategory)
+	subcategoryRoute.Get("/", controller.ListSubcategory)
+	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
 	//TODO add AUTH for POST/PUT/DELETE
 
-	subcategoryRoute.Post("/", controller.Addsubcategory)
-	// subcategoryRoute.Put("/:subcategoryId", controller.editsubcategory)
-	// subcategoryRoute.Delete("/:subcategoryId", controller.deletesubcategory)
+	subcategoryRoute.Post("/", controller.AddSubcategory)
+	// subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
+	// subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
 }
 
 type Controller struct {
@@ -31,7 +31,7 @@ type Controller struct {
 var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
 // get subcategory by id
-func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
+func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
 
 	objectId, err := functions.IsValidObjectId(subcategoryId)
@@ -48,7 +48,7 @@ func (contc *Controller) Getsubcategory(c *fiber.Ctx) error {
 }
 
 // list all subcategories
-func (contc *Controller) Listsubcategory(c *fiber.Ctx) error {
+func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {
 	subcategories, err := FindAll()
 	if err != nil {
 		return errors.Throw(c, err)
@@ -58,7 +58,7 @@ func (contc *Controller) Listsubcategory(c *fiber.Ctx) error {
 }
 
 // add a subcategory
-func (contc *Controller) Addsubcategory(c *fiber.Ctx) error {
+func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 
 	p := new(Subcategory)
 
@@ -77,7 +77,7 @@ func (contc *Controller) Addsubcategory(c *fiber.Ctx) error {
 }
 
 // // edit the subcategory
-// func (contc *Controller) editsubcategory(c *fiber.Ctx) error {}
+// func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {}
 
 // // delete the subcategory
-// func (cont *Controller) deletesubcategory(c *fiber.Ctx) error {}
+// func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {}

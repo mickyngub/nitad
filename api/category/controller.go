@@ -14,12 +14,12 @@ func NewController(
 
 	controller := &Controller{}
 
-	categoryRoute.Get("/", controller.Listcategory)
-	categoryRoute.Get("/:categoryId", controller.Getcategory)
+	categoryRoute.Get("/", controller.ListCategory)
+	categoryRoute.Get("/:categoryId", controller.GetCategory)
 
 	//TODO add AUTH for POST/PUT/DELETE
 
-	categoryRoute.Post("/", controller.Addcategory)
+	categoryRoute.Post("/", controller.AddCategory)
 	// categoryRoute.Put("/:categoryId", controller.editcategory)
 	// categoryRoute.Delete("/:categoryId", controller.deletecategory)
 }
@@ -31,7 +31,7 @@ type Controller struct {
 var collectionName = database.COLLECTIONS["CATEGORY"]
 
 // get category by id
-func (contc *Controller) Getcategory(c *fiber.Ctx) error {
+func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 	categoryId := c.Params("categoryId")
 
 	objectId, err := functions.IsValidObjectId(categoryId)
@@ -48,7 +48,7 @@ func (contc *Controller) Getcategory(c *fiber.Ctx) error {
 }
 
 // list all categories
-func (contc *Controller) Listcategory(c *fiber.Ctx) error {
+func (contc *Controller) ListCategory(c *fiber.Ctx) error {
 	categories, err := FindAll()
 	if err != nil {
 		return errors.Throw(c, err)
@@ -58,7 +58,7 @@ func (contc *Controller) Listcategory(c *fiber.Ctx) error {
 }
 
 // add a category
-func (contc *Controller) Addcategory(c *fiber.Ctx) error {
+func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 	p := new(CategoryRequest)
 	//TODO: handle this bodyParser middleware
@@ -76,7 +76,7 @@ func (contc *Controller) Addcategory(c *fiber.Ctx) error {
 }
 
 // // edit the category
-// func (contc *Controller) editcategory(c *fiber.Ctx) error {}
+// func (contc *Controller) editCategory(c *fiber.Ctx) error {}
 
 // // delete the category
-// func (cont *Controller) deletecategory(c *fiber.Ctx) error {}
+// func (cont *Controller) deleteCategory(c *fiber.Ctx) error {}
