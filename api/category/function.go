@@ -19,10 +19,15 @@ func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	cursor, err := categoryCollection.Aggregate(ctx, mongo.Pipeline{matchStage, lookupStage})
 	var result []bson.M
 	if err != nil {
-		return result[0], errors.NewBadRequestError(err.Error())
+		return bson.M{}, errors.NewBadRequestError(err.Error())
 	}
 	if err = cursor.All(ctx, &result); err != nil {
-		return result[0], errors.NewBadRequestError(err.Error())
+		return bson.M{}, errors.NewBadRequestError(err.Error())
+	}
+
+	if len(result) == 0 {
+		return bson.M{}, errors.NewNotFoundError("categoryId")
+
 	}
 
 	return result[0], nil
