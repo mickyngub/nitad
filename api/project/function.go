@@ -2,6 +2,7 @@ package project
 
 import (
 	"log"
+	"time"
 
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
@@ -113,6 +114,8 @@ func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
 		{Key: "category", Value: categoryIds},
 		{Key: "subcategory", Value: subcategoryIds},
 		{Key: "views", Value: 0},
+		{Key: "createdAt", Value: time.Now()},
+		{Key: "updatedAt", Value: time.Now()},
 	})
 
 	if insertErr != nil {

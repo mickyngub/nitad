@@ -1,6 +1,8 @@
 package subcategory
 
 import (
+	"time"
+
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -50,6 +52,8 @@ func Add(s *Subcategory) (map[string]interface{}, errors.CustomError) {
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: s.Title},
 		{Key: "image", Value: s.Image},
+		{Key: "createdAt", Value: time.Now()},
+		{Key: "updatedAt", Value: time.Now()},
 	})
 
 	if insertErr != nil {

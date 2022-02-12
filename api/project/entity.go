@@ -1,6 +1,10 @@
 package project
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Project struct {
 	ID          primitive.ObjectID   `bson:"_id,omitempty`
@@ -16,6 +20,8 @@ type Project struct {
 	Category    []primitive.ObjectID `bson:"category,omitempty" json:"category,omitempty"`
 	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
 	Views       int                  `bson:"views,omitempty" json:"views,omitempty"`
+	CreatedAt   time.Time            `bson:"created_at" json:"created_at"`
+	updatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
 }
 
 type ProjectRequest struct {

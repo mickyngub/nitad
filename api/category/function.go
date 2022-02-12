@@ -1,6 +1,8 @@
 package category
 
 import (
+	"time"
+
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -65,6 +67,8 @@ func Add(c *CategoryRequest) (map[string]interface{}, errors.CustomError) {
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: c.Title},
 		{Key: "subcategory", Value: subcategoryIds},
+		{Key: "createdAt", Value: time.Now()},
+		{Key: "updatedAt", Value: time.Now()},
 	})
 
 	if insertErr != nil {
