@@ -30,6 +30,16 @@ type Controller struct {
 
 var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
+// list all subcategories
+func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {
+	subcategories, err := FindAll()
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": subcategories})
+}
+
 // get subcategory by id
 func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
@@ -45,16 +55,6 @@ func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
-}
-
-// list all subcategories
-func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {
-	subcategories, err := FindAll()
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": subcategories})
 }
 
 // add a subcategory
