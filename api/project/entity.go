@@ -16,3 +16,17 @@ type Project struct {
 	Category    []primitive.ObjectID `bson:"category,omitempty" json:"category,omitempty"`
 	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
 }
+
+type ProjectRequest struct {
+	Title       string
+	Description string
+	Authors     []string
+	Emails      []string
+	Inspiration string
+	Abstract    string
+	Images      []string
+	Videos      []string
+	Keywords    []string
+	Category    []string
+	Subcategory []string
+}
