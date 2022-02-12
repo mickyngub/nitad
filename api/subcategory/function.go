@@ -3,6 +3,7 @@ package subcategory
 import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -62,4 +63,37 @@ func Add(s *Subcategory) (map[string]interface{}, errors.CustomError) {
 	}
 
 	return result, nil
+}
+
+// validate requested string of subcategoryIds
+// and return valid []objectId, otherwise error
+func ValidateIds(sids []string) ([]primitive.ObjectID, errors.CustomError) {
+	objectIds := make([]primitive.ObjectID, len(sids))
+
+	for i, sid := range sids {
+		objectId, err := ValidateId(sid)
+		if err != nil {
+			return objectIds, err
+		}
+
+		objectIds[i] = objectId
+	}
+
+	return objectIds, nil
+}
+
+// validate requested string of a single subcategoryId
+// and return valid objectId, otherwise error
+func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
+	objectId, err := functions.IsValidObjectId(sid)
+	if err != nil {
+		return objectId, err
+
+	}
+	// if err != nil >> id is not found
+	if _, err = FindById(objectId); err != nil {
+		return objectId, err
+	}
+
+	return objectId, nil
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -46,29 +45,9 @@ func FindAll() ([]bson.M, errors.CustomError) {
 	return result, nil
 }
 
-func ValidateSubcategoyIds(c *CategoryRequest) ([]primitive.ObjectID, errors.CustomError) {
-	subcategoryIds := make([]primitive.ObjectID, len(c.Subcategory))
-
-	for i, subcategoryId := range c.Subcategory {
-		objectId, err := functions.IsValidObjectId(subcategoryId)
-		if err != nil {
-			return subcategoryIds, err
-
-		}
-
-		if _, err = subcategory.FindById(objectId); err != nil {
-			return subcategoryIds, err
-		}
-
-		subcategoryIds[i] = objectId
-	}
-
-	return subcategoryIds, nil
-}
-
 func Add(c *CategoryRequest) (map[string]interface{}, errors.CustomError) {
 	var result map[string]interface{}
-	subcategoryIds, err := ValidateSubcategoyIds(c)
+	subcategoryIds, err := subcategory.ValidateIds(c.Subcategory)
 	if err != nil {
 		return result, err
 	}

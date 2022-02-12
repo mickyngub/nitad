@@ -9,7 +9,6 @@ type Category struct {
 }
 
 type CategoryRequest struct {
-	ID          primitive.ObjectID
 	Title       string
 	Subcategory []string
 }
