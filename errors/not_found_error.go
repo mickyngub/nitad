@@ -19,12 +19,12 @@ func (n *notFoundError) Code() int {
 	return fiber.StatusNotFound
 }
 
-func (n *notFoundError) Message() string {
+func (n *notFoundError) Error() string {
 	return fmt.Sprintf("%s not found", n.resourceName)
 }
 
 // func ThrowNotFoundError(c *fiber.Ctx, resourceName string) error {
 // 	notFoundError := NewNotFoundError(resourceName)
-// 	return c.Status(notFoundError.Code()).JSON(fiber.Map{"result": notFoundError.Message()})
+// 	return c.Status(notFoundError.Code()).JSON(fiber.Map{"result": notFoundError.Error()})
 // 	// return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"result": fmt.Sprintf("%s not found", resourceName)})
 // }

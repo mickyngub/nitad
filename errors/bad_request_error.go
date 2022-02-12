@@ -17,6 +17,6 @@ func (b *badRequestError) Code() int {
 	return fiber.StatusBadRequest
 }
 
-func (b *badRequestError) Message() string {
+func (b *badRequestError) Error() string {
 	return b.message
 }

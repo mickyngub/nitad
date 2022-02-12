@@ -44,7 +44,7 @@ func (contc *Controller) Getcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": result})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
 
 // list all categories
@@ -54,7 +54,7 @@ func (contc *Controller) Listcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": categories})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": categories})
 }
 
 // add a category
@@ -71,7 +71,7 @@ func (contc *Controller) Addcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": result})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 
 }
 
