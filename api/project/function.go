@@ -83,8 +83,6 @@ func FindAll(oids []primitive.ObjectID) ([]bson.M, errors.CustomError) {
 	// }
 
 	stages := GetLookupStage()
-	//TODO: find all matches not just in
-
 	for _, oid := range oids {
 		matchStage := bson.D{{
 			Key: "$match", Value: bson.D{{
