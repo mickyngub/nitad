@@ -8,6 +8,7 @@ import (
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -17,6 +18,7 @@ func main() {
 
 	config.Loadenv()
 	database.ConnectDb()
+	gcp.Init()
 	app := config.InitApp()
 	api.CreateAPI(app)
 
