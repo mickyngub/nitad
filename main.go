@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/birdglove2/nitad-backend/api"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
@@ -8,9 +11,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const PORT = ":3000"
+var PORT = os.Getenv("PORT")
 
 func main() {
+
 	config.Loadenv()
 	database.ConnectDb()
 	app := config.InitApp()
@@ -24,6 +28,18 @@ func main() {
 		return errors.Throw(c, errors.NewNotFoundError("Page"))
 	})
 
-	app.Listen(PORT)
+	if PORT == "" {
+		PORT = "3000"
+	}
+
+	PORT = ":" + PORT
+
+	log.Println("Listening to ", PORT)
+
+	err := app.Listen(PORT)
+	if err != nil {
+		log.Printf("Listen to %s Failed", PORT)
+		log.Fatal("Error: ", err.Error())
+	}
 
 }
