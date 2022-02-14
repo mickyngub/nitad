@@ -3,6 +3,7 @@ module github.com/birdglove2/nitad-backend
 go 1.17
 
 require (
+	cloud.google.com/go/storage v1.20.0
 	github.com/gofiber/fiber/v2 v2.26.0
 	github.com/joho/godotenv v1.4.0
 	go.mongodb.org/mongo-driver v1.8.3
@@ -12,9 +13,7 @@ require (
 	cloud.google.com/go v0.100.2 // indirect
 	cloud.google.com/go/compute v0.1.0 // indirect
 	cloud.google.com/go/iam v0.1.1 // indirect
-	cloud.google.com/go/storage v1.20.0 // indirect
 	github.com/andybalholm/brotli v1.0.2 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -23,7 +22,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.32.0 // indirect

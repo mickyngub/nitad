@@ -66,7 +66,6 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 	urls := []string{}
 	for _, file := range files {
 		blobFile, err := file.Open()
-		//TODO : handle this error
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}

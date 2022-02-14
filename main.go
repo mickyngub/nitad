@@ -17,6 +17,7 @@ var PORT = os.Getenv("PORT")
 func main() {
 
 	config.Loadenv()
+
 	database.ConnectDb()
 	gcp.Init()
 	app := config.InitApp()
