@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -12,17 +11,15 @@ import (
 	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func GetLookupStage() []bson.D {
-	lookupCategoryStage := bson.D{{"$lookup", bson.D{{"from", "category"},
-		{"localField", "category"}, {"foreignField", "_id"}, {"as", "category"}}}}
-
-	unsetStage := bson.D{{"$unset", "category.subcategory"}}
-
-	lookupSubcategoryStage := bson.D{{"$lookup", bson.D{{"from", "subcategory"}, {"localField", "subcategory"}, {"foreignField", "_id"}, {"as", "subcategory"}}}}
-
-	return []bson.D{lookupCategoryStage, unsetStage, lookupSubcategoryStage}
+func GetLookupStage() mongo.Pipeline {
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendLookupStage(pipe, "category")
+	pipe = database.AppendLookupStage(pipe, "subcategory")
+	pipe = database.AppendUnsetStage(pipe, "category.subcategory")
+	return pipe
 }
 
 func IncrementView(id primitive.ObjectID) {
@@ -32,7 +29,7 @@ func IncrementView(id primitive.ObjectID) {
 		ctx,
 		bson.M{"_id": id},
 		bson.D{
-			{"$inc", bson.D{{"views", 1}}},
+			{Key: "$inc", Value: bson.D{{Key: "views", Value: 1}}},
 		},
 	)
 
@@ -46,7 +43,7 @@ func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
 	lookupStage := GetLookupStage()
-	matchStage := bson.D{{"$match", bson.D{{"_id", id}}}}
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: id}}}}
 
 	stages := append(lookupStage, matchStage)
 
@@ -110,7 +107,6 @@ func FindAll(oids []primitive.ObjectID) ([]bson.M, errors.CustomError) {
 	if len(result) == 0 {
 		return []bson.M{}, nil
 	}
-	fmt.Println("result", result)
 
 	return result, nil
 }

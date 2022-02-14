@@ -15,13 +15,13 @@ func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	var result bson.M
-	err := collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&result)
+	err := collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&result)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return result, errors.NewNotFoundError("subcategoryId")
 		} else {
-			return result, errors.NewBadRequestError("something went wrong")
+			return result, errors.NewBadRequestError(err.Error())
 		}
 	}
 
