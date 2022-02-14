@@ -83,15 +83,26 @@ func FindAll(oids []primitive.ObjectID) ([]bson.M, errors.CustomError) {
 	// }
 
 	stages := GetLookupStage()
-	if len(oids) > 0 {
+	//TODO: find all matches not just in
+
+	for _, oid := range oids {
 		matchStage := bson.D{{
 			Key: "$match", Value: bson.D{{
-				Key: "subcategory._id", Value: bson.D{{
-					Key: "$in", Value: oids,
-				}}}},
+				Key: "subcategory._id", Value: oid}},
 		}}
 		stages = append(stages, matchStage)
 	}
+
+	// if len(oids) > 0 {
+	// 	for oid
+	// 	matchStage := bson.D{{
+	// 		Key: "$match", Value: bson.D{{
+	// 			Key: "subcategory._id", Value: bson.D{{
+	// 				Key: "$in", Value: oids,
+	// 			}}}},
+	// 	}}
+	// 	stages = append(stages, matchStage)
+	// }
 
 	cursor, err := projectCollection.Aggregate(ctx, stages)
 
