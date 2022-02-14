@@ -1,13 +1,11 @@
 package subcategory
 
 import (
-	"mime/multipart"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
-	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -102,19 +100,4 @@ func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
 	}
 
 	return objectId, nil
-}
-
-// extractFiles extract files from request body
-func (p *Controller) extractFiles(ctx *fiber.Ctx, key string) ([]*multipart.FileHeader, errors.CustomError) {
-	form, err := ctx.MultipartForm()
-	if err != nil {
-		return nil, errors.NewBadRequestError("Invalid input")
-	}
-
-	files := form.File[key]
-	if len(files) <= 0 {
-		return nil, errors.NewBadRequestError("at least one file must me provided")
-	}
-
-	return files, nil
 }

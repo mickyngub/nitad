@@ -1,16 +1,10 @@
 package subcategory
 
 import (
-	"fmt"
-	"io/ioutil"
-	"log"
-	"mime/multipart"
-	"path/filepath"
-	"strings"
-
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -74,15 +68,15 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
 
-	files, err := contc.extractFiles(c, "image")
+	files, err := functions.ExtractFiles(c, "image")
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	//TODO: handle file upload
-	imageURLs := UploadImage(files)
-
-	// var subcate Subcategory
+	imageURLs, err := gcp.UploadImages(files, collectionName)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
 	p.Image = imageURLs[0]
 
 	result, err := Add(p)
@@ -91,32 +85,6 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
-}
-
-//TODO: upload to AWS
-func UploadImage(files []*multipart.FileHeader) []string {
-
-	for _, file := range files {
-		// should get image url instead
-		// writing file here is just for testing purpose
-		WriteFile(file, file.Filename)
-	}
-
-	dummyURL := "https://www.einfochips.com/blog/wp-content/uploads/2018/11/how-to-develop-machine-learning-applications-for-business-featured.jpg"
-	return []string{dummyURL}
-}
-
-func WriteFile(f *multipart.FileHeader, filename string) {
-	fileContent, _ := f.Open()
-	var newErr error
-	byteContainer, newErr := ioutil.ReadAll(fileContent)
-	filename = fmt.Sprintf("%s.png", strings.TrimSuffix(filename, filepath.Ext(filename)))
-
-	ioutil.WriteFile(filename, byteContainer, 0666)
-
-	if newErr != nil {
-		log.Fatal(newErr)
-	}
 }
 
 // // edit the subcategory
