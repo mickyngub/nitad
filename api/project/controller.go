@@ -4,6 +4,7 @@ import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -63,6 +64,17 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	if err := c.BodyParser(p); err != nil {
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
+
+	files, err := functions.ExtractFiles(c, "images")
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	imageURLs, err := gcp.UploadImages(files, collectionName)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	p.Images = imageURLs
 
 	result, err := Add(p)
 	if err != nil {

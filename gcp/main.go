@@ -75,6 +75,8 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}
+
+		// TODO: save only filename to the database
 		urls = append(urls, fmt.Sprintf("https://storage.cloud.google.com/nitad/%s/%s", collectionName, filename))
 	}
 	return urls, nil
