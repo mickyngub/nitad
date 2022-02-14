@@ -1,6 +1,7 @@
 package project
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -66,20 +67,50 @@ func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 	return result[0], nil
 }
 
-func FindAll() ([]bson.M, errors.CustomError) {
+func FindAll(oids []primitive.ObjectID) ([]bson.M, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	lookupStage := GetLookupStage()
+	// if len(oids) == 0 {
+	// stages := GetLookupStage()
+	// } else {
+	// stages := []bson.M{{
+	// 	"$lookup": bson.M{
+	// 		"from":         "subcategory",
+	// 		"localField":   "subcategory",
+	// 		"foreignField": "_id",
+	// 		"as":           "subcategory",
+	// 	}},
+	// 	{"$match": bson.M{
+	// 		"subcategory._id": bson.M{"$in": oids},
+	// 	}},
+	// }
 
-	cursor, err := projectCollection.Aggregate(ctx, lookupStage)
+	stages := GetLookupStage()
+	if len(oids) > 0 {
+		matchStage := bson.D{{
+			Key: "$match", Value: bson.D{{
+				Key: "subcategory._id", Value: bson.D{{
+					Key: "$in", Value: oids,
+				}}}},
+		}}
+		stages = append(stages, matchStage)
+	}
+
+	cursor, err := projectCollection.Aggregate(ctx, stages)
+
 	var result []bson.M
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return []bson.M{}, errors.NewBadRequestError(err.Error())
 
 	}
 	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return []bson.M{}, errors.NewBadRequestError(err.Error())
 	}
+
+	if len(result) == 0 {
+		return []bson.M{}, nil
+	}
+	fmt.Println("result", result)
 
 	return result, nil
 }
