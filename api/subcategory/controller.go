@@ -24,7 +24,7 @@ func NewController(
 
 	subcategoryRoute.Post("/", controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
-	// subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
+	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
 }
 
 type Controller struct{}
@@ -114,4 +114,23 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 }
 
 // // delete the subcategory
-// func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {}
+func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
+	subcategoryId := c.Params("subcategoryId")
+	objectId, err := functions.IsValidObjectId(subcategoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = HandleDeleteImage(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = Delete(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete successfully!"})
+
+}

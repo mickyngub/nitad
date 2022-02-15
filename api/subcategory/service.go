@@ -5,9 +5,6 @@ import (
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
-	"github.com/birdglove2/nitad-backend/gcp"
-	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -102,75 +99,13 @@ func Edit(oid primitive.ObjectID, s *Subcategory) (map[string]interface{}, error
 	return result, nil
 }
 
-// validate requested string of subcategoryIds
-// and return valid []objectId, otherwise error
-func ValidateIds(sids []string) ([]primitive.ObjectID, errors.CustomError) {
-	objectIds := make([]primitive.ObjectID, len(sids))
+func Delete(oid primitive.ObjectID) errors.CustomError {
+	collection, ctx := database.GetCollection(collectionName)
 
-	for i, sid := range sids {
-		objectId, err := ValidateId(sid)
-		if err != nil {
-			return objectIds, err
-		}
-
-		objectIds[i] = objectId
-	}
-
-	return objectIds, nil
-}
-
-// validate requested string of a single subcategoryId
-// and return valid objectId, otherwise error
-func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
-	objectId, err := functions.IsValidObjectId(sid)
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": oid})
 	if err != nil {
-		return objectId, err
-
-	}
-	// if err != nil >> id is not found
-	if _, err = FindById(objectId); err != nil {
-		return objectId, err
+		return errors.NewBadRequestError("Delete failed!" + err.Error())
 	}
 
-	return objectId, nil
-}
-
-func HandleUpdateImage(c *fiber.Ctx, p *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	var oldSubcategory bson.M
-	var s Subcategory
-	var err errors.CustomError
-	oldSubcategory, err = FindById(oid)
-	if err != nil {
-		return p, err
-	}
-
-	// convert bson to subcategory
-	bsonBytes, _ := bson.Marshal(oldSubcategory)
-	bson.Unmarshal(bsonBytes, &s)
-
-	files, err := functions.ExtractUpdatedFiles(c, "image")
-
-	if err != nil {
-		return p, err
-	}
-	if files == nil {
-		// no file passed, use old image url
-		p.Image = s.Image
-	} else {
-		// delete old files
-		defer gcp.DeleteImages([]string{s.Image}, collectionName)
-
-		// upload new files
-		imageURLs, err := gcp.UploadImages(files, collectionName)
-		if err != nil {
-			// if upload error, delete uploaded file if it was uploaed
-			defer gcp.DeleteImages(imageURLs, collectionName)
-			return p, err
-		}
-
-		// if upload success, pass the url to the subcategory struct
-		p.Image = imageURLs[0]
-	}
-
-	return p, nil
+	return nil
 }
