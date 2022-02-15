@@ -72,6 +72,7 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		}
 		filename := functions.GetUniqueFilename(file.Filename)
 
+		//TODO: channel this
 		err = uploader.UploadFile(blobFile, filename, fmt.Sprintf("%s/", collectionName))
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
@@ -86,6 +87,8 @@ func DeleteImages(imageURLS []string, collectionName string) errors.CustomError 
 	for _, url := range imageURLS {
 		urlSlice := strings.Split(url, "/")
 		filepath := fmt.Sprintf("%s/%s", collectionName, urlSlice[len(urlSlice)-1])
+
+		//TODO: channel this
 		err := DeleteFile(filepath)
 		if err != nil {
 			return errors.NewBadRequestError(err.Error())
