@@ -22,9 +22,7 @@ func NewController(
 
 }
 
-type Controller struct {
-	// service Service
-}
+type Controller struct{}
 
 var collectionName = database.COLLECTIONS["PROJECT"]
 
@@ -76,9 +74,8 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	p := new(ProjectRequest)
-	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.InvalidInput)
 	}
 
 	files, err := functions.ExtractFiles(c, "images")

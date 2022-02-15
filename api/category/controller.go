@@ -61,9 +61,8 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 	p := new(CategoryRequest)
-	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.InvalidInput)
 	}
 
 	result, err := Add(p)
