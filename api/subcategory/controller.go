@@ -21,7 +21,6 @@ func NewController(
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
 	//TODO add AUTH for POST/PUT/DELETE
-
 	subcategoryRoute.Post("/", controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)

@@ -20,7 +20,7 @@ func NewController(
 	//TODO add AUTH for POST/PUT/DELETE
 
 	categoryRoute.Post("/", controller.AddCategory)
-	// categoryRoute.Put("/:categoryId", controller.editcategory)
+	categoryRoute.Put("/:categoryId", controller.EditCategory)
 	// categoryRoute.Delete("/:categoryId", controller.deletecategory)
 }
 
@@ -59,7 +59,6 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 
 // add a category
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
-
 	p := new(CategoryRequest)
 	if err := c.BodyParser(p); err != nil {
 		return errors.Throw(c, errors.InvalidInput)
@@ -75,7 +74,24 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 }
 
 // // edit the category
-// func (contc *Controller) editCategory(c *fiber.Ctx) error {}
+func (contc *Controller) EditCategory(c *fiber.Ctx) error {
+	p := new(CategoryRequest)
+	if err := c.BodyParser(p); err != nil {
+		return errors.Throw(c, errors.InvalidInput)
+	}
+
+	categoryId := c.Params("categoryId")
+	objectId, err := functions.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	if err = Edit(objectId, p); err != nil {
+		return errors.Throw(c, err)
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Edit category successfully!"})
+
+}
 
 // // delete the category
 // func (cont *Controller) deleteCategory(c *fiber.Ctx) error {}

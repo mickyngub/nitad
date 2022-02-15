@@ -83,36 +83,36 @@ func Add(c *CategoryRequest) (map[string]interface{}, errors.CustomError) {
 	return result, nil
 }
 
-//TODO: reuse these 2 funcs with subcategory's validating func
-// validate requested string of categoryIds
-// and return valid []objectId, otherwise error
-func ValidateIds(cids []string) ([]primitive.ObjectID, errors.CustomError) {
-	objectIds := make([]primitive.ObjectID, len(cids))
+func Edit(oid primitive.ObjectID, c *CategoryRequest) errors.CustomError {
+	collection, ctx := database.GetCollection(collectionName)
+	// oldCategory, err := database.FindById(oid, collectionName)
+	// if err != nil {
+	// 	return err
+	// }
 
-	for i, cid := range cids {
-		objectId, err := ValidateId(cid)
-		if err != nil {
-			return objectIds, err
-		}
+	// oc := BsonToCategory(oldCategory)
+	// sidsString := append(c.Subcategory, oc.Subcategory...)
 
-		objectIds[i] = objectId
-	}
-
-	return objectIds, nil
-}
-
-// validate requested string of a single categoryId
-// and return valid objectId, otherwise error
-func ValidateId(cid string) (primitive.ObjectID, errors.CustomError) {
-	objectId, err := functions.IsValidObjectId(cid)
+	subcategoryIds, err := subcategory.ValidateIds(c.Subcategory)
 	if err != nil {
-		return objectId, err
+		return err
 	}
+	subcategoryIds = functions.RemoveDuplicateObjectIds(subcategoryIds)
 
-	// if err != nil >> id is not found
-	if _, err = FindById(objectId); err != nil {
-		return objectId, err
+	_, updateErr := collection.UpdateByID(
+		ctx,
+		oid,
+		bson.D{{
+			Key: "$set", Value: bson.D{
+				{Key: "title", Value: c.Title},
+				{Key: "subcategory", Value: subcategoryIds},
+				{Key: "updatedAt", Value: time.Now()},
+			},
+		},
+		})
+
+	if updateErr != nil {
+		return errors.NewBadRequestError(updateErr.Error())
 	}
-
-	return objectId, nil
+	return nil
 }
