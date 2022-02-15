@@ -12,13 +12,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
+func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
-	matchStage := bson.D{{"$match", bson.D{{"_id", id}}}}
-	lookupStage := bson.D{{"$lookup", bson.D{{"from", "subcategory"}, {"localField", "subcategory"}, {"foreignField", "_id"}, {"as", "subcategory"}}}}
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendMatchIdStage(pipe, oid)
+	pipe = database.AppendLookupStage(pipe, "subcategory")
 
-	cursor, err := categoryCollection.Aggregate(ctx, mongo.Pipeline{matchStage, lookupStage})
+	cursor, err := categoryCollection.Aggregate(ctx, pipe)
 	var result []bson.M
 	if err != nil {
 		return bson.M{}, errors.NewBadRequestError(err.Error())
@@ -38,9 +39,10 @@ func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
 func FindAll() ([]bson.M, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
-	lookupStage := bson.D{{"$lookup", bson.D{{"from", "subcategory"}, {"localField", "subcategory"}, {"foreignField", "_id"}, {"as", "subcategory"}}}}
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendLookupStage(pipe, "subcategory")
 
-	cursor, err := categoryCollection.Aggregate(ctx, mongo.Pipeline{lookupStage})
+	cursor, err := categoryCollection.Aggregate(ctx, pipe)
 	var result []bson.M
 	if err != nil {
 		return result, errors.NewBadRequestError(err.Error())

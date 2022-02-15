@@ -11,7 +11,7 @@ type Category struct {
 	Title       string               `bson:"title,omitempty`
 	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
 	CreatedAt   time.Time            `bson:"created_at" json:"created_at"`
-	updatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
+	UpdatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
 }
 
 type CategoryRequest struct {
