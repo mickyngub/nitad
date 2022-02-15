@@ -7,6 +7,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -79,4 +80,36 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		urls = append(urls, fmt.Sprintf("https://storage.cloud.google.com/nitad/%s/%s", collectionName, filename))
 	}
 	return urls, nil
+}
+
+func DeleteImages(imageURLS []string, collectionName string) errors.CustomError {
+	for _, url := range imageURLS {
+		urlSlice := strings.Split(url, "/")
+		filepath := fmt.Sprintf("%s/%s", collectionName, urlSlice[len(urlSlice)-1])
+		err := DeleteFile(filepath)
+		if err != nil {
+			return errors.NewBadRequestError(err.Error())
+		}
+	}
+	return nil
+}
+
+// deleteFile removes specified object.
+func DeleteFile(object string) errors.CustomError {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return errors.NewBadRequestError(err.Error())
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	o := client.Bucket(bucketName).Object(object)
+	if err := o.Delete(ctx); err != nil {
+		return errors.NewBadRequestError(err.Error())
+	}
+
+	return nil
 }
