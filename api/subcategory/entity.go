@@ -11,5 +11,5 @@ type Subcategory struct {
 	Title     string             `bson:"title,omitempty`
 	Image     string             `bson:"image,omitempty`
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	updatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
 }

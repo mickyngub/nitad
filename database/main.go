@@ -48,7 +48,7 @@ func ConnectDb() {
 		log.Fatal(err)
 	}
 
-	// TODO: fix loop bug db
+	//WARNING: fix loop bug db
 	// defer client.Disconnect(ctx)
 
 	// List databases

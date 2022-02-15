@@ -1,6 +1,8 @@
 package subcategory
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -21,13 +23,11 @@ func NewController(
 	//TODO add AUTH for POST/PUT/DELETE
 
 	subcategoryRoute.Post("/", controller.AddSubcategory)
-	// subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
+	subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
 	// subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
 }
 
-type Controller struct {
-	// service Service
-}
+type Controller struct{}
 
 var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
@@ -60,12 +60,10 @@ func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 
 // add a subcategory
 func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
-
 	p := new(Subcategory)
 
-	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.InvalidInput)
 	}
 
 	files, err := functions.ExtractFiles(c, "image")
@@ -88,7 +86,32 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 }
 
 // // edit the subcategory
-// func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {}
+func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
+	p := new(Subcategory)
+
+	if err := c.BodyParser(p); err != nil {
+		log.Println(err.Error())
+		return errors.Throw(c, errors.InvalidInput)
+	}
+
+	subcategoryId := c.Params("subcategoryId")
+	objectId, err := functions.IsValidObjectId(subcategoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	p, err = HandleUpdateImage(c, p, objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	result, err := Edit(objectId, p)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+}
 
 // // delete the subcategory
 // func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {}

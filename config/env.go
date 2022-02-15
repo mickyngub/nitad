@@ -14,5 +14,4 @@ func Loadenv() {
 			fmt.Println("Error loading .env file!")
 		}
 	}
-
 }

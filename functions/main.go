@@ -38,6 +38,21 @@ func RemoveDuplicateObjectIds(oids []primitive.ObjectID) []primitive.ObjectID {
 	return list
 }
 
+//  Extract files from request body, if no file passed, no error
+func ExtractUpdatedFiles(c *fiber.Ctx, key string) ([]*multipart.FileHeader, errors.CustomError) {
+	form, err := c.MultipartForm()
+	if err != nil {
+		return nil, errors.NewBadRequestError("Invalid input")
+	}
+
+	files := form.File[key]
+	if len(files) <= 0 {
+		return nil, nil
+	}
+
+	return files, nil
+}
+
 // extractFiles extract files from request body
 func ExtractFiles(c *fiber.Ctx, key string) ([]*multipart.FileHeader, errors.CustomError) {
 	form, err := c.MultipartForm()
