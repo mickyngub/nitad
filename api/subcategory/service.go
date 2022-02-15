@@ -7,24 +7,11 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
+func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
+	return database.FindById(oid, collectionName)
 
-	var result bson.M
-	err := collection.FindOne(ctx, bson.D{{Key: "_id", Value: id}}).Decode(&result)
-	if err != nil {
-		// ErrNoDocuments means that the filter did not match any documents in the collection
-		if err == mongo.ErrNoDocuments {
-			return result, errors.NewNotFoundError("subcategoryId")
-		} else {
-			return result, errors.NewBadRequestError(err.Error())
-		}
-	}
-
-	return result, nil
 }
 
 func FindAll() ([]bson.M, errors.CustomError) {
