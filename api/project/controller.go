@@ -1,6 +1,8 @@
 package project
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -18,7 +20,10 @@ func NewController(
 
 	projectRoute.Get("/", controller.ListProject)
 	projectRoute.Get("/:projectId", controller.GetProject)
+
+	//TODO Add auth
 	projectRoute.Post("/", controller.AddProject)
+	projectRoute.Put("/:projectId", controller.EditProject)
 
 }
 
@@ -90,6 +95,34 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	p.Images = imageURLs
 
 	result, err := Add(p)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+
+}
+
+func (contc *Controller) EditProject(c *fiber.Ctx) error {
+	upr := new(UpdateProjectRequest)
+
+	if err := c.BodyParser(upr); err != nil {
+		return errors.Throw(c, errors.InvalidInput)
+	}
+
+	projectId := c.Params("projectId")
+	objectId, err := functions.IsValidObjectId(projectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	upr, err = HandleUpdateImages(c, upr, objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	log.Println("hello0", upr.Images)
+	result, err := Edit(objectId, upr)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

@@ -21,19 +21,24 @@ type Project struct {
 	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
 	Views       int                  `bson:"views,omitempty" json:"views,omitempty"`
 	CreatedAt   time.Time            `bson:"created_at" json:"created_at"`
-	updatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
+	UpdatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
 }
 
 type ProjectRequest struct {
-	Title       string
-	Description string
-	Authors     []string
-	Emails      []string
-	Inspiration string
-	Abstract    string
-	Images      []string
-	Videos      []string
-	Keywords    []string
-	Category    []string
-	Subcategory []string
+	Title       string   `form:"title" validate:"required"`
+	Description string   `form:"description" validate:"required"`
+	Authors     []string `form:"authors" validate:"required"`
+	Emails      []string `form:"emails" validate:"required"`
+	Inspiration string   `form:"inspiration" validate:"required"`
+	Abstract    string   `form:"abstract" validate:"required"`
+	Images      []string `form:"images" validate:"required"`
+	Videos      []string `form:"videos" validate:"required"`
+	Keywords    []string `form:"keywords" validate:"required"`
+	Category    []string `form:"category" validate:"required"`
+	Subcategory []string `form:"subcategory" validate:"required"`
+}
+
+type UpdateProjectRequest struct {
+	ProjectRequest
+	DeleteImages []string `form:deleteImages`
 }

@@ -67,7 +67,6 @@ func Edit(oid primitive.ObjectID, s *Subcategory) (map[string]interface{}, error
 			Key: "$set", Value: bson.D{
 				{Key: "title", Value: s.Title},
 				{Key: "image", Value: s.Image},
-				{Key: "createdAt", Value: time.Now()},
 				{Key: "updatedAt", Value: time.Now()},
 			},
 		},

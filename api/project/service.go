@@ -3,20 +3,17 @@ package project
 import (
 	"time"
 
-	"github.com/birdglove2/nitad-backend/api/category"
-	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func FindById(id primitive.ObjectID) (bson.M, errors.CustomError) {
+func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
 	lookupStage := GetLookupStage()
-	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: id}}}}
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: oid}}}}
 
 	stages := append(lookupStage, matchStage)
 
@@ -64,18 +61,11 @@ func FindAll(oids []primitive.ObjectID) ([]bson.M, errors.CustomError) {
 
 func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
 	var result map[string]interface{}
-	subcategoryIds, err := subcategory.ValidateIds(c.Subcategory)
+
+	subcategoryIds, categoryIds, err := ValidateAndRemoveDuplicateIds(c.Subcategory, c.Category)
 	if err != nil {
 		return result, err
 	}
-
-	categoryIds, err := category.ValidateIds(c.Category)
-	if err != nil {
-		return result, err
-	}
-
-	subcategoryIds = functions.RemoveDuplicateObjectIds(subcategoryIds)
-	categoryIds = functions.RemoveDuplicateObjectIds(categoryIds)
 
 	collection, ctx := database.GetCollection(collectionName)
 
@@ -114,6 +104,50 @@ func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
 		"category":    categoryIds,
 		"subcategory": subcategoryIds,
 		"views":       0,
+	}
+
+	return result, nil
+}
+
+func Edit(oid primitive.ObjectID, upr *UpdateProjectRequest) (map[string]interface{}, errors.CustomError) {
+	var result map[string]interface{}
+
+	subcategoryIds, categoryIds, err := ValidateAndRemoveDuplicateIds(upr.Subcategory, upr.Category)
+	if err != nil {
+		return result, err
+	}
+
+	collection, ctx := database.GetCollection(collectionName)
+
+	_, updateErr := collection.UpdateByID(
+		ctx,
+		oid,
+		bson.D{{
+			Key: "$set", Value: bson.D{
+				{Key: "title", Value: upr.Title},
+				{Key: "description", Value: upr.Description},
+				{Key: "authors", Value: upr.Authors},
+				{Key: "emails", Value: upr.Emails},
+				{Key: "inspiration", Value: upr.Inspiration},
+				{Key: "abstract", Value: upr.Abstract},
+				{Key: "images", Value: upr.Images},
+				{Key: "videos", Value: upr.Videos},
+				{Key: "keywords", Value: upr.Keywords},
+				{Key: "category", Value: categoryIds},
+				{Key: "subcategory", Value: subcategoryIds},
+				{Key: "updatedAt", Value: time.Now()},
+			},
+		},
+		})
+
+	if updateErr != nil {
+		return result, errors.NewBadRequestError("edit project error: " + updateErr.Error())
+	}
+
+	result = map[string]interface{}{
+		"id":     oid,
+		"title":  upr.Title,
+		"images": upr.Images,
 	}
 
 	return result, nil
