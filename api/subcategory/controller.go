@@ -112,7 +112,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
 
-// // delete the subcategory
+// delete the subcategory
 func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
 	objectId, err := functions.IsValidObjectId(subcategoryId)
@@ -130,6 +130,6 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete subcategory successfully!"})
 
 }

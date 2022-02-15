@@ -116,3 +116,14 @@ func Edit(oid primitive.ObjectID, c *CategoryRequest) errors.CustomError {
 	}
 	return nil
 }
+
+func Delete(oid primitive.ObjectID) errors.CustomError {
+	collection, ctx := database.GetCollection(collectionName)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": oid})
+	if err != nil {
+		return errors.NewBadRequestError("Delete failed!" + err.Error())
+	}
+
+	return nil
+}

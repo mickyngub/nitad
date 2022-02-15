@@ -21,7 +21,7 @@ func NewController(
 
 	categoryRoute.Post("/", controller.AddCategory)
 	categoryRoute.Put("/:categoryId", controller.EditCategory)
-	// categoryRoute.Delete("/:categoryId", controller.deletecategory)
+	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
 }
 
 type Controller struct {
@@ -73,7 +73,7 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 }
 
-// // edit the category
+// edit the category
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 	p := new(CategoryRequest)
 	if err := c.BodyParser(p); err != nil {
@@ -93,5 +93,18 @@ func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 
 }
 
-// // delete the category
-// func (cont *Controller) deleteCategory(c *fiber.Ctx) error {}
+// delete the category
+func (cont *Controller) DeleteCategory(c *fiber.Ctx) error {
+	categoryId := c.Params("categoryId")
+	objectId, err := functions.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = Delete(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category successfully!"})
+}
