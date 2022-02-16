@@ -121,9 +121,7 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 	}
 
 	err = HandleDeleteImage(objectId)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
+	log.Println("Delete image gcp error:", err.Error())
 
 	err = Delete(objectId)
 	if err != nil {
