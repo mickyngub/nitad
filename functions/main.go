@@ -57,7 +57,7 @@ func ExtractUpdatedFiles(c *fiber.Ctx, key string) ([]*multipart.FileHeader, err
 func ExtractFiles(c *fiber.Ctx, key string) ([]*multipart.FileHeader, errors.CustomError) {
 	form, err := c.MultipartForm()
 	if err != nil {
-		return nil, errors.NewBadRequestError("Invalid input")
+		return nil, errors.NewBadRequestError("Invalid input: " + err.Error())
 	}
 
 	files := form.File[key]
