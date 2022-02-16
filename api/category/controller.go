@@ -61,7 +61,8 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 	p := new(CategoryRequest)
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.InvalidInput)
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+
 	}
 
 	result, err := Add(p)
@@ -77,7 +78,8 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 	p := new(CategoryRequest)
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.InvalidInput)
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+
 	}
 
 	categoryId := c.Params("categoryId")

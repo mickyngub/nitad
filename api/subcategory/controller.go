@@ -62,7 +62,7 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 	p := new(Subcategory)
 
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.InvalidInput)
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
 
 	files, err := functions.ExtractFiles(c, "image")
@@ -90,7 +90,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(p); err != nil {
 		log.Println(err.Error())
-		return errors.Throw(c, errors.InvalidInput)
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
 
 	subcategoryId := c.Params("subcategoryId")

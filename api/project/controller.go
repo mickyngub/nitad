@@ -77,7 +77,8 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	p := new(ProjectRequest)
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.InvalidInput)
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+
 	}
 
 	files, err := functions.ExtractFiles(c, "images")
@@ -104,7 +105,8 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 	upr := new(UpdateProjectRequest)
 
 	if err := c.BodyParser(upr); err != nil {
-		return errors.Throw(c, errors.InvalidInput)
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+
 	}
 
 	projectId := c.Params("projectId")
