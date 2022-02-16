@@ -4,6 +4,7 @@ import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -16,20 +17,36 @@ func NewController(
 
 	projectRoute.Get("/", controller.ListProject)
 	projectRoute.Get("/:projectId", controller.GetProject)
+
+	//TODO Add auth
 	projectRoute.Post("/", controller.AddProject)
+	projectRoute.Put("/:projectId", controller.EditProject)
+	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
 }
 
-type Controller struct {
-	// service Service
-}
+type Controller struct{}
 
 var collectionName = database.COLLECTIONS["PROJECT"]
+
+type ProjectQuery struct {
+	SubcategoryId []string `query:"subcategoryId"`
+	ByViews       int      `query:"byViews"`
+	ByName        int      `query:"byName"`
+	ByCreatedAt   int      `query:"byCreatedAt"`
+	ByUpdatedAt   int      `query:"byUpdatedAt"`
+}
 
 // list all projects
 // TODO: sorting & filtering
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
-	projects, err := FindAll()
+	pq := new(ProjectQuery)
+
+	if err := c.QueryParser(pq); err != nil {
+		return err
+	}
+
+	projects, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -59,10 +76,20 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	p := new(ProjectRequest)
-	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.InvalidInput)
 	}
+
+	files, err := functions.ExtractFiles(c, "images")
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	imageURLs, err := gcp.UploadImages(files, collectionName)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	p.Images = imageURLs
 
 	result, err := Add(p)
 	if err != nil {
@@ -70,5 +97,53 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+
+}
+
+func (contc *Controller) EditProject(c *fiber.Ctx) error {
+	upr := new(UpdateProjectRequest)
+
+	if err := c.BodyParser(upr); err != nil {
+		return errors.Throw(c, errors.InvalidInput)
+	}
+
+	projectId := c.Params("projectId")
+	objectId, err := functions.IsValidObjectId(projectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	upr, err = HandleUpdateImages(c, upr, objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	result, err := Edit(objectId, upr)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+}
+
+// delete the project
+func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
+	projectId := c.Params("projectId")
+	objectId, err := functions.IsValidObjectId(projectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = HandleDeleteImages(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = Delete(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project successfully!"})
 
 }

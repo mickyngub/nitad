@@ -8,6 +8,7 @@ import (
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -17,7 +18,11 @@ func main() {
 
 	config.Loadenv()
 	database.ConnectDb()
+
+	gcp.Init()
+
 	app := config.InitApp()
+
 	api.CreateAPI(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -36,6 +41,7 @@ func main() {
 
 	log.Println("Listening to ", PORT)
 
+	defer database.DisconnectDb()
 	err := app.Listen(PORT)
 	if err != nil {
 		log.Printf("Listen to %s Failed", PORT)

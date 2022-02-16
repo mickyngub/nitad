@@ -6,6 +6,10 @@ type badRequestError struct {
 	message string
 }
 
+var (
+	InvalidInput = NewBadRequestError("Invalid input format")
+)
+
 // NewBadRequestError used when client send wrong type of input
 // e.g. expect application/json but got plain/text
 // 			or wrong username/password

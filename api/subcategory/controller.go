@@ -1,16 +1,12 @@
 package subcategory
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
-	"mime/multipart"
-	"path/filepath"
-	"strings"
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -25,15 +21,12 @@ func NewController(
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
 	//TODO add AUTH for POST/PUT/DELETE
-
 	subcategoryRoute.Post("/", controller.AddSubcategory)
-	// subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
-	// subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
+	subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
+	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
 }
 
-type Controller struct {
-	// service Service
-}
+type Controller struct{}
 
 var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
@@ -66,23 +59,21 @@ func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 
 // add a subcategory
 func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
-
 	p := new(Subcategory)
 
-	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.InvalidInput)
 	}
 
-	files, err := contc.extractFiles(c, "image")
+	files, err := functions.ExtractFiles(c, "image")
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	//TODO: handle file upload
-	imageURLs := UploadImage(files)
-
-	// var subcate Subcategory
+	imageURLs, err := gcp.UploadImages(files, collectionName)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
 	p.Image = imageURLs[0]
 
 	result, err := Add(p)
@@ -93,34 +84,52 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
 
-//TODO: upload to AWS
-func UploadImage(files []*multipart.FileHeader) []string {
-
-	for _, file := range files {
-		// should get image url instead
-		// writing file here is just for testing purpose
-		WriteFile(file, file.Filename)
-	}
-
-	dummyURL := "https://www.einfochips.com/blog/wp-content/uploads/2018/11/how-to-develop-machine-learning-applications-for-business-featured.jpg"
-	return []string{dummyURL}
-}
-
-func WriteFile(f *multipart.FileHeader, filename string) {
-	fileContent, _ := f.Open()
-	var newErr error
-	byteContainer, newErr := ioutil.ReadAll(fileContent)
-	filename = fmt.Sprintf("%s.png", strings.TrimSuffix(filename, filepath.Ext(filename)))
-
-	ioutil.WriteFile(filename, byteContainer, 0666)
-
-	if newErr != nil {
-		log.Fatal(newErr)
-	}
-}
-
 // // edit the subcategory
-// func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {}
+func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
+	p := new(Subcategory)
 
-// // delete the subcategory
-// func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {}
+	if err := c.BodyParser(p); err != nil {
+		log.Println(err.Error())
+		return errors.Throw(c, errors.InvalidInput)
+	}
+
+	subcategoryId := c.Params("subcategoryId")
+	objectId, err := functions.IsValidObjectId(subcategoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	p, err = HandleUpdateImage(c, p, objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	result, err := Edit(objectId, p)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+}
+
+// delete the subcategory
+func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
+	subcategoryId := c.Params("subcategoryId")
+	objectId, err := functions.IsValidObjectId(subcategoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = HandleDeleteImage(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = Delete(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete subcategory successfully!"})
+
+}

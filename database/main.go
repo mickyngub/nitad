@@ -24,7 +24,7 @@ var COLLECTIONS = map[string]string{
 }
 
 func GetCollection(collectionName string) (*mongo.Collection, context.Context) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx := context.Background()
 	collection := client.Database(DatabaseName).Collection(collectionName)
 
 	return collection, ctx
@@ -48,8 +48,6 @@ func ConnectDb() {
 		log.Fatal(err)
 	}
 
-	// TODO: fix loop bug db
-
 	// List databases
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
@@ -60,5 +58,10 @@ func ConnectDb() {
 
 func DisconnectDb() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Disconnect(ctx)
+	err := client.Disconnect(ctx)
+	if err != nil {
+		log.Println("error", err)
+	} else {
+		log.Println("disconnecting mongodb...")
+	}
 }

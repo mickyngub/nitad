@@ -1,1 +1,8 @@
 .env
+google-credentials.json
+tmp/
+tmp
+/tmp
+
+bin
+bin/air

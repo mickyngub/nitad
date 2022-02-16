@@ -20,8 +20,8 @@ func NewController(
 	//TODO add AUTH for POST/PUT/DELETE
 
 	categoryRoute.Post("/", controller.AddCategory)
-	// categoryRoute.Put("/:categoryId", controller.editcategory)
-	// categoryRoute.Delete("/:categoryId", controller.deletecategory)
+	categoryRoute.Put("/:categoryId", controller.EditCategory)
+	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
 }
 
 type Controller struct {
@@ -59,11 +59,9 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 
 // add a category
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
-
 	p := new(CategoryRequest)
-	//TODO: handle this bodyParser middleware
 	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.InvalidInput)
 	}
 
 	result, err := Add(p)
@@ -75,8 +73,38 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 }
 
-// // edit the category
-// func (contc *Controller) editCategory(c *fiber.Ctx) error {}
+// edit the category
+func (contc *Controller) EditCategory(c *fiber.Ctx) error {
+	p := new(CategoryRequest)
+	if err := c.BodyParser(p); err != nil {
+		return errors.Throw(c, errors.InvalidInput)
+	}
 
-// // delete the category
-// func (cont *Controller) deleteCategory(c *fiber.Ctx) error {}
+	categoryId := c.Params("categoryId")
+	objectId, err := functions.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	if err = Edit(objectId, p); err != nil {
+		return errors.Throw(c, err)
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Edit category successfully!"})
+
+}
+
+// delete the category
+func (cont *Controller) DeleteCategory(c *fiber.Ctx) error {
+	categoryId := c.Params("categoryId")
+	objectId, err := functions.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = Delete(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category successfully!"})
+}
