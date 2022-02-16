@@ -1,7 +1,6 @@
 package project
 
 import (
-	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -31,24 +30,23 @@ type Controller struct{}
 var collectionName = database.COLLECTIONS["PROJECT"]
 
 type ProjectQuery struct {
-	SubcategoryId []string `query:"subcategoryId`
+	SubcategoryId []string `query:"subcategoryId"`
+	ByViews       int      `query:"byViews"`
+	ByName        int      `query:"byName"`
+	ByCreatedAt   int      `query:"byCreatedAt"`
+	ByUpdatedAt   int      `query:"byUpdatedAt"`
 }
 
 // list all projects
 // TODO: sorting & filtering
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
-	p := new(ProjectQuery)
+	pq := new(ProjectQuery)
 
-	if err := c.QueryParser(p); err != nil {
+	if err := c.QueryParser(pq); err != nil {
 		return err
 	}
 
-	validSubcategoryIds, err := subcategory.ValidateIds(p.SubcategoryId)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	projects, err := FindAll(validSubcategoryIds)
+	projects, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

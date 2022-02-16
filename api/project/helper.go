@@ -23,6 +23,36 @@ func GetLookupStage() mongo.Pipeline {
 	return pipe
 }
 
+func AppendSortStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+	pq = SetDefaultSort(pq)
+	return append(pipe, bson.D{{Key: "$sort", Value: bson.D{
+		{Key: "views", Value: pq.ByViews},
+		{Key: "title", Value: pq.ByName},
+		{Key: "updatedAt", Value: pq.ByUpdatedAt},
+		{Key: "createdAt", Value: pq.ByCreatedAt},
+	}}})
+}
+
+func SetDefaultSort(pq *ProjectQuery) *ProjectQuery {
+	if pq.ByViews == 0 {
+		// sort for most view
+		pq.ByViews = -1
+	}
+	if pq.ByName == 0 {
+		// sort by alphabet
+		pq.ByName = 1
+	}
+	if pq.ByUpdatedAt == 0 {
+		pq.ByUpdatedAt = -1
+	}
+
+	if pq.ByCreatedAt == 0 {
+		pq.ByCreatedAt = -1
+	}
+
+	return pq
+}
+
 func IncrementView(id primitive.ObjectID) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 

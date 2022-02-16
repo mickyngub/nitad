@@ -3,6 +3,7 @@ package project
 import (
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,22 +35,29 @@ func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
 	return result[0], nil
 }
 
-func FindAll(oids []primitive.ObjectID) ([]bson.M, errors.CustomError) {
+func FindAll(pq *ProjectQuery) ([]bson.M, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
+	validSubcategoryIds, err := subcategory.ValidateIds(pq.SubcategoryId)
+	if err != nil {
+		return []bson.M{}, err
+	}
+
 	stages := GetLookupStage()
-	for _, oid := range oids {
+	stages = AppendSortStage(stages, pq)
+
+	for _, oid := range validSubcategoryIds {
 		stages = database.AppendMatchIdStage(stages, "subcategory._id", oid)
 	}
 
-	cursor, err := projectCollection.Aggregate(ctx, stages)
+	cursor, aggregateErr := projectCollection.Aggregate(ctx, stages)
 	var result []bson.M
-	if err != nil {
-		return []bson.M{}, errors.NewBadRequestError(err.Error())
+	if aggregateErr != nil {
+		return []bson.M{}, errors.NewBadRequestError(aggregateErr.Error())
 	}
 
-	if err = cursor.All(ctx, &result); err != nil {
-		return []bson.M{}, errors.NewBadRequestError(err.Error())
+	if curErr := cursor.All(ctx, &result); err != nil {
+		return []bson.M{}, errors.NewBadRequestError(curErr.Error())
 	}
 
 	if len(result) == 0 {
