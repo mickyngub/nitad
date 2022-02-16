@@ -17,10 +17,12 @@ var PORT = os.Getenv("PORT")
 func main() {
 
 	config.Loadenv()
-
 	database.ConnectDb()
+
 	gcp.Init()
+
 	app := config.InitApp()
+
 	api.CreateAPI(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -39,6 +41,7 @@ func main() {
 
 	log.Println("Listening to ", PORT)
 
+	defer database.DisconnectDb()
 	err := app.Listen(PORT)
 	if err != nil {
 		log.Printf("Listen to %s Failed", PORT)

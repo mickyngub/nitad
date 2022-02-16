@@ -90,7 +90,7 @@ func Delete(oid primitive.ObjectID) errors.CustomError {
 
 	_, err := collection.DeleteOne(ctx, bson.M{"_id": oid})
 	if err != nil {
-		return errors.NewBadRequestError("Delete failed!" + err.Error())
+		return errors.NewBadRequestError("Delete subcategory failed!" + err.Error())
 	}
 
 	return nil

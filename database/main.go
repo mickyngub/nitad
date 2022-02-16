@@ -42,14 +42,11 @@ func ConnectDb() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ctx := context.Background()
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	//WARNING: fix loop bug db
-	// defer client.Disconnect(ctx)
 
 	// List databases
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
@@ -61,5 +58,10 @@ func ConnectDb() {
 
 func DisconnectDb() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client.Disconnect(ctx)
+	err := client.Disconnect(ctx)
+	if err != nil {
+		log.Println("error", err)
+	} else {
+		log.Println("disconnecting mongodb...")
+	}
 }

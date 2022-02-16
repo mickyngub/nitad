@@ -15,16 +15,9 @@ import (
 	"github.com/birdglove2/nitad-backend/functions"
 )
 
-var (
-	projectID  = os.Getenv("GCP_PROJECTID")
-	bucketName = os.Getenv("GCP_BUCKETNAME")
-)
-
 type ClientUploader struct {
 	cl         *storage.Client
-	projectID  string
 	bucketName string
-	uploadPath string
 }
 
 var uploader *ClientUploader
@@ -33,33 +26,30 @@ func Init() {
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json") // FILL IN WITH YOUR FILE PATH
 	client, err := storage.NewClient(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+		log.Fatalf("Failed to create gcp client: %v", err)
 	}
 
 	uploader = &ClientUploader{
 		cl:         client,
-		bucketName: bucketName,
-		projectID:  projectID,
+		bucketName: os.Getenv("GCP_BUCKETNAME"),
 	}
-
 }
 
 // UploadFile uploads an object
-func (c *ClientUploader) UploadFile(file multipart.File, object string, uploadPath string) error {
-	ctx := context.Background()
-
-	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
+func UploadFile(f multipart.File, object string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*50)
 	defer cancel()
 
 	// Upload an object with storage.Writer.
-	wc := c.cl.Bucket(c.bucketName).Object(uploadPath + object).NewWriter(ctx)
-	if _, err := io.Copy(wc, file); err != nil {
-		return fmt.Errorf("io.Copy: %v", err)
+	wc := uploader.cl.Bucket(uploader.bucketName).Object(object).NewWriter(ctx)
+	if _, err := io.Copy(wc, f); err != nil {
+		return fmt.Errorf("GCP io.Copy: %v", err)
 	}
 	if err := wc.Close(); err != nil {
-		return fmt.Errorf("Writer.Close: %v", err)
+		return fmt.Errorf("GCP Writer.Close: %v", err)
 	}
 
+	defer f.Close()
 	return nil
 }
 
@@ -73,13 +63,14 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		filename := functions.GetUniqueFilename(file.Filename)
 
 		//TODO: channel this
-		err = uploader.UploadFile(blobFile, filename, fmt.Sprintf("%s/", collectionName))
+		err = UploadFile(blobFile, collectionName+"/"+filename)
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}
 
 		urls = append(urls, fmt.Sprintf("https://storage.cloud.google.com/nitad/%s/%s", collectionName, filename))
 	}
+
 	return urls, nil
 }
 
@@ -99,17 +90,10 @@ func DeleteImages(imageURLS []string, collectionName string) errors.CustomError 
 
 // deleteFile removes specified object.
 func DeleteFile(object string) errors.CustomError {
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		return errors.NewBadRequestError(err.Error())
-	}
-	defer client.Close()
-
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	o := client.Bucket(bucketName).Object(object)
+	o := uploader.cl.Bucket(uploader.bucketName).Object(object)
 	if err := o.Delete(ctx); err != nil {
 		return errors.NewBadRequestError(err.Error())
 	}
