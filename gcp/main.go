@@ -7,7 +7,6 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -18,6 +17,7 @@ import (
 type ClientUploader struct {
 	cl         *storage.Client
 	bucketName string
+	apiPrefix  string
 }
 
 var uploader *ClientUploader
@@ -32,6 +32,7 @@ func Init() {
 	uploader = &ClientUploader{
 		cl:         client,
 		bucketName: os.Getenv("GCP_BUCKETNAME"),
+		apiPrefix:  os.Getenv("GCP_API_PREFIX"),
 	}
 }
 
@@ -68,7 +69,8 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 			return urls, errors.NewBadRequestError(err.Error())
 		}
 
-		urls = append(urls, fmt.Sprintf("https://storage.cloud.google.com/nitad/%s/%s", collectionName, filename))
+		// urls = append(urls, fmt.Sprintf("https://storage.cloud.google.com/nitad/%s/%s", collectionName, filename))
+		urls = append(urls, filename)
 	}
 
 	return urls, nil
@@ -76,8 +78,9 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 
 func DeleteImages(imageURLS []string, collectionName string) errors.CustomError {
 	for _, url := range imageURLS {
-		urlSlice := strings.Split(url, "/")
-		filepath := fmt.Sprintf("%s/%s", collectionName, urlSlice[len(urlSlice)-1])
+		// urlSlice := strings.Split(url, "/")
+		// filepath := fmt.Sprintf("%s/%s", collectionName, urlSlice[len(urlSlice)-1])
+		filepath := fmt.Sprintf("%s/%s/%s/%s", uploader.apiPrefix, uploader.bucketName, collectionName, url)
 
 		//TODO: channel this
 		err := DeleteFile(filepath)
