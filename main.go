@@ -41,7 +41,7 @@ func main() {
 
 	log.Println("Listening to ", PORT)
 
-	defer database.DisconnectDb()
+	// defer database.DisconnectDb()
 	err := app.Listen(PORT)
 	if err != nil {
 		log.Printf("Listen to %s Failed", PORT)
