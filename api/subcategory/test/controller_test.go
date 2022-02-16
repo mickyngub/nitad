@@ -1,17 +1,5 @@
 package subcategory_test
 
-import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http/httptest"
-	"testing"
-
-	"github.com/birdglove2/nitad-backend/api"
-	"github.com/birdglove2/nitad-backend/config"
-	"github.com/birdglove2/nitad-backend/database"
-)
-
 // type Subcategory struct {
 // 	ID        primitive.ObjectID `bson:"_id,omitempty`
 // 	Title     string             `bson:"title,omitempty`
@@ -25,23 +13,23 @@ import (
 // 	result  Subcategory
 // }
 
-func TestDoStuffWithTestServer(t *testing.T) {
+// func TestDoStuffWithTestServer(t *testing.T) {
 
-	config.Loadenv()
-	database.ConnectDb()
-	app := config.InitApp()
-	api.CreateAPI(app)
+// 	config.Loadenv()
+// 	database.ConnectDb()
+// 	app := config.InitApp()
+// 	api.CreateAPI(app)
 
-	req := httptest.NewRequest("GET", "/subcategory", nil)
-	req.Header.Set("X-Custom-Header", "hi")
+// 	req := httptest.NewRequest("GET", "/subcategory", nil)
+// 	req.Header.Set("X-Custom-Header", "hi")
 
-	resp, _ := app.Test(req)
-	bodyByte, _ := ioutil.ReadAll(resp.Body)
+// 	resp, _ := app.Test(req)
+// 	bodyByte, _ := ioutil.ReadAll(resp.Body)
 
-	var jsonMap map[string]interface{}
-	json.Unmarshal(bodyByte, &jsonMap)
-	fmt.Println("this is getting method", jsonMap)
-}
+// 	var jsonMap map[string]interface{}
+// 	json.Unmarshal(bodyByte, &jsonMap)
+// 	fmt.Println("this is getting method", jsonMap)
+// }
 
 //
 // func TestAddSubcategory(t *testing.T) {
