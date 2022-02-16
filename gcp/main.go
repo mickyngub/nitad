@@ -27,6 +27,7 @@ func Init() {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
 	}
 
+	log.Println("testing gcp credentials", os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	client, err := storage.NewClient(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to create gcp client: %v", err)
