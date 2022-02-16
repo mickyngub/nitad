@@ -60,12 +60,25 @@ func ValidateAndRemoveDuplicateIds(sids []string, cids []string) ([]primitive.Ob
 	return subcategoryIds, categoryIds, nil
 }
 
+func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
+	project, err := FindById(oid)
+	if err != nil {
+		return err
+	}
+	p := BsonToProject(project)
+
+	err = gcp.DeleteImages(p.Images, collectionName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func HandleUpdateImages(c *fiber.Ctx, upr *UpdateProjectRequest, oid primitive.ObjectID) (*UpdateProjectRequest, errors.CustomError) {
 	oldProject, err := database.FindById(oid, collectionName)
 	if err != nil {
 		return upr, err
 	}
-	log.Println("old prok", oldProject)
 	pr := BsonToProject(oldProject)
 
 	if len(upr.DeleteImages) > 0 {

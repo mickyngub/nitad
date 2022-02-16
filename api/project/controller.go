@@ -1,8 +1,6 @@
 package project
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -24,6 +22,7 @@ func NewController(
 	//TODO Add auth
 	projectRoute.Post("/", controller.AddProject)
 	projectRoute.Put("/:projectId", controller.EditProject)
+	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
 }
 
@@ -121,12 +120,32 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	log.Println("hello0", upr.Images)
 	result, err := Edit(objectId, upr)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+}
+
+// delete the project
+func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
+	projectId := c.Params("projectId")
+	objectId, err := functions.IsValidObjectId(projectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = HandleDeleteImages(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = Delete(objectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project successfully!"})
 
 }

@@ -152,3 +152,14 @@ func Edit(oid primitive.ObjectID, upr *UpdateProjectRequest) (map[string]interfa
 
 	return result, nil
 }
+
+func Delete(oid primitive.ObjectID) errors.CustomError {
+	collection, ctx := database.GetCollection(collectionName)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": oid})
+	if err != nil {
+		return errors.NewBadRequestError("Delete project failed!" + err.Error())
+	}
+
+	return nil
+}
