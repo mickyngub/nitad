@@ -10,6 +10,7 @@ func GetApp() *fiber.App {
 
 func InitApp() *fiber.App {
 	app = fiber.New(fiber.Config{
+		Prefork:       false,
 		CaseSensitive: true,
 		StrictRouting: true,
 		ServerHeader:  "Fiber",
