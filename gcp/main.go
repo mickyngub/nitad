@@ -23,7 +23,10 @@ type ClientUploader struct {
 var uploader *ClientUploader
 
 func Init() {
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json") // FILL IN WITH YOUR FILE PATH
+	if os.Getenv("APP_ENV") != "production" {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
+	}
+
 	client, err := storage.NewClient(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to create gcp client: %v", err)
