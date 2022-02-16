@@ -39,6 +39,7 @@ func main() {
 
 	PORT = ":" + PORT
 
+	log.Println("Deploying... ", os.Getenv("APP_ENV"))
 	log.Println("Listening to ", PORT)
 
 	defer database.DisconnectDb()
