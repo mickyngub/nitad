@@ -31,14 +31,15 @@ var collectionName = database.COLLECTIONS["PROJECT"]
 
 type ProjectQuery struct {
 	SubcategoryId []string `query:"subcategoryId"`
-	ByViews       int      `query:"byViews"`
-	ByName        int      `query:"byName"`
-	ByCreatedAt   int      `query:"byCreatedAt"`
-	ByUpdatedAt   int      `query:"byUpdatedAt"`
+	// ByViews       int      `query:"byViews"`
+	// ByName        int      `query:"byName"`
+	// ByCreatedAt   int      `query:"byCreatedAt"`
+	// ByUpdatedAt   int      `query:"byUpdatedAt"`
+	Sort string `query:"sort`
+	By   int    `query:by`
 }
 
 // list all projects
-// TODO: sorting & filtering
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
 	pq := new(ProjectQuery)
 
