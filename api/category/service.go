@@ -14,7 +14,7 @@ func GetById(oid primitive.ObjectID) (Category, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
 	pipe := mongo.Pipeline{}
-	pipe = database.AppendMatchIdStage(pipe, "_id", oid)
+	pipe = database.AppendMatchStage(pipe, "_id", oid)
 	pipe = database.AppendLookupStage(pipe, "subcategory")
 
 	cursor, err := categoryCollection.Aggregate(ctx, pipe)

@@ -10,26 +10,23 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
+func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	lookupStage := GetLookupStage()
-	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: oid}}}}
+	pipe := GetLookupStage()
+	pipe = database.AppendMatchStage(pipe, "_id", oid)
 
-	stages := append(lookupStage, matchStage)
-
-	cursor, err := projectCollection.Aggregate(ctx, stages)
-	var result []bson.M
+	cursor, err := projectCollection.Aggregate(ctx, pipe)
+	result := []Project{}
 	if err != nil {
-		return bson.M{}, errors.NewBadRequestError(err.Error())
+		return Project{}, errors.NewBadRequestError(err.Error())
 	}
 	if err = cursor.All(ctx, &result); err != nil {
-		return bson.M{}, errors.NewBadRequestError(err.Error())
+		return Project{}, errors.NewBadRequestError(err.Error())
 	}
 
 	if len(result) == 0 {
-		return bson.M{}, errors.NewNotFoundError("projectId")
-
+		return Project{}, errors.NewNotFoundError("projectId")
 	}
 
 	return result[0], nil
@@ -49,7 +46,7 @@ func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	stages = AppendSortStage(stages, pq)
 
 	for _, sid := range sids {
-		stages = database.AppendMatchIdStage(stages, "subcategory._id", sid)
+		stages = database.AppendMatchStage(stages, "subcategory._id", sid)
 	}
 
 	cursor, aggregateErr := projectCollection.Aggregate(ctx, stages)

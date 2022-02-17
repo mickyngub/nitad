@@ -6,7 +6,6 @@ import (
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -65,8 +64,8 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	var result bson.M
-	if result, err = FindById(objectId); err != nil {
+	var result Project
+	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 

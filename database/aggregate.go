@@ -24,6 +24,6 @@ func AppendUnsetStage(pipe mongo.Pipeline, field string) mongo.Pipeline {
 	return append(pipe, bson.D{{Key: "$unset", Value: field}})
 }
 
-func AppendMatchIdStage(pipe mongo.Pipeline, field string, oid primitive.ObjectID) mongo.Pipeline {
+func AppendMatchStage(pipe mongo.Pipeline, field string, oid primitive.ObjectID) mongo.Pipeline {
 	return append(pipe, bson.D{{Key: "$match", Value: bson.D{{Key: field, Value: oid}}}})
 }

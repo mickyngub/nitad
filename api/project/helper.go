@@ -92,13 +92,12 @@ func IncrementView(id primitive.ObjectID) {
 }
 
 func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
-	project, err := FindById(oid)
+	project, err := GetById(oid)
 	if err != nil {
 		return err
 	}
-	p := BsonToProject(project)
 
-	err = gcp.DeleteImages(p.Images, collectionName)
+	err = gcp.DeleteImages(project.Images, collectionName)
 	if err != nil {
 		return err
 	}
