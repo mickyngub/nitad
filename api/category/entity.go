@@ -15,6 +15,6 @@ type Category struct {
 }
 
 type CategoryRequest struct {
-	Title       string
-	Subcategory []string
+	Title       string   `form:"title" validate:"required"`
+	Subcategory []string `form:"subcategory" validate:"required"`
 }

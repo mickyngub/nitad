@@ -19,14 +19,12 @@ func NewController(
 
 	//TODO add AUTH for POST/PUT/DELETE
 
-	categoryRoute.Post("/", controller.AddCategory)
-	categoryRoute.Put("/:categoryId", controller.EditCategory)
+	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
+	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
 }
 
-type Controller struct {
-	// service Service
-}
+type Controller struct{}
 
 var collectionName = database.COLLECTIONS["CATEGORY"]
 
@@ -59,13 +57,11 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 
 // add a category
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
-	p := new(CategoryRequest)
-	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+	cr := new(CategoryRequest)
+	c.BodyParser(cr)
 
-	}
+	result, err := Add(cr)
 
-	result, err := Add(p)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -76,11 +72,8 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 // edit the category
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
-	p := new(CategoryRequest)
-	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
-
-	}
+	cr := new(CategoryRequest)
+	c.BodyParser(cr)
 
 	categoryId := c.Params("categoryId")
 	objectId, err := functions.IsValidObjectId(categoryId)
@@ -88,10 +81,11 @@ func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	if err = Edit(objectId, p); err != nil {
+	result, err := Edit(objectId, cr)
+	if err != nil {
 		return errors.Throw(c, err)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Edit category successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 
 }
 
@@ -108,5 +102,5 @@ func (cont *Controller) DeleteCategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category " + categoryId + " successfully!"})
 }

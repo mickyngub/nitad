@@ -77,7 +77,7 @@ func Add(c *CategoryRequest) (map[string]interface{}, errors.CustomError) {
 		return result, errors.NewBadRequestError(insertErr.Error())
 	}
 	result = map[string]interface{}{
-		"id":          insertRes.InsertedID,
+		"_id":         insertRes.InsertedID,
 		"title":       c.Title,
 		"subcategory": subcategoryIds,
 	}
@@ -85,19 +85,14 @@ func Add(c *CategoryRequest) (map[string]interface{}, errors.CustomError) {
 	return result, nil
 }
 
-func Edit(oid primitive.ObjectID, c *CategoryRequest) errors.CustomError {
-	collection, ctx := database.GetCollection(collectionName)
-	// oldCategory, err := database.FindById(oid, collectionName)
-	// if err != nil {
-	// 	return err
-	// }
+func Edit(oid primitive.ObjectID, c *CategoryRequest) (map[string]interface{}, errors.CustomError) {
+	var result map[string]interface{}
 
-	// oc := BsonToCategory(oldCategory)
-	// sidsString := append(c.Subcategory, oc.Subcategory...)
+	collection, ctx := database.GetCollection(collectionName)
 
 	subcategoryIds, err := subcategory.ValidateIds(c.Subcategory)
 	if err != nil {
-		return err
+		return result, err
 	}
 	subcategoryIds = functions.RemoveDuplicateObjectIds(subcategoryIds)
 
@@ -114,9 +109,15 @@ func Edit(oid primitive.ObjectID, c *CategoryRequest) errors.CustomError {
 		})
 
 	if updateErr != nil {
-		return errors.NewBadRequestError(updateErr.Error())
+		return result, errors.NewBadRequestError(updateErr.Error())
 	}
-	return nil
+
+	result = map[string]interface{}{
+		"_id":         c.Title,
+		"title":       c.Title,
+		"subcategory": subcategoryIds,
+	}
+	return result, nil
 }
 
 func Delete(oid primitive.ObjectID) errors.CustomError {
