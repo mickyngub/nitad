@@ -49,3 +49,46 @@ func AddProjectValidator(c *fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func EditProjectValidator(c *fiber.Ctx) error {
+	upr := new(UpdateProjectRequest)
+
+	if err := c.BodyParser(upr); err != nil {
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+	}
+
+	err := validators.ValidateStruct(*upr)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	subcategories, sids, err := subcategory.FindByIds(upr.Subcategory)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	category, err := category.FindById(upr.Category)
+
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	project := new(UpdateProject)
+	project.Title = upr.Title
+	project.Description = upr.Description
+	project.Authors = upr.Authors
+	project.Emails = upr.Emails
+	project.Inspiration = upr.Inspiration
+	project.Abstract = upr.Abstract
+	project.Videos = upr.Videos
+	project.Keywords = upr.Keywords
+	project.Subcategory = subcategories
+	project.Category = category
+	project.DeleteImages = upr.DeleteImages
+
+	c.Locals("updateProjectBody", project)
+	c.Locals("cid", category.ID)
+	c.Locals("sids", sids)
+
+	return c.Next()
+}

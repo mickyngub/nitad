@@ -97,7 +97,7 @@ func DeleteFile(object string) errors.CustomError {
 
 	o := uploader.cl.Bucket(uploader.bucketName).Object(object)
 	if err := o.Delete(ctx); err != nil {
-		return errors.NewInternalServerError("gcp " + err.Error())
+		return errors.NewInternalServerError("gcp deletion error, " + err.Error())
 	}
 
 	return nil

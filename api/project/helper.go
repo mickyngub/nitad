@@ -103,64 +103,70 @@ func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
 	return nil
 }
 
-func HandleUpdateImages(c *fiber.Ctx, upr *UpdateProjectRequest, oid primitive.ObjectID) (*UpdateProjectRequest, errors.CustomError) {
-	oldProject, err := database.GetElementById(oid, collectionName)
+func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID) (*UpdateProject, errors.CustomError) {
+	oldProject, err := FindById(oid)
 	if err != nil {
-		return upr, err
+		return up, err
 	}
-	pr := BsonToProject(oldProject)
 
-	if len(upr.DeleteImages) > 0 {
-		pr.Images = RemoveSliceFromSlice(pr.Images, upr.DeleteImages)
-		defer gcp.DeleteImages(upr.DeleteImages, collectionName)
+	up.Images = oldProject.Images
+
+	if len(up.DeleteImages) > 0 {
+		// remove deleteImages from Images attrs
+		oldProject.Images = RemoveSliceFromSlice(oldProject.Images, up.DeleteImages)
+		err = gcp.DeleteImages(up.DeleteImages, collectionName)
+		if err != nil {
+			return up, err
+		}
 	}
 
 	files, err := functions.ExtractUpdatedFiles(c, "images")
 	if err != nil {
-		return upr, err
+		return up, err
 	}
 
-	if files == nil {
-		// no file passed, use old image url
-
-		// upr.Images = pr.Images
-
-		// log.Println("file == nil", upr.Images, pr.Images)
-		return upr, nil
-	} else {
-		// if file pass
-		// log.Println("file passed", upr.Images, pr.Images)
-		// upload file
+	if len(files) > 0 {
+		// if file pass, upload file
 		imageURLs, err := gcp.UploadImages(files, collectionName)
-
-		// log.Println("imageUrls", imageURLs)
 
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
 			defer gcp.DeleteImages(imageURLs, collectionName)
-			// log.Println("file bugs", upr.Images, pr.Images)
-			return upr, err
+			return up, err
 		}
 
 		// concat uploaded file to the existing ones
-		imageURLs = append(pr.Images, imageURLs...)
-		// log.Println("check ", imageURLs, pr.Images)
-
-		// if upload success, pass the url to the subcategory struct
-
-		// upr.Images = imageURLs
-
-		// log.Println("file latest", upr.Images)
+		up.Images = append(up.Images, imageURLs...)
 	}
 
-	return upr, nil
+	up.CreatedAt = oldProject.CreatedAt
+	return up, nil
 }
 
-func BsonToProject(b bson.M) Project {
+func FindById(oid primitive.ObjectID) (ProjectForDecode, errors.CustomError) {
+	b, err := database.GetElementById(oid, collectionName)
+	if err != nil {
+		return ProjectForDecode{}, err
+	}
+	// log.Println(b)
+
+	return BsonToProjectForDecode(b), nil
+}
+
+func BsonToProjectForDecode(b interface{}) ProjectForDecode {
 	// convert bson to project
-	var p Project
-	bsonBytes, _ := bson.Marshal(b)
-	bson.Unmarshal(bsonBytes, &p)
+	var p ProjectForDecode
+	bsonBytes, err := bson.Marshal(b)
+	if err != nil {
+		log.Println("ERROR", err.Error())
+	}
+	err = bson.Unmarshal(bsonBytes, &p)
+	if err != nil {
+		log.Println("ERROR 2", err.Error())
+	}
+	//NOTE: these errors make p.Images cannot found sometime
+	// resulting in false image management
+	// log.Println(p.Images)
 	return p
 }
 

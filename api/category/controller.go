@@ -83,7 +83,6 @@ func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 
 	result, err := Edit(categoryObjectId, categoryBody, sids)
 
-	// result, err := Edit(objectId, cr)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

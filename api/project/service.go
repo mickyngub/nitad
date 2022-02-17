@@ -94,48 +94,40 @@ func Add(p *Project, cid primitive.ObjectID, sids []primitive.ObjectID) (*Projec
 	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, upr *UpdateProjectRequest) (map[string]interface{}, errors.CustomError) {
-	var result map[string]interface{}
+func Edit(oid primitive.ObjectID, p *UpdateProject, cid primitive.ObjectID, sids []primitive.ObjectID) (*UpdateProject, errors.CustomError) {
 
-	// subcategoryIds, categoryIds, err := ValidateAndRemoveDuplicateIds(upr.Subcategory, upr.Category)
-	// if err != nil {
-	// 	return result, err
-	// }
+	collection, ctx := database.GetCollection(collectionName)
 
-	// collection, ctx := database.GetCollection(collectionName)
+	now := time.Now()
+	_, updateErr := collection.UpdateByID(
+		ctx,
+		oid,
+		bson.D{{
+			Key: "$set", Value: bson.D{
+				{Key: "title", Value: p.Title},
+				{Key: "description", Value: p.Description},
+				{Key: "authors", Value: p.Authors},
+				{Key: "emails", Value: p.Emails},
+				{Key: "inspiration", Value: p.Inspiration},
+				{Key: "abstract", Value: p.Abstract},
+				{Key: "images", Value: p.Images},
+				{Key: "videos", Value: p.Videos},
+				{Key: "keywords", Value: p.Keywords},
+				{Key: "category", Value: cid},
+				{Key: "subcategory", Value: sids},
+				{Key: "updatedAt", Value: now},
+			},
+		},
+		})
 
-	// _, updateErr := collection.UpdateByID(
-	// 	ctx,
-	// 	oid,
-	// 	bson.D{{
-	// 		Key: "$set", Value: bson.D{
-	// 			{Key: "title", Value: upr.Title},
-	// 			{Key: "description", Value: upr.Description},
-	// 			{Key: "authors", Value: upr.Authors},
-	// 			{Key: "emails", Value: upr.Emails},
-	// 			{Key: "inspiration", Value: upr.Inspiration},
-	// 			{Key: "abstract", Value: upr.Abstract},
-	// 			{Key: "images", Value: upr.Images},
-	// 			{Key: "videos", Value: upr.Videos},
-	// 			{Key: "keywords", Value: upr.Keywords},
-	// 			{Key: "category", Value: categoryIds},
-	// 			{Key: "subcategory", Value: subcategoryIds},
-	// 			{Key: "updatedAt", Value: time.Now()},
-	// 		},
-	// 	},
-	// 	})
+	if updateErr != nil {
+		return p, errors.NewBadRequestError("edit project error: " + updateErr.Error())
+	}
 
-	// if updateErr != nil {
-	// 	return result, errors.NewBadRequestError("edit project error: " + updateErr.Error())
-	// }
+	p.ID = oid
+	p.UpdatedAt = now
 
-	// result = map[string]interface{}{
-	// 	"id":     oid,
-	// 	"title":  upr.Title,
-	// 	"images": upr.Images,
-	// }
-
-	return result, nil
+	return p, nil
 }
 
 func Delete(oid primitive.ObjectID) errors.CustomError {

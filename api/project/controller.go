@@ -20,7 +20,7 @@ func NewController(
 
 	//TODO Add auth
 	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
-	projectRoute.Put("/:projectId", controller.EditProject)
+	projectRoute.Put("/:projectId", EditProjectValidator, controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
 }
@@ -103,25 +103,22 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 }
 
 func (contc *Controller) EditProject(c *fiber.Ctx) error {
-	upr := new(UpdateProjectRequest)
-
-	if err := c.BodyParser(upr); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
-
-	}
-
 	projectId := c.Params("projectId")
-	objectId, err := functions.IsValidObjectId(projectId)
+	projectIdObjectId, err := functions.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	upr, err = HandleUpdateImages(c, upr, objectId)
+	updateProjectBody := c.Locals("updateProjectBody").(*UpdateProject)
+	cid := c.Locals("cid").(primitive.ObjectID)
+	sids := c.Locals("sids").([]primitive.ObjectID)
+
+	updateProjectBody, err = HandleUpdateImages(c, updateProjectBody, projectIdObjectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(objectId, upr)
+	result, err := Edit(projectIdObjectId, updateProjectBody, cid, sids)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

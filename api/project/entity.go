@@ -17,7 +17,7 @@ type Project struct {
 	Emails      []string                       `bson:"emails" json:"emails"`
 	Inspiration string                         `bson:"inspiration" json:"inspiration"`
 	Abstract    string                         `bson:"abstract" json:"abstract"`
-	Images      []string                       `bson:"images" json:"images"`
+	Images      []string                       `bson:"images,omitempty" json:"images"`
 	Videos      []string                       `bson:"videos" json:"videos"`
 	Keywords    []string                       `bson:"keywords" json:"keywords"`
 	Category    category.CategoryClean         `bson:"category" json:"category"`
@@ -25,6 +25,14 @@ type Project struct {
 	Views       int                            `bson:"views" json:"views"`
 	CreatedAt   time.Time                      `bson:"createdAt" json:"createdAt"`
 	UpdatedAt   time.Time                      `bson:"updatedAt" json:"updatedAt"`
+}
+
+//WARNING: find a better way to handle this
+type ProjectForDecode struct {
+	Category    primitive.ObjectID   `bson:"category" json:"category"`
+	Subcategory []primitive.ObjectID `bson:"subcategory" json:"subcategory"`
+	Images      []string             `bson:"images,omitempty" json:"images"`
+	CreatedAt   time.Time            `bson:"createdAt" json:"createdAt"`
 }
 
 type ProjectRequest struct {
@@ -39,6 +47,11 @@ type ProjectRequest struct {
 	Keywords    []string               `form:"keywords" validate:"required"`
 	Category    string                 `form:"category" validate:"required"`
 	Subcategory []string               `form:"subcategory" validate:"required"`
+}
+
+type UpdateProject struct {
+	Project
+	DeleteImages []string `form:"deleteImages"`
 }
 
 type UpdateProjectRequest struct {
