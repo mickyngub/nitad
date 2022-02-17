@@ -72,20 +72,22 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 // edit the category
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
-	// cr := new(CategoryRequest)
-	// c.BodyParser(cr)
+	categoryId := c.Params("categoryId")
+	categoryObjectId, err := functions.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
 
-	// categoryId := c.Params("categoryId")
-	// objectId, err := functions.IsValidObjectId(categoryId)
-	// if err != nil {
-	// 	return errors.Throw(c, err)
-	// }
+	categoryBody := c.Locals("categoryBody").(*Category)
+	sids := c.Locals("sids").([]primitive.ObjectID)
+
+	result, err := Edit(categoryObjectId, categoryBody, sids)
 
 	// result, err := Edit(objectId, cr)
-	// if err != nil {
-	// 	return errors.Throw(c, err)
-	// }
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "result"})
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 
 }
 

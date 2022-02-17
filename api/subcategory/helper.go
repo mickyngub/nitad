@@ -9,21 +9,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetSubcategoryIds(subcategories []Subcategory) []primitive.ObjectID {
-	sids := make([]primitive.ObjectID, len(subcategories))
-	for _, sc := range subcategories {
-		sids = append(sids, sc.ID)
-	}
-
-	sids = functions.RemoveDuplicateObjectIds(sids)
-	return sids
-}
-
-// validate requested string of subcategoryIds
-// and return valid []objectId, otherwise error
+// receive array of subcategoryIds, then
+// find and return non-duplicated subcategories, and their ids
 func FindByIds(sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
 	var objectIds []primitive.ObjectID
 	var subcategories []Subcategory
+
+	sids = functions.RemoveDuplicateIds(sids)
 
 	for _, sid := range sids {
 		oid, err := functions.IsValidObjectId(sid)
