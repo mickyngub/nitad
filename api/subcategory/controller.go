@@ -21,7 +21,7 @@ func NewController(
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
 	//TODO add AUTH for POST/PUT/DELETE
-	subcategoryRoute.Post("/", controller.AddSubcategory)
+	subcategoryRoute.Post("/", AddSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
 }
@@ -59,12 +59,6 @@ func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 
 // add a subcategory
 func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
-	p := new(Subcategory)
-
-	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
-	}
-
 	files, err := functions.ExtractFiles(c, "image")
 	if err != nil {
 		return errors.Throw(c, err)
@@ -74,9 +68,14 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	p.Image = imageURLs[0]
 
-	result, err := Add(p)
+	sr := new(SubcategoryRequest)
+	c.BodyParser(sr)
+	var subcategory Subcategory
+	subcategory.Title = sr.Title
+	subcategory.Image = imageURLs[0]
+
+	result, err := Add(&subcategory)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
