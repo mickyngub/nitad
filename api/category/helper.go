@@ -1,44 +1,47 @@
 package category
 
 import (
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//TODO: reuse these 2 funcs with subcategory's validating func
-// validate requested string of categoryIds
-// and return valid []objectId, otherwise error
-func ValidateIds(cids []string) ([]primitive.ObjectID, errors.CustomError) {
-	objectIds := make([]primitive.ObjectID, len(cids))
+// receive array of categoryIds, then
+// find and return non-duplicated categories, and their ids
+func FindById(cid string) (CategoryProject, errors.CustomError) {
+	var categoryProject CategoryProject
 
-	for i, cid := range cids {
-		objectId, err := ValidateId(cid)
-		if err != nil {
-			return objectIds, err
-		}
-
-		objectIds[i] = objectId
+	oid, err := functions.IsValidObjectId(cid)
+	if err != nil {
+		return categoryProject, err
 	}
 
-	return objectIds, nil
+	bson, err := database.FindById(oid, collectionName)
+	category := BsonToCategory(bson)
+	if err != nil {
+		return categoryProject, err
+	}
+	categoryProject.ID = category.ID
+	categoryProject.Title = category.Title
+
+	return categoryProject, nil
 }
 
 // validate requested string of a single categoryId
 // and return valid objectId, otherwise error
-func ValidateId(cid string) (primitive.ObjectID, errors.CustomError) {
+func ValidateId(cid string) (Category, errors.CustomError) {
+	var c Category
 	objectId, err := functions.IsValidObjectId(cid)
 	if err != nil {
-		return objectId, err
+		return c, err
 	}
 
-	// if err != nil ==> id is not found
-	if _, err = FindById(objectId); err != nil {
-		return objectId, err
+	if c, err = GetById(objectId); err != nil {
+		return c, err
 	}
 
-	return objectId, nil
+	return c, nil
 }
 
 // convert bson to category

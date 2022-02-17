@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindById(oid primitive.ObjectID) (Category, errors.CustomError) {
+func GetById(oid primitive.ObjectID) (Category, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
 	pipe := mongo.Pipeline{}

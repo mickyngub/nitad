@@ -1,41 +1,44 @@
 package project
 
 import (
+	"mime/multipart"
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/category"
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Project struct {
-	ID          primitive.ObjectID   `bson:"_id,omitempty`
-	Title       string               `bson:"title,omitempty`
-	Description string               `bson:"description,omitempty`
-	Authors     []string             `bson:"authors,omitempty`
-	Emails      []string             `bson:"emails,omitempty`
-	Inspiration string               `bson:"inspiration,omitempty`
-	Abstract    string               `bson:"abstract,omitempty`
-	Images      []string             `bson:"images,omitempty`
-	Videos      []string             `bson:"videos,omitempty`
-	Keywords    []string             `bson:"keywords,omitempty`
-	Category    []primitive.ObjectID `bson:"category,omitempty" json:"category,omitempty"`
-	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
-	Views       int                  `bson:"views,omitempty" json:"views,omitempty"`
-	CreatedAt   time.Time            `bson:"created_at" json:"created_at"`
-	UpdatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
+	ID          primitive.ObjectID        `bson:"_id" json:"id"`
+	Title       string                    `bson:"title" json:"title"`
+	Description string                    `bson:"description" json:"description"`
+	Authors     []string                  `bson:"authors" json:"authors"`
+	Emails      []string                  `bson:"emails" json:"emails"`
+	Inspiration string                    `bson:"inspiration" json:"inspiration"`
+	Abstract    string                    `bson:"abstract" json:"abstract"`
+	Images      []string                  `bson:"images" json:"images"`
+	Videos      []string                  `bson:"videos" json:"videos"`
+	Keywords    []string                  `bson:"keywords" json:"keywords"`
+	Category    category.CategoryProject  `bson:"category" json:"category"`
+	Subcategory []subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
+	Views       int                       `bson:"views" json:"views"`
+	CreatedAt   time.Time                 `bson:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time                 `bson:"updatedAt" json:"updatedAt"`
 }
 
 type ProjectRequest struct {
-	Title       string   `form:"title" validate:"required"`
-	Description string   `form:"description" validate:"required"`
-	Authors     []string `form:"authors" validate:"required"`
-	Emails      []string `form:"emails" validate:"required"`
-	Inspiration string   `form:"inspiration" validate:"required"`
-	Abstract    string   `form:"abstract" validate:"required"`
-	Images      []string `form:"images" validate:"required"`
-	Videos      []string `form:"videos" validate:"required"`
-	Keywords    []string `form:"keywords" validate:"required"`
-	Category    []string `form:"category" validate:"required"`
-	Subcategory []string `form:"subcategory" validate:"required"`
+	Title       string                 `form:"title" validate:"required"`
+	Description string                 `form:"description" validate:"required"`
+	Authors     []string               `form:"authors" validate:"required"`
+	Emails      []string               `form:"emails" validate:"required"`
+	Inspiration string                 `form:"inspiration" validate:"required"`
+	Abstract    string                 `form:"abstract" validate:"required"`
+	Images      []multipart.FileHeader `form:"-"`
+	Videos      []string               `form:"videos" validate:"required"`
+	Keywords    []string               `form:"keywords" validate:"required"`
+	Category    string                 `form:"category" validate:"required"`
+	Subcategory []string               `form:"subcategory" validate:"required"`
 }
 
 type UpdateProjectRequest struct {

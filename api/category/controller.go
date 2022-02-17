@@ -48,7 +48,7 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 	}
 
 	var result Category
-	if result, err = FindById(objectId); err != nil {
+	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 
