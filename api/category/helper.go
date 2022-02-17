@@ -7,19 +7,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// use for checking ids from ProjectRequest
 // receive array of categoryIds, then
 // find and return non-duplicated categories, and their ids
-// func FindById(cid string) (Category, errors.CustomError) {
+// return CategoryClean struct
 func FindById(cid string) (CategoryClean, errors.CustomError) {
 	var CategoryClean CategoryClean
-	// var category Category
 
 	oid, err := functions.IsValidObjectId(cid)
 	if err != nil {
 		return CategoryClean, err
 	}
 
-	bson, err := database.FindById(oid, collectionName)
+	bson, err := database.GetElementById(oid, collectionName)
 	category := BsonToCategory(bson)
 	if err != nil {
 		return CategoryClean, err
@@ -28,7 +28,6 @@ func FindById(cid string) (CategoryClean, errors.CustomError) {
 	CategoryClean.Title = category.Title
 
 	return CategoryClean, nil
-	// return category, nil
 }
 
 // validate requested string of a single categoryId

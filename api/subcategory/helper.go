@@ -23,7 +23,7 @@ func FindByIds(sids []string) ([]SubcategoryClean, []primitive.ObjectID, errors.
 			return subcategories, objectIds, err
 		}
 
-		s, err := FindById(oid)
+		s, err := GetById(oid)
 		if err != nil {
 			return subcategories, objectIds, err
 		}
@@ -47,7 +47,7 @@ func ValidateId(sid string) (Subcategory, errors.CustomError) {
 		return s, err
 	}
 
-	if s, err = FindById(objectId); err != nil {
+	if s, err = GetById(objectId); err != nil {
 		return s, err
 	}
 
@@ -55,7 +55,7 @@ func ValidateId(sid string) (Subcategory, errors.CustomError) {
 }
 
 func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	oldSubcategory, err := FindById(oid)
+	oldSubcategory, err := GetById(oid)
 	if err != nil {
 		return s, err
 	}
@@ -89,7 +89,7 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*S
 }
 
 func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {
-	oldSubcategory, err := FindById(oid)
+	oldSubcategory, err := GetById(oid)
 	if err != nil {
 		return err
 	}

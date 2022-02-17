@@ -9,10 +9,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func FindById(oid primitive.ObjectID) (Subcategory, errors.CustomError) {
-	m, err := database.FindById(oid, collectionName)
+// get the SUBCATEGORY from requested id
+// ** different from FindById
+func GetById(oid primitive.ObjectID) (Subcategory, errors.CustomError) {
+	m, err := database.GetElementById(oid, collectionName)
 	return BsonToSubcategory(m), err
-
 }
 
 func FindAll() ([]Subcategory, errors.CustomError) {

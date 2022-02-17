@@ -85,9 +85,8 @@ func IncrementView(id primitive.ObjectID) {
 		},
 	)
 
-	// NOTE: logging ??
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("=====Incrementing view error: ", err.Error())
 	}
 }
 
@@ -105,7 +104,7 @@ func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
 }
 
 func HandleUpdateImages(c *fiber.Ctx, upr *UpdateProjectRequest, oid primitive.ObjectID) (*UpdateProjectRequest, errors.CustomError) {
-	oldProject, err := database.FindById(oid, collectionName)
+	oldProject, err := database.GetElementById(oid, collectionName)
 	if err != nil {
 		return upr, err
 	}
