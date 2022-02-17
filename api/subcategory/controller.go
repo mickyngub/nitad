@@ -1,14 +1,11 @@
 package subcategory
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func NewController(
@@ -49,7 +46,7 @@ func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	var result bson.M
+	var result Subcategory
 	if result, err = FindById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
@@ -115,11 +112,13 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 	}
 
 	err = HandleDeleteImage(objectId)
-	log.Println("Delete image gcp error:", err.Error())
+	if err != nil {
+		return errors.Throw(c, err)
+	}
 
 	err = Delete(objectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete subcategory successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete subcategory " + subcategoryId + " successfully!"})
 }

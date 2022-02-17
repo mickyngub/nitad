@@ -43,12 +43,10 @@ func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
 }
 
 func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	oldSubcategoryM, err := FindById(oid)
+	oldSubcategory, err := FindById(oid)
 	if err != nil {
 		return s, err
 	}
-
-	oldSubcategory := BsonToSubcategory(oldSubcategoryM)
 
 	files, err := functions.ExtractUpdatedFiles(c, "image")
 
@@ -74,6 +72,7 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*S
 		s.Image = imageURLs[0]
 	}
 
+	s.CreatedAt = oldSubcategory.CreatedAt
 	return s, nil
 }
 
@@ -83,17 +82,15 @@ func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {
 		return err
 	}
 
-	s := BsonToSubcategory(oldSubcategory)
-
-	err = gcp.DeleteImages([]string{s.Image}, collectionName)
+	err = gcp.DeleteImages([]string{oldSubcategory.Image}, collectionName)
 	if err != nil {
-		return err
+		return errors.NewInternalServerError("gcp, " + err.Error())
 	}
 	return nil
 }
 
 func BsonToSubcategory(b bson.M) Subcategory {
-	// convert bson to subcategory
+	// convert bson to Subcategory struct
 	var s Subcategory
 	bsonBytes, _ := bson.Marshal(b)
 	bson.Unmarshal(bsonBytes, &s)

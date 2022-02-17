@@ -8,11 +8,11 @@ import (
 )
 
 type Subcategory struct {
-	ID        primitive.ObjectID `bson:"_id",omitempty`
-	Title     string             `bson:"title" validate:"required"`
-	Image     string             `bson:"image"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+	ID        primitive.ObjectID `bson:"_id" json:"id"`
+	Title     string             `bson:"title" json:"title" validate:"required"`
+	Image     string             `bson:"image" json:"image"`
+	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 type SubcategoryRequest struct {
