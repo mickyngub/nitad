@@ -7,6 +7,7 @@ import (
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func NewController(
@@ -19,7 +20,7 @@ func NewController(
 	projectRoute.Get("/:projectId", controller.GetProject)
 
 	//TODO Add auth
-	projectRoute.Post("/", controller.AddProject)
+	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
 	projectRoute.Put("/:projectId", controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
@@ -76,11 +77,9 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
-	p := new(ProjectRequest)
-	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
-
-	}
+	projectBody := c.Locals("projectBody").(*Project)
+	cid := c.Locals("cid").(primitive.ObjectID)
+	sids := c.Locals("sids").([]primitive.ObjectID)
 
 	files, err := functions.ExtractFiles(c, "images")
 	if err != nil {
@@ -91,10 +90,12 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	p.Images = imageURLs
+	projectBody.Images = imageURLs
 
-	result, err := Add(p)
+	result, err := Add(projectBody, cid, sids)
 	if err != nil {
+		// if there is any error, remove the uploaded file from gcp
+		defer gcp.DeleteImages(imageURLs, collectionName)
 		return errors.Throw(c, err)
 	}
 
