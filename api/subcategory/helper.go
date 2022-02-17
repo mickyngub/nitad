@@ -84,7 +84,7 @@ func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {
 
 	err = gcp.DeleteImages([]string{oldSubcategory.Image}, collectionName)
 	if err != nil {
-		return errors.NewInternalServerError("gcp, " + err.Error())
+		return err
 	}
 	return nil
 }
