@@ -10,155 +10,124 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
+func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	lookupStage := GetLookupStage()
-	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "_id", Value: oid}}}}
+	pipe := GetLookupStage()
+	pipe = database.AppendMatchStage(pipe, "_id", oid)
 
-	stages := append(lookupStage, matchStage)
-
-	cursor, err := projectCollection.Aggregate(ctx, stages)
-	var result []bson.M
+	cursor, err := projectCollection.Aggregate(ctx, pipe)
+	result := []Project{}
 	if err != nil {
-		return bson.M{}, errors.NewBadRequestError(err.Error())
+		return Project{}, errors.NewBadRequestError(err.Error())
 	}
 	if err = cursor.All(ctx, &result); err != nil {
-		return bson.M{}, errors.NewBadRequestError(err.Error())
+		return Project{}, errors.NewBadRequestError(err.Error())
 	}
 
 	if len(result) == 0 {
-		return bson.M{}, errors.NewNotFoundError("projectId")
-
+		return Project{}, errors.NewNotFoundError("projectId")
 	}
 
 	return result[0], nil
 }
 
-func FindAll(pq *ProjectQuery) ([]bson.M, errors.CustomError) {
+func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	validSubcategoryIds, err := subcategory.ValidateIds(pq.SubcategoryId)
+	result := []Project{}
+
+	_, sids, err := subcategory.FindByIds(pq.SubcategoryId)
 	if err != nil {
-		return []bson.M{}, err
+		return result, err
 	}
 
 	stages := GetLookupStage()
 	stages = AppendSortStage(stages, pq)
 
-	for _, oid := range validSubcategoryIds {
-		stages = database.AppendMatchIdStage(stages, "subcategory._id", oid)
+	for _, sid := range sids {
+		stages = database.AppendMatchStage(stages, "subcategory._id", sid)
 	}
 
 	cursor, aggregateErr := projectCollection.Aggregate(ctx, stages)
-	var result []bson.M
 	if aggregateErr != nil {
-		return []bson.M{}, errors.NewBadRequestError(aggregateErr.Error())
+		return result, errors.NewBadRequestError(aggregateErr.Error())
 	}
 
-	if curErr := cursor.All(ctx, &result); err != nil {
-		return []bson.M{}, errors.NewBadRequestError(curErr.Error())
-	}
-
-	if len(result) == 0 {
-		return []bson.M{}, nil
+	if curErr := cursor.All(ctx, &result); curErr != nil {
+		return result, errors.NewBadRequestError(curErr.Error())
 	}
 
 	return result, nil
 }
 
-func Add(c *ProjectRequest) (map[string]interface{}, errors.CustomError) {
-	var result map[string]interface{}
-
-	subcategoryIds, categoryIds, err := ValidateAndRemoveDuplicateIds(c.Subcategory, c.Category)
-	if err != nil {
-		return result, err
-	}
-
+func Add(p *Project, cid primitive.ObjectID, sids []primitive.ObjectID) (*Project, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
+	now := time.Now()
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
-		{Key: "title", Value: c.Title},
-		{Key: "description", Value: c.Description},
-		{Key: "authors", Value: c.Authors},
-		{Key: "emails", Value: c.Emails},
-		{Key: "inspiration", Value: c.Inspiration},
-		{Key: "abstract", Value: c.Abstract},
-		{Key: "images", Value: c.Images},
-		{Key: "videos", Value: c.Videos},
-		{Key: "keywords", Value: c.Keywords},
-		{Key: "category", Value: categoryIds},
-		{Key: "subcategory", Value: subcategoryIds},
+		{Key: "title", Value: p.Title},
+		{Key: "description", Value: p.Description},
+		{Key: "authors", Value: p.Authors},
+		{Key: "emails", Value: p.Emails},
+		{Key: "inspiration", Value: p.Inspiration},
+		{Key: "abstract", Value: p.Abstract},
+		{Key: "images", Value: p.Images},
+		{Key: "videos", Value: p.Videos},
+		{Key: "keywords", Value: p.Keywords},
+		{Key: "category", Value: cid},
+		{Key: "subcategory", Value: sids},
 		{Key: "views", Value: 0},
-		{Key: "createdAt", Value: time.Now()},
-		{Key: "updatedAt", Value: time.Now()},
+		{Key: "createdAt", Value: now},
+		{Key: "updatedAt", Value: now},
 	})
 
 	if insertErr != nil {
-		return result, errors.NewBadRequestError(insertErr.Error())
+		return p, errors.NewBadRequestError(insertErr.Error())
 	}
 
-	result = map[string]interface{}{
-		"id":          insertRes.InsertedID,
-		"title":       c.Title,
-		"description": c.Description,
-		"authors":     c.Authors,
-		"emails":      c.Emails,
-		"inspiration": c.Inspiration,
-		"abstract":    c.Abstract,
-		"images":      c.Images,
-		"videos":      c.Videos,
-		"keywords":    c.Keywords,
-		"category":    categoryIds,
-		"subcategory": subcategoryIds,
-		"views":       0,
-	}
+	p.ID = insertRes.InsertedID.(primitive.ObjectID)
+	p.CreatedAt = now
+	p.UpdatedAt = now
+	p.Views = 0
 
-	return result, nil
+	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, upr *UpdateProjectRequest) (map[string]interface{}, errors.CustomError) {
-	var result map[string]interface{}
-
-	subcategoryIds, categoryIds, err := ValidateAndRemoveDuplicateIds(upr.Subcategory, upr.Category)
-	if err != nil {
-		return result, err
-	}
+func Edit(oid primitive.ObjectID, p *UpdateProject, cid primitive.ObjectID, sids []primitive.ObjectID) (*UpdateProject, errors.CustomError) {
 
 	collection, ctx := database.GetCollection(collectionName)
 
+	now := time.Now()
 	_, updateErr := collection.UpdateByID(
 		ctx,
 		oid,
 		bson.D{{
 			Key: "$set", Value: bson.D{
-				{Key: "title", Value: upr.Title},
-				{Key: "description", Value: upr.Description},
-				{Key: "authors", Value: upr.Authors},
-				{Key: "emails", Value: upr.Emails},
-				{Key: "inspiration", Value: upr.Inspiration},
-				{Key: "abstract", Value: upr.Abstract},
-				{Key: "images", Value: upr.Images},
-				{Key: "videos", Value: upr.Videos},
-				{Key: "keywords", Value: upr.Keywords},
-				{Key: "category", Value: categoryIds},
-				{Key: "subcategory", Value: subcategoryIds},
-				{Key: "updatedAt", Value: time.Now()},
+				{Key: "title", Value: p.Title},
+				{Key: "description", Value: p.Description},
+				{Key: "authors", Value: p.Authors},
+				{Key: "emails", Value: p.Emails},
+				{Key: "inspiration", Value: p.Inspiration},
+				{Key: "abstract", Value: p.Abstract},
+				{Key: "images", Value: p.Images},
+				{Key: "videos", Value: p.Videos},
+				{Key: "keywords", Value: p.Keywords},
+				{Key: "category", Value: cid},
+				{Key: "subcategory", Value: sids},
+				{Key: "updatedAt", Value: now},
 			},
 		},
 		})
 
 	if updateErr != nil {
-		return result, errors.NewBadRequestError("edit project error: " + updateErr.Error())
+		return p, errors.NewBadRequestError("edit project error: " + updateErr.Error())
 	}
 
-	result = map[string]interface{}{
-		"id":     oid,
-		"title":  upr.Title,
-		"images": upr.Images,
-	}
+	p.ID = oid
+	p.UpdatedAt = now
 
-	return result, nil
+	return p, nil
 }
 
 func Delete(oid primitive.ObjectID) errors.CustomError {

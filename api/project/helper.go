@@ -3,8 +3,6 @@ package project
 import (
 	"log"
 
-	"github.com/birdglove2/nitad-backend/api/category"
-	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -18,8 +16,10 @@ import (
 func GetLookupStage() mongo.Pipeline {
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendLookupStage(pipe, "category")
+	pipe = database.AppendUnwindStage(pipe, "category")
+
 	pipe = database.AppendLookupStage(pipe, "subcategory")
-	pipe = database.AppendUnsetStage(pipe, "category.subcategory")
+
 	return pipe
 }
 
@@ -85,101 +85,89 @@ func IncrementView(id primitive.ObjectID) {
 		},
 	)
 
-	// NOTE: logging ??
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("=====Incrementing view error: ", err.Error())
 	}
-}
-
-func ValidateAndRemoveDuplicateIds(sids []string, cids []string) ([]primitive.ObjectID, []primitive.ObjectID, errors.CustomError) {
-	var subcategoryIds []primitive.ObjectID
-	var categoryIds []primitive.ObjectID
-
-	soids, err := subcategory.ValidateIds(sids)
-	if err != nil {
-		return subcategoryIds, categoryIds, err
-	}
-
-	coids, err := category.ValidateIds(cids)
-	if err != nil {
-		return subcategoryIds, categoryIds, err
-	}
-
-	subcategoryIds = functions.RemoveDuplicateObjectIds(soids)
-	categoryIds = functions.RemoveDuplicateObjectIds(coids)
-
-	return subcategoryIds, categoryIds, nil
 }
 
 func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
-	project, err := FindById(oid)
+	project, err := GetById(oid)
 	if err != nil {
 		return err
 	}
-	p := BsonToProject(project)
 
-	err = gcp.DeleteImages(p.Images, collectionName)
+	err = gcp.DeleteImages(project.Images, collectionName)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func HandleUpdateImages(c *fiber.Ctx, upr *UpdateProjectRequest, oid primitive.ObjectID) (*UpdateProjectRequest, errors.CustomError) {
-	oldProject, err := database.FindById(oid, collectionName)
+func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID) (*UpdateProject, errors.CustomError) {
+	oldProject, err := FindById(oid)
 	if err != nil {
-		return upr, err
+		return up, err
 	}
-	pr := BsonToProject(oldProject)
 
-	if len(upr.DeleteImages) > 0 {
-		pr.Images = RemoveSliceFromSlice(pr.Images, upr.DeleteImages)
-		defer gcp.DeleteImages(upr.DeleteImages, collectionName)
+	up.Images = oldProject.Images
+
+	if len(up.DeleteImages) > 0 {
+		// remove deleteImages from Images attrs
+		oldProject.Images = RemoveSliceFromSlice(oldProject.Images, up.DeleteImages)
+		err = gcp.DeleteImages(up.DeleteImages, collectionName)
+		if err != nil {
+			return up, err
+		}
 	}
 
 	files, err := functions.ExtractUpdatedFiles(c, "images")
 	if err != nil {
-		return upr, err
+		return up, err
 	}
 
-	if files == nil {
-		// no file passed, use old image url
-		upr.Images = pr.Images
-		// log.Println("file == nil", upr.Images, pr.Images)
-		return upr, nil
-	} else {
-		// if file pass
-		// log.Println("file passed", upr.Images, pr.Images)
-		// upload file
+	if len(files) > 0 {
+		// if file pass, upload file
 		imageURLs, err := gcp.UploadImages(files, collectionName)
-
-		// log.Println("imageUrls", imageURLs)
 
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
 			defer gcp.DeleteImages(imageURLs, collectionName)
-			// log.Println("file bugs", upr.Images, pr.Images)
-			return upr, err
+			return up, err
 		}
 
 		// concat uploaded file to the existing ones
-		imageURLs = append(pr.Images, imageURLs...)
-		// log.Println("check ", imageURLs, pr.Images)
-
-		// if upload success, pass the url to the subcategory struct
-		upr.Images = imageURLs
-		// log.Println("file latest", upr.Images)
+		up.Images = append(up.Images, imageURLs...)
 	}
 
-	return upr, nil
+	up.CreatedAt = oldProject.CreatedAt
+	return up, nil
 }
 
-func BsonToProject(b bson.M) ProjectRequest {
-	// convert bson to subcategory
-	var pr ProjectRequest
-	bsonBytes, _ := bson.Marshal(b)
-	bson.Unmarshal(bsonBytes, &pr)
-	return pr
+func FindById(oid primitive.ObjectID) (ProjectForDecode, errors.CustomError) {
+	b, err := database.GetElementById(oid, collectionName)
+	if err != nil {
+		return ProjectForDecode{}, err
+	}
+	// log.Println(b)
+
+	return BsonToProjectForDecode(b), nil
+}
+
+func BsonToProjectForDecode(b interface{}) ProjectForDecode {
+	// convert bson to project
+	var p ProjectForDecode
+	bsonBytes, err := bson.Marshal(b)
+	if err != nil {
+		log.Println("ERROR", err.Error())
+	}
+	err = bson.Unmarshal(bsonBytes, &p)
+	if err != nil {
+		log.Println("ERROR 2", err.Error())
+	}
+	//NOTE: these errors make p.Images cannot found sometime
+	// resulting in false image management
+	// log.Println(p.Images)
+	return p
 }
 
 // this function remove the slice remove from the slice base

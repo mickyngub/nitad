@@ -27,7 +27,6 @@ func Init() {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
 	}
 
-	log.Println("testing gcp credentials: ", os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	client, err := storage.NewClient(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to create gcp client: %v", err)
@@ -72,8 +71,6 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}
-
-		// urls = append(urls, fmt.Sprintf("https://storage.cloud.google.com/nitad/%s/%s", collectionName, filename))
 		urls = append(urls, filename)
 	}
 
@@ -82,14 +79,12 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 
 func DeleteImages(imageURLS []string, collectionName string) errors.CustomError {
 	for _, url := range imageURLS {
-		// urlSlice := strings.Split(url, "/")
-		// filepath := fmt.Sprintf("%s/%s", collectionName, urlSlice[len(urlSlice)-1])
-		filepath := fmt.Sprintf("%s/%s/%s/%s", uploader.apiPrefix, uploader.bucketName, collectionName, url)
+		filepath := collectionName + "/" + url
 
 		//TODO: channel this
 		err := DeleteFile(filepath)
 		if err != nil {
-			return errors.NewBadRequestError(err.Error())
+			return err
 		}
 	}
 	return nil
@@ -102,7 +97,7 @@ func DeleteFile(object string) errors.CustomError {
 
 	o := uploader.cl.Bucket(uploader.bucketName).Object(object)
 	if err := o.Delete(ctx); err != nil {
-		return errors.NewBadRequestError(err.Error())
+		return errors.NewInternalServerError("gcp deletion error, " + err.Error())
 	}
 
 	return nil

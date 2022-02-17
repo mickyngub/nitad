@@ -9,15 +9,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
-	return database.FindById(oid, collectionName)
-
+// get the SUBCATEGORY from requested id
+// ** different from FindById
+func GetById(oid primitive.ObjectID) (Subcategory, errors.CustomError) {
+	m, err := database.GetElementById(oid, collectionName)
+	return BsonToSubcategory(m), err
 }
 
-func FindAll() ([]bson.M, errors.CustomError) {
+func FindAll() ([]Subcategory, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
-	var result []bson.M
+	var result []Subcategory
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
 		return result, errors.NewBadRequestError(err.Error())
@@ -30,44 +32,42 @@ func FindAll() ([]bson.M, errors.CustomError) {
 	return result, nil
 }
 
-func Add(s *Subcategory) (map[string]interface{}, errors.CustomError) {
+func Add(s *Subcategory) (*Subcategory, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
-	var result map[string]interface{}
-
+	now := time.Now()
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: s.Title},
 		{Key: "image", Value: s.Image},
-		{Key: "createdAt", Value: time.Now()},
-		{Key: "updatedAt", Value: time.Now()},
+		{Key: "createdAt", Value: now},
+		{Key: "updatedAt", Value: now},
 	})
 
 	if insertErr != nil {
-		return result, errors.NewBadRequestError(insertErr.Error())
+		return s, errors.NewBadRequestError(insertErr.Error())
 	}
 
-	result = map[string]interface{}{
-		"id":    insertRes.InsertedID,
-		"title": s.Title,
-		"image": s.Image,
-	}
+	s.ID = insertRes.InsertedID.(primitive.ObjectID)
+	s.CreatedAt = now
+	s.UpdatedAt = now
 
-	return result, nil
+	return s, nil
 }
 
-func Edit(oid primitive.ObjectID, s *Subcategory) (map[string]interface{}, errors.CustomError) {
+func Edit(oid primitive.ObjectID, ns *Subcategory) (*Subcategory, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
-	var result map[string]interface{}
+	result := new(Subcategory)
 
+	now := time.Now()
 	_, updateErr := collection.UpdateByID(
 		ctx,
 		oid,
 		bson.D{{
 			Key: "$set", Value: bson.D{
-				{Key: "title", Value: s.Title},
-				{Key: "image", Value: s.Image},
-				{Key: "updatedAt", Value: time.Now()},
+				{Key: "title", Value: ns.Title},
+				{Key: "image", Value: ns.Image},
+				{Key: "updatedAt", Value: now},
 			},
 		},
 		})
@@ -76,11 +76,11 @@ func Edit(oid primitive.ObjectID, s *Subcategory) (map[string]interface{}, error
 		return result, errors.NewBadRequestError(updateErr.Error())
 	}
 
-	result = map[string]interface{}{
-		"id":    oid,
-		"title": s.Title,
-		"image": s.Image,
-	}
+	result.ID = oid
+	result.Title = ns.Title
+	result.Image = ns.Image
+	result.CreatedAt = ns.CreatedAt
+	result.UpdatedAt = now
 
 	return result, nil
 }

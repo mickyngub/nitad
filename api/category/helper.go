@@ -1,49 +1,54 @@
 package category
 
 import (
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//TODO: reuse these 2 funcs with subcategory's validating func
-// validate requested string of categoryIds
-// and return valid []objectId, otherwise error
-func ValidateIds(cids []string) ([]primitive.ObjectID, errors.CustomError) {
-	objectIds := make([]primitive.ObjectID, len(cids))
+// use for checking ids from ProjectRequest
+// receive array of categoryIds, then
+// find and return non-duplicated categories, and their ids
+// return CategoryClean struct
+func FindById(cid string) (CategoryClean, errors.CustomError) {
+	var CategoryClean CategoryClean
 
-	for i, cid := range cids {
-		objectId, err := ValidateId(cid)
-		if err != nil {
-			return objectIds, err
-		}
-
-		objectIds[i] = objectId
+	oid, err := functions.IsValidObjectId(cid)
+	if err != nil {
+		return CategoryClean, err
 	}
 
-	return objectIds, nil
+	bson, err := database.GetElementById(oid, collectionName)
+	category := BsonToCategory(bson)
+	if err != nil {
+		return CategoryClean, err
+	}
+	CategoryClean.ID = category.ID
+	CategoryClean.Title = category.Title
+
+	return CategoryClean, nil
 }
 
 // validate requested string of a single categoryId
 // and return valid objectId, otherwise error
-func ValidateId(cid string) (primitive.ObjectID, errors.CustomError) {
+func ValidateId(cid string) (Category, errors.CustomError) {
+	var c Category
 	objectId, err := functions.IsValidObjectId(cid)
 	if err != nil {
-		return objectId, err
+		return c, err
 	}
 
-	// if err != nil >> id is not found
-	if _, err = FindById(objectId); err != nil {
-		return objectId, err
+	if c, err = GetById(objectId); err != nil {
+		return c, err
 	}
 
-	return objectId, nil
+	return c, nil
 }
 
-func BsonToCategory(b bson.M) CategoryRequest {
-	// convert bson to subcategory
-	var s CategoryRequest
+// convert bson to category
+func BsonToCategory(b bson.M) Category {
+	var s Category
 	bsonBytes, _ := bson.Marshal(b)
 	bson.Unmarshal(bsonBytes, &s)
 	return s

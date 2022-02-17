@@ -7,7 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindById(oid primitive.ObjectID, collectionName string) (bson.M, errors.CustomError) {
+// this function is a reusable function
+// for func GetById that just want to find
+// element that match with the requested id
+func GetElementById(oid primitive.ObjectID, collectionName string) (bson.M, errors.CustomError) {
 	collection, ctx := GetCollection(collectionName)
 
 	var result bson.M

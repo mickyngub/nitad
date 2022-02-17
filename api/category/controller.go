@@ -5,7 +5,7 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func NewController(
@@ -19,14 +19,12 @@ func NewController(
 
 	//TODO add AUTH for POST/PUT/DELETE
 
-	categoryRoute.Post("/", controller.AddCategory)
-	categoryRoute.Put("/:categoryId", controller.EditCategory)
+	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
+	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
 }
 
-type Controller struct {
-	// service Service
-}
+type Controller struct{}
 
 var collectionName = database.COLLECTIONS["CATEGORY"]
 
@@ -49,8 +47,8 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	var result bson.M
-	if result, err = FindById(objectId); err != nil {
+	var result Category
+	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 
@@ -59,13 +57,11 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 
 // add a category
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
-	p := new(CategoryRequest)
-	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+	categoryBody := c.Locals("categoryBody").(*Category)
+	sids := c.Locals("sids").([]primitive.ObjectID)
 
-	}
+	result, err := Add(categoryBody, sids)
 
-	result, err := Add(p)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -76,22 +72,21 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 // edit the category
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
-	p := new(CategoryRequest)
-	if err := c.BodyParser(p); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
-
-	}
-
 	categoryId := c.Params("categoryId")
-	objectId, err := functions.IsValidObjectId(categoryId)
+	categoryObjectId, err := functions.IsValidObjectId(categoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	if err = Edit(objectId, p); err != nil {
+	categoryBody := c.Locals("categoryBody").(*Category)
+	sids := c.Locals("sids").([]primitive.ObjectID)
+
+	result, err := Edit(categoryObjectId, categoryBody, sids)
+
+	if err != nil {
 		return errors.Throw(c, err)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Edit category successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 
 }
 
@@ -108,5 +103,5 @@ func (cont *Controller) DeleteCategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category " + categoryId + " successfully!"})
 }

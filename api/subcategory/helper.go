@@ -9,55 +9,65 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// validate requested string of subcategoryIds
-// and return valid []objectId, otherwise error
-func ValidateIds(sids []string) ([]primitive.ObjectID, errors.CustomError) {
-	objectIds := make([]primitive.ObjectID, len(sids))
+// receive array of subcategoryIds, then
+// find and return non-duplicated subcategories, and their ids
+func FindByIds(sids []string) ([]SubcategoryClean, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var subcategories []SubcategoryClean
 
-	for i, sid := range sids {
-		objectId, err := ValidateId(sid)
+	sids = functions.RemoveDuplicateIds(sids)
+
+	for _, sid := range sids {
+		oid, err := functions.IsValidObjectId(sid)
 		if err != nil {
-			return objectIds, err
+			return subcategories, objectIds, err
 		}
 
-		objectIds[i] = objectId
+		s, err := GetById(oid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+		objectIds = append(objectIds, oid)
+		subcategories = append(subcategories, SubcategoryClean{
+			ID:    s.ID,
+			Title: s.Title,
+			Image: s.Image,
+		})
 	}
 
-	return objectIds, nil
+	return subcategories, objectIds, nil
 }
 
 // validate requested string of a single subcategoryId
 // and return valid objectId, otherwise error
-func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
+func ValidateId(sid string) (Subcategory, errors.CustomError) {
+	var s Subcategory
 	objectId, err := functions.IsValidObjectId(sid)
 	if err != nil {
-		return objectId, err
-
-	}
-	// if err != nil >> id is not found
-	if _, err = FindById(objectId); err != nil {
-		return objectId, err
+		return s, err
 	}
 
-	return objectId, nil
+	if s, err = GetById(objectId); err != nil {
+		return s, err
+	}
+
+	return s, nil
 }
 
-func HandleUpdateImage(c *fiber.Ctx, p *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	oldSubcategory, err := FindById(oid)
+func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
+	oldSubcategory, err := GetById(oid)
 	if err != nil {
-		return p, err
+		return s, err
 	}
-
-	s := BsonToSubcategory(oldSubcategory)
 
 	files, err := functions.ExtractUpdatedFiles(c, "image")
 
 	if err != nil {
-		return p, err
+		return s, err
 	}
 	if files == nil {
 		// no file passed, use old image url
-		p.Image = s.Image
+		s.Image = oldSubcategory.Image
 	} else {
 		// delete old files
 		defer gcp.DeleteImages([]string{s.Image}, collectionName)
@@ -67,25 +77,24 @@ func HandleUpdateImage(c *fiber.Ctx, p *Subcategory, oid primitive.ObjectID) (*S
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
 			defer gcp.DeleteImages(imageURLs, collectionName)
-			return p, err
+			return s, err
 		}
 
 		// if upload success, pass the url to the subcategory struct
-		p.Image = imageURLs[0]
+		s.Image = imageURLs[0]
 	}
 
-	return p, nil
+	s.CreatedAt = oldSubcategory.CreatedAt
+	return s, nil
 }
 
 func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {
-	oldSubcategory, err := FindById(oid)
+	oldSubcategory, err := GetById(oid)
 	if err != nil {
 		return err
 	}
 
-	s := BsonToSubcategory(oldSubcategory)
-
-	err = gcp.DeleteImages([]string{s.Image}, collectionName)
+	err = gcp.DeleteImages([]string{oldSubcategory.Image}, collectionName)
 	if err != nil {
 		return err
 	}
@@ -93,7 +102,7 @@ func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {
 }
 
 func BsonToSubcategory(b bson.M) Subcategory {
-	// convert bson to subcategory
+	// convert bson to Subcategory struct
 	var s Subcategory
 	bsonBytes, _ := bson.Marshal(b)
 	bson.Unmarshal(bsonBytes, &s)
