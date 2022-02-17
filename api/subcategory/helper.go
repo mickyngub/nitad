@@ -42,22 +42,22 @@ func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
 	return objectId, nil
 }
 
-func HandleUpdateImage(c *fiber.Ctx, p *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	oldSubcategory, err := FindById(oid)
+func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
+	oldSubcategoryM, err := FindById(oid)
 	if err != nil {
-		return p, err
+		return s, err
 	}
 
-	s := BsonToSubcategory(oldSubcategory)
+	oldSubcategory := BsonToSubcategory(oldSubcategoryM)
 
 	files, err := functions.ExtractUpdatedFiles(c, "image")
 
 	if err != nil {
-		return p, err
+		return s, err
 	}
 	if files == nil {
 		// no file passed, use old image url
-		p.Image = s.Image
+		s.Image = oldSubcategory.Image
 	} else {
 		// delete old files
 		defer gcp.DeleteImages([]string{s.Image}, collectionName)
@@ -67,14 +67,14 @@ func HandleUpdateImage(c *fiber.Ctx, p *Subcategory, oid primitive.ObjectID) (*S
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
 			defer gcp.DeleteImages(imageURLs, collectionName)
-			return p, err
+			return s, err
 		}
 
 		// if upload success, pass the url to the subcategory struct
-		p.Image = imageURLs[0]
+		s.Image = imageURLs[0]
 	}
 
-	return p, nil
+	return s, nil
 }
 
 func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {

@@ -47,7 +47,7 @@ func Add(s *Subcategory) (map[string]interface{}, errors.CustomError) {
 	}
 
 	result = map[string]interface{}{
-		"id":    insertRes.InsertedID,
+		"_id":   insertRes.InsertedID,
 		"title": s.Title,
 		"image": s.Image,
 	}
@@ -77,7 +77,7 @@ func Edit(oid primitive.ObjectID, s *Subcategory) (map[string]interface{}, error
 	}
 
 	result = map[string]interface{}{
-		"id":    oid,
+		"_id":   oid,
 		"title": s.Title,
 		"image": s.Image,
 	}

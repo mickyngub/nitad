@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func AddSubcategoryValidator(c *fiber.Ctx) error {
+func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
 	p := new(SubcategoryRequest)
 
 	if err := c.BodyParser(p); err != nil {
