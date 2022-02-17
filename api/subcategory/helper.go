@@ -9,37 +9,53 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// validate requested string of subcategoryIds
-// and return valid []objectId, otherwise error
-func ValidateIds(sids []string) ([]primitive.ObjectID, errors.CustomError) {
-	objectIds := make([]primitive.ObjectID, len(sids))
-
-	for i, sid := range sids {
-		objectId, err := ValidateId(sid)
-		if err != nil {
-			return objectIds, err
-		}
-
-		objectIds[i] = objectId
+func GetSubcategoryIds(subcategories []Subcategory) []primitive.ObjectID {
+	sids := make([]primitive.ObjectID, len(subcategories))
+	for _, sc := range subcategories {
+		sids = append(sids, sc.ID)
 	}
 
-	return objectIds, nil
+	sids = functions.RemoveDuplicateObjectIds(sids)
+	return sids
+}
+
+// validate requested string of subcategoryIds
+// and return valid []objectId, otherwise error
+func FindByIds(sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var subcategories []Subcategory
+
+	for _, sid := range sids {
+		oid, err := functions.IsValidObjectId(sid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+
+		s, err := FindById(oid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+		objectIds = append(objectIds, oid)
+		subcategories = append(subcategories, s)
+	}
+
+	return subcategories, objectIds, nil
 }
 
 // validate requested string of a single subcategoryId
 // and return valid objectId, otherwise error
-func ValidateId(sid string) (primitive.ObjectID, errors.CustomError) {
+func ValidateId(sid string) (Subcategory, errors.CustomError) {
+	var s Subcategory
 	objectId, err := functions.IsValidObjectId(sid)
 	if err != nil {
-		return objectId, err
-
-	}
-	// if err != nil >> id is not found
-	if _, err = FindById(objectId); err != nil {
-		return objectId, err
+		return s, err
 	}
 
-	return objectId, nil
+	if s, err = FindById(objectId); err != nil {
+		return s, err
+	}
+
+	return s, nil
 }
 
 func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {

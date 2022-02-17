@@ -5,6 +5,7 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func NewController(
@@ -56,10 +57,10 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 
 // add a category
 func (contc *Controller) AddCategory(c *fiber.Ctx) error {
-	cr := new(CategoryRequest)
-	c.BodyParser(cr)
+	categoryBody := c.Locals("categoryBody").(*Category)
+	sids := c.Locals("sids").([]primitive.ObjectID)
 
-	result, err := Add(cr)
+	result, err := Add(categoryBody, sids)
 
 	if err != nil {
 		return errors.Throw(c, err)
@@ -71,20 +72,20 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 
 // edit the category
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
-	cr := new(CategoryRequest)
-	c.BodyParser(cr)
+	// cr := new(CategoryRequest)
+	// c.BodyParser(cr)
 
-	categoryId := c.Params("categoryId")
-	objectId, err := functions.IsValidObjectId(categoryId)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
+	// categoryId := c.Params("categoryId")
+	// objectId, err := functions.IsValidObjectId(categoryId)
+	// if err != nil {
+	// 	return errors.Throw(c, err)
+	// }
 
-	result, err := Edit(objectId, cr)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	// result, err := Edit(objectId, cr)
+	// if err != nil {
+	// 	return errors.Throw(c, err)
+	// }
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "result"})
 
 }
 
