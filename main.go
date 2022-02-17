@@ -39,10 +39,10 @@ func main() {
 
 	PORT = ":" + PORT
 
-	log.Println("Deploying... ", os.Getenv("APP_ENV"))
-	log.Println("Listening to ", PORT)
+	log.Println("===== Running on", os.Getenv("APP_ENV"), "stage =====")
+	log.Println("===== Listening to PORT", PORT, "======")
 
-	// defer database.DisconnectDb()
+	defer database.DisconnectDb()
 	err := app.Listen(PORT)
 	if err != nil {
 		log.Printf("Listen to %s Failed", PORT)
