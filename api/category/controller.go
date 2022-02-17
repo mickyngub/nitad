@@ -5,7 +5,6 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func NewController(
@@ -47,7 +46,7 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	var result bson.M
+	var result Category
 	if result, err = FindById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}

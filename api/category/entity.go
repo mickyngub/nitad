@@ -3,15 +3,16 @@ package category
 import (
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Category struct {
-	ID          primitive.ObjectID   `bson:"_id,omitempty`
-	Title       string               `bson:"title,omitempty`
-	Subcategory []primitive.ObjectID `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
-	CreatedAt   time.Time            `bson:"created_at" json:"created_at"`
-	UpdatedAt   time.Time            `bson:"updated_at" json:"updated_at"`
+	ID          primitive.ObjectID        `bson:"_id" json:"id"`
+	Title       string                    `bson:"title" json:"title"`
+	Subcategory []subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
+	CreatedAt   time.Time                 `bson:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time                 `bson:"updatedAt" json:"updatedAt"`
 }
 
 type CategoryRequest struct {

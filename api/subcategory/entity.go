@@ -9,7 +9,7 @@ import (
 
 type Subcategory struct {
 	ID        primitive.ObjectID `bson:"_id" json:"id"`
-	Title     string             `bson:"title" json:"title" validate:"required"`
+	Title     string             `bson:"title" json:"title"`
 	Image     string             `bson:"image" json:"image"`
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`

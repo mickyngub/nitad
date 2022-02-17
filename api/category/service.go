@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
+func FindById(oid primitive.ObjectID) (Category, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
 	pipe := mongo.Pipeline{}
@@ -20,30 +20,30 @@ func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
 	pipe = database.AppendLookupStage(pipe, "subcategory")
 
 	cursor, err := categoryCollection.Aggregate(ctx, pipe)
-	var result []bson.M
+	var result []Category
 	if err != nil {
-		return bson.M{}, errors.NewBadRequestError(err.Error())
+		return Category{}, errors.NewBadRequestError(err.Error())
 	}
 	if err = cursor.All(ctx, &result); err != nil {
-		return bson.M{}, errors.NewBadRequestError(err.Error())
+		return Category{}, errors.NewBadRequestError(err.Error())
 	}
 
 	if len(result) == 0 {
-		return bson.M{}, errors.NewNotFoundError("categoryId")
+		return Category{}, errors.NewNotFoundError("categoryId")
 
 	}
 
 	return result[0], nil
 }
 
-func FindAll() ([]bson.M, errors.CustomError) {
+func FindAll() ([]Category, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendLookupStage(pipe, "subcategory")
 
 	cursor, err := categoryCollection.Aggregate(ctx, pipe)
-	var result []bson.M
+	var result []Category
 	if err != nil {
 		return result, errors.NewBadRequestError(err.Error())
 

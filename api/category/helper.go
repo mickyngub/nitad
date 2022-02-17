@@ -33,7 +33,7 @@ func ValidateId(cid string) (primitive.ObjectID, errors.CustomError) {
 		return objectId, err
 	}
 
-	// if err != nil >> id is not found
+	// if err != nil ==> id is not found
 	if _, err = FindById(objectId); err != nil {
 		return objectId, err
 	}
@@ -41,9 +41,9 @@ func ValidateId(cid string) (primitive.ObjectID, errors.CustomError) {
 	return objectId, nil
 }
 
-func BsonToCategory(b bson.M) CategoryRequest {
-	// convert bson to subcategory
-	var s CategoryRequest
+// convert bson to category
+func BsonToCategory(b bson.M) Category {
+	var s Category
 	bsonBytes, _ := bson.Marshal(b)
 	bson.Unmarshal(bsonBytes, &s)
 	return s
