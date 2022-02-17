@@ -35,8 +35,8 @@ type ProjectQuery struct {
 	// ByName        int      `query:"byName"`
 	// ByCreatedAt   int      `query:"byCreatedAt"`
 	// ByUpdatedAt   int      `query:"byUpdatedAt"`
-	Sort string `query:"sort`
-	By   int    `query:by`
+	Sort string `query:"sort"`
+	By   int    `query:"by"`
 }
 
 // list all projects
@@ -144,6 +144,6 @@ func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + projectId + " successfully!"})
 
 }
