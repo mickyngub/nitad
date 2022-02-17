@@ -10,21 +10,21 @@ import (
 )
 
 type Project struct {
-	ID          primitive.ObjectID        `bson:"_id" json:"id"`
-	Title       string                    `bson:"title" json:"title"`
-	Description string                    `bson:"description" json:"description"`
-	Authors     []string                  `bson:"authors" json:"authors"`
-	Emails      []string                  `bson:"emails" json:"emails"`
-	Inspiration string                    `bson:"inspiration" json:"inspiration"`
-	Abstract    string                    `bson:"abstract" json:"abstract"`
-	Images      []string                  `bson:"images" json:"images"`
-	Videos      []string                  `bson:"videos" json:"videos"`
-	Keywords    []string                  `bson:"keywords" json:"keywords"`
-	Category    category.CategoryProject  `bson:"category" json:"category"`
-	Subcategory []subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
-	Views       int                       `bson:"views" json:"views"`
-	CreatedAt   time.Time                 `bson:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time                 `bson:"updatedAt" json:"updatedAt"`
+	ID          primitive.ObjectID             `bson:"_id" json:"id"`
+	Title       string                         `bson:"title" json:"title"`
+	Description string                         `bson:"description" json:"description"`
+	Authors     []string                       `bson:"authors" json:"authors"`
+	Emails      []string                       `bson:"emails" json:"emails"`
+	Inspiration string                         `bson:"inspiration" json:"inspiration"`
+	Abstract    string                         `bson:"abstract" json:"abstract"`
+	Images      []string                       `bson:"images" json:"images"`
+	Videos      []string                       `bson:"videos" json:"videos"`
+	Keywords    []string                       `bson:"keywords" json:"keywords"`
+	Category    category.CategoryClean         `bson:"category" json:"category"`
+	Subcategory []subcategory.SubcategoryClean `bson:"subcategory" json:"subcategory"`
+	Views       int                            `bson:"views" json:"views"`
+	CreatedAt   time.Time                      `bson:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time                      `bson:"updatedAt" json:"updatedAt"`
 }
 
 type ProjectRequest struct {
@@ -43,5 +43,5 @@ type ProjectRequest struct {
 
 type UpdateProjectRequest struct {
 	ProjectRequest
-	DeleteImages []string `form:deleteImages`
+	DeleteImages []string `form:"deleteImages"`
 }

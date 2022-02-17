@@ -11,9 +11,9 @@ import (
 
 // receive array of subcategoryIds, then
 // find and return non-duplicated subcategories, and their ids
-func FindByIds(sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
+func FindByIds(sids []string) ([]SubcategoryClean, []primitive.ObjectID, errors.CustomError) {
 	var objectIds []primitive.ObjectID
-	var subcategories []Subcategory
+	var subcategories []SubcategoryClean
 
 	sids = functions.RemoveDuplicateIds(sids)
 
@@ -28,7 +28,11 @@ func FindByIds(sids []string) ([]Subcategory, []primitive.ObjectID, errors.Custo
 			return subcategories, objectIds, err
 		}
 		objectIds = append(objectIds, oid)
-		subcategories = append(subcategories, s)
+		subcategories = append(subcategories, SubcategoryClean{
+			ID:    s.ID,
+			Title: s.Title,
+			Image: s.Image,
+		})
 	}
 
 	return subcategories, objectIds, nil

@@ -9,23 +9,26 @@ import (
 
 // receive array of categoryIds, then
 // find and return non-duplicated categories, and their ids
-func FindById(cid string) (CategoryProject, errors.CustomError) {
-	var categoryProject CategoryProject
+// func FindById(cid string) (Category, errors.CustomError) {
+func FindById(cid string) (CategoryClean, errors.CustomError) {
+	var CategoryClean CategoryClean
+	// var category Category
 
 	oid, err := functions.IsValidObjectId(cid)
 	if err != nil {
-		return categoryProject, err
+		return CategoryClean, err
 	}
 
 	bson, err := database.FindById(oid, collectionName)
 	category := BsonToCategory(bson)
 	if err != nil {
-		return categoryProject, err
+		return CategoryClean, err
 	}
-	categoryProject.ID = category.ID
-	categoryProject.Title = category.Title
+	CategoryClean.ID = category.ID
+	CategoryClean.Title = category.Title
 
-	return categoryProject, nil
+	return CategoryClean, nil
+	// return category, nil
 }
 
 // validate requested string of a single categoryId

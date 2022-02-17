@@ -3,8 +3,6 @@ package project
 import (
 	"log"
 
-	"github.com/birdglove2/nitad-backend/api/category"
-	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -18,8 +16,10 @@ import (
 func GetLookupStage() mongo.Pipeline {
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendLookupStage(pipe, "category")
+	pipe = database.AppendUnwindStage(pipe, "category")
+
 	pipe = database.AppendLookupStage(pipe, "subcategory")
-	pipe = database.AppendUnsetStage(pipe, "category.subcategory")
+
 	return pipe
 }
 
@@ -91,26 +91,6 @@ func IncrementView(id primitive.ObjectID) {
 	}
 }
 
-func ValidateAndRemoveDuplicateIds(sids []string, cids []string) ([]primitive.ObjectID, []primitive.ObjectID, errors.CustomError) {
-	var subcategoryIds []primitive.ObjectID
-	var categoryIds []primitive.ObjectID
-
-	soids, err := subcategory.ValidateIds(sids)
-	if err != nil {
-		return subcategoryIds, categoryIds, err
-	}
-
-	coids, err := category.ValidateIds(cids)
-	if err != nil {
-		return subcategoryIds, categoryIds, err
-	}
-
-	subcategoryIds = functions.RemoveDuplicateObjectIds(soids)
-	categoryIds = functions.RemoveDuplicateObjectIds(coids)
-
-	return subcategoryIds, categoryIds, nil
-}
-
 func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
 	project, err := FindById(oid)
 	if err != nil {
@@ -144,7 +124,9 @@ func HandleUpdateImages(c *fiber.Ctx, upr *UpdateProjectRequest, oid primitive.O
 
 	if files == nil {
 		// no file passed, use old image url
-		upr.Images = pr.Images
+
+		// upr.Images = pr.Images
+
 		// log.Println("file == nil", upr.Images, pr.Images)
 		return upr, nil
 	} else {
@@ -167,19 +149,21 @@ func HandleUpdateImages(c *fiber.Ctx, upr *UpdateProjectRequest, oid primitive.O
 		// log.Println("check ", imageURLs, pr.Images)
 
 		// if upload success, pass the url to the subcategory struct
-		upr.Images = imageURLs
+
+		// upr.Images = imageURLs
+
 		// log.Println("file latest", upr.Images)
 	}
 
 	return upr, nil
 }
 
-func BsonToProject(b bson.M) ProjectRequest {
-	// convert bson to subcategory
-	var pr ProjectRequest
+func BsonToProject(b bson.M) Project {
+	// convert bson to project
+	var p Project
 	bsonBytes, _ := bson.Marshal(b)
-	bson.Unmarshal(bsonBytes, &pr)
-	return pr
+	bson.Unmarshal(bsonBytes, &p)
+	return p
 }
 
 // this function remove the slice remove from the slice base

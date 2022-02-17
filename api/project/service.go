@@ -35,33 +35,30 @@ func FindById(oid primitive.ObjectID) (bson.M, errors.CustomError) {
 	return result[0], nil
 }
 
-func FindAll(pq *ProjectQuery) ([]bson.M, errors.CustomError) {
+func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	subcategories, _, err := subcategory.FindByIds(pq.SubcategoryId)
+	result := []Project{}
+
+	_, sids, err := subcategory.FindByIds(pq.SubcategoryId)
 	if err != nil {
-		return []bson.M{}, err
+		return result, err
 	}
 
 	stages := GetLookupStage()
 	stages = AppendSortStage(stages, pq)
 
-	for _, s := range subcategories {
-		stages = database.AppendMatchIdStage(stages, "subcategory._id", s.ID)
+	for _, sid := range sids {
+		stages = database.AppendMatchIdStage(stages, "subcategory._id", sid)
 	}
 
 	cursor, aggregateErr := projectCollection.Aggregate(ctx, stages)
-	var result []bson.M
 	if aggregateErr != nil {
-		return []bson.M{}, errors.NewBadRequestError(aggregateErr.Error())
+		return result, errors.NewBadRequestError(aggregateErr.Error())
 	}
 
-	if curErr := cursor.All(ctx, &result); err != nil {
-		return []bson.M{}, errors.NewBadRequestError(curErr.Error())
-	}
-
-	if len(result) == 0 {
-		return []bson.M{}, nil
+	if curErr := cursor.All(ctx, &result); curErr != nil {
+		return result, errors.NewBadRequestError(curErr.Error())
 	}
 
 	return result, nil

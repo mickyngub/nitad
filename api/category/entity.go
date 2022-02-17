@@ -8,14 +8,14 @@ import (
 )
 
 type Category struct {
-	ID          primitive.ObjectID        `bson:"_id" json:"id"`
-	Title       string                    `bson:"title" json:"title"`
-	Subcategory []subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
-	CreatedAt   time.Time                 `bson:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time                 `bson:"updatedAt" json:"updatedAt"`
+	ID          primitive.ObjectID             `bson:"_id" json:"id"`
+	Title       string                         `bson:"title" json:"title"`
+	Subcategory []subcategory.SubcategoryClean `bson:"subcategory" json:"subcategory"`
+	CreatedAt   time.Time                      `bson:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time                      `bson:"updatedAt" json:"updatedAt"`
 }
 
-type CategoryProject struct {
+type CategoryClean struct {
 	ID    primitive.ObjectID `bson:"_id" json:"id"`
 	Title string             `bson:"title" json:"title"`
 }

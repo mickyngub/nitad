@@ -14,6 +14,12 @@ func AppendLookupStage(pipe mongo.Pipeline, collectionName string) mongo.Pipelin
 		{Key: "as", Value: collectionName}}}})
 }
 
+func AppendUnwindStage(pipe mongo.Pipeline, collectionName string) mongo.Pipeline {
+	return append(pipe, bson.D{{Key: "$unwind", Value: bson.D{
+		{Key: "path", Value: "$" + collectionName},
+		{Key: "preserveNullAndEmptyArrays", Value: true}}}})
+}
+
 func AppendUnsetStage(pipe mongo.Pipeline, field string) mongo.Pipeline {
 	return append(pipe, bson.D{{Key: "$unset", Value: field}})
 }
