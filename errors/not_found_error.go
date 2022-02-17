@@ -20,7 +20,7 @@ func (n *notFoundError) Code() int {
 }
 
 func (n *notFoundError) Error() string {
-	return fmt.Sprintf("%s not found", n.resourceName)
+	return fmt.Sprintf("404: %s not found", n.resourceName)
 }
 
 // func ThrowNotFoundError(c *fiber.Ctx, resourceName string) error {
