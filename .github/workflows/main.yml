@@ -15,7 +15,7 @@ jobs:
         run: |
           echo "Github act1: $CI"
           echo "Github act2: $GITHUB_ACTOR"
-          echo "giyhub act4: ${{ secrets.GCP_PROJECTID }}
+          echo "giyhub act4: ${{ secrets.GCP_PROJECTID }}"
 
       - name: Checkout
         uses: actions/checkout@v2
