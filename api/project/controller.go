@@ -78,9 +78,12 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
-	projectBody := c.Locals("projectBody").(*Project)
-	cids := c.Locals("cids").([]primitive.ObjectID)
-	sids := c.Locals("sids").([]primitive.ObjectID)
+	projectBody, ok1 := c.Locals("projectBody").(*Project)
+	cids, ok2 := c.Locals("cids").([]primitive.ObjectID)
+	sids, ok3 := c.Locals("sids").([]primitive.ObjectID)
+	if !ok1 || !ok2 || !ok3 {
+		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
+	}
 
 	files, err := functions.ExtractFiles(c, "images")
 	if err != nil {
@@ -111,9 +114,12 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	updateProjectBody := c.Locals("updateProjectBody").(*UpdateProject)
-	cids := c.Locals("cids").([]primitive.ObjectID)
-	sids := c.Locals("sids").([]primitive.ObjectID)
+	updateProjectBody, ok1 := c.Locals("updateProjectBody").(*UpdateProject)
+	cids, ok2 := c.Locals("cids").([]primitive.ObjectID)
+	sids, ok3 := c.Locals("sids").([]primitive.ObjectID)
+	if !ok1 || !ok2 || !ok3 {
+		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
+	}
 
 	updateProjectBody, err = HandleUpdateImages(c, updateProjectBody, projectIdObjectId)
 	if err != nil {
