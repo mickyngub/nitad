@@ -3,7 +3,7 @@ runtime: go116
 instance_class: F1
 
 env_variables:
-  APP_ENV: production
+  APP_ENV: $APP_ENV
   MONGO_URI: $MONGO_URI
   GCP_PROJECTID: $GCP_PROJECTID
   GCP_BUCKETNAME: $GCP_BUCKETNAME
