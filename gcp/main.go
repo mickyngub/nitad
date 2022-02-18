@@ -24,7 +24,7 @@ var uploader *ClientUploader
 
 func Init() {
 	if os.Getenv("APP_ENV") != "production" {
-		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
 	}
 
 	client, err := storage.NewClient(context.Background())

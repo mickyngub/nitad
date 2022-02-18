@@ -3,12 +3,11 @@ runtime: go116
 instance_class: F1
 
 env_variables:
-  APP_ENV: ${{ env.APP_ENV }}
-  MONGO_URI: ${{ env.MONGO_URI }}
-  GCP_PROJECTID: ${{ env.GCP_PROJECTID }}
-  GCP_BUCKETNAME: ${{ env.GCP_BUCKETNAME }}
-  GCP_SERVICE_ACCOUNT: ${{ env.GCP_SERVICE_ACCOUNT }}
-  GCP_API_PREFIX: ${{ env.GCP_API_PREFIX }}
+  APP_ENV: ${{ secrets.APP_ENV }}
+  MONGO_URI: ${{ secrets.MONGO_URI }}
+  GCP_PROJECTID: ${{ secrets.GCP_PROJECTID }}
+  GCP_BUCKETNAME: ${{ secrets.GCP_BUCKETNAME }}
+  GCP_API_PREFIX: ${{ secrets.GCP_API_PREFIX }}
 
 handlers:
   - url: /stylesheets
