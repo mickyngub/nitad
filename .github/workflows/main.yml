@@ -15,19 +15,13 @@ jobs:
         run: |
           echo "Github act1: $CI"
           echo "Github act2: $GITHUB_ACTOR"
-          echo "giyhub act4: $GCP_PROJECTID"
+          echo "giyhub act4: ${{ secrets.GCP_PROJECTID }}
 
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
-
-      - name: Google Cloud Authentication
-        uses: google-github-actions/auth@v0
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Google Cloud App Engine
         id: deploy
