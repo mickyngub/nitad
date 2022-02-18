@@ -27,14 +27,6 @@ type Project struct {
 	UpdatedAt   time.Time                      `bson:"updatedAt" json:"updatedAt"`
 }
 
-//WARNING: find a better way to handle this
-type ProjectForDecode struct {
-	Category    primitive.ObjectID   `bson:"category" json:"category"`
-	Subcategory []primitive.ObjectID `bson:"subcategory" json:"subcategory"`
-	Images      []string             `bson:"images,omitempty" json:"images"`
-	CreatedAt   time.Time            `bson:"createdAt" json:"createdAt"`
-}
-
 type ProjectRequest struct {
 	Title       string                 `form:"title" validate:"required"`
 	Description string                 `form:"description" validate:"required"`
