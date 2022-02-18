@@ -79,7 +79,7 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	projectBody := c.Locals("projectBody").(*Project)
-	cid := c.Locals("cid").(primitive.ObjectID)
+	cids := c.Locals("cids").([]primitive.ObjectID)
 	sids := c.Locals("sids").([]primitive.ObjectID)
 
 	files, err := functions.ExtractFiles(c, "images")
@@ -93,7 +93,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	}
 	projectBody.Images = imageURLs
 
-	result, err := Add(projectBody, cid, sids)
+	result, err := Add(projectBody, cids, sids)
 	if err != nil {
 		// if there is any error, remove the uploaded file from gcp
 		defer gcp.DeleteImages(imageURLs, collectionName)
@@ -112,7 +112,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 	}
 
 	updateProjectBody := c.Locals("updateProjectBody").(*UpdateProject)
-	cid := c.Locals("cid").(primitive.ObjectID)
+	cids := c.Locals("cids").([]primitive.ObjectID)
 	sids := c.Locals("sids").([]primitive.ObjectID)
 
 	updateProjectBody, err = HandleUpdateImages(c, updateProjectBody, projectIdObjectId)
@@ -120,7 +120,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(projectIdObjectId, updateProjectBody, cid, sids)
+	result, err := Edit(projectIdObjectId, updateProjectBody, cids, sids)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

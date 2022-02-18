@@ -5,29 +5,41 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // use for checking ids from ProjectRequest
 // receive array of categoryIds, then
 // find and return non-duplicated categories, and their ids
-// return CategoryClean struct
-func FindById(cid string) (CategoryClean, errors.CustomError) {
-	var CategoryClean CategoryClean
+// return []CategoryClean
+func FindByIds(cids []string) ([]CategoryClean, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var categories []CategoryClean
 
-	oid, err := functions.IsValidObjectId(cid)
-	if err != nil {
-		return CategoryClean, err
+	cids = functions.RemoveDuplicateIds(cids)
+
+	for _, cid := range cids {
+		oid, err := functions.IsValidObjectId(cid)
+		if err != nil {
+			return categories, objectIds, err
+		}
+
+		bson, err := database.GetElementById(oid, collectionName)
+		category := BsonToCategory(bson)
+		if err != nil {
+			return categories, objectIds, err
+		}
+
+		objectIds = append(objectIds, oid)
+		categories = append(categories, CategoryClean{
+			ID:    category.ID,
+			Title: category.Title,
+		})
+
 	}
 
-	bson, err := database.GetElementById(oid, collectionName)
-	category := BsonToCategory(bson)
-	if err != nil {
-		return CategoryClean, err
-	}
-	CategoryClean.ID = category.ID
-	CategoryClean.Title = category.Title
+	return categories, objectIds, nil
 
-	return CategoryClean, nil
 }
 
 // validate requested string of a single categoryId

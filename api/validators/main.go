@@ -12,7 +12,6 @@ var validate = validator.New()
 type Request interface{}
 
 func ValidateStruct(req Request) errors.CustomError {
-
 	var errfields []string
 	err := validate.Struct(req)
 	if err != nil {
@@ -24,5 +23,4 @@ func ValidateStruct(req Request) errors.CustomError {
 		return errors.NewInvalidInputError(errfields)
 	}
 	return nil
-
 }

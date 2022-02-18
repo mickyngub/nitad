@@ -20,7 +20,7 @@ type Project struct {
 	Images      []string                       `bson:"images,omitempty" json:"images"`
 	Videos      []string                       `bson:"videos" json:"videos"`
 	Keywords    []string                       `bson:"keywords" json:"keywords"`
-	Category    category.CategoryClean         `bson:"category" json:"category"`
+	Category    []category.CategoryClean       `bson:"category" json:"category"`
 	Subcategory []subcategory.SubcategoryClean `bson:"subcategory" json:"subcategory"`
 	Views       int                            `bson:"views" json:"views"`
 	CreatedAt   time.Time                      `bson:"createdAt" json:"createdAt"`
@@ -37,7 +37,7 @@ type ProjectRequest struct {
 	Images      []multipart.FileHeader `form:"-"`
 	Videos      []string               `form:"videos" validate:"required"`
 	Keywords    []string               `form:"keywords" validate:"required"`
-	Category    string                 `form:"category" validate:"required"`
+	Category    []string               `form:"category" validate:"required"`
 	Subcategory []string               `form:"subcategory" validate:"required"`
 }
 
