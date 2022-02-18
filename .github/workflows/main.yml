@@ -13,6 +13,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      
+      - name: env setup
+        uses: golang-enthusiast/app-yaml-env-compiler@v1.0
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          GCP_PROJECTID: ${{ secrets.GCP_PROJECTID }}
+          GCP_BUCKETNAME: ${{ secrets.GCP_BUCKETNAME }}
+          GCP_API_PREFIX: ${{ secrets.GCP_API_PREFIX }}
 
       - name: Google Cloud Authentication
         uses: google-github-actions/auth@v0
@@ -30,6 +38,7 @@ jobs:
           deliverables: app.yaml
           project_id: ${{ secrets.GCP_PROJECTID }}
           credentials: ${{ secrets.GCP_CREDENTIALS }}
+          args: app deploy app.yaml
 
       - name: Test
         run: curl "${{ steps.deploy.outputs.url }}"
