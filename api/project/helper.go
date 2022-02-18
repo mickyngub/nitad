@@ -98,13 +98,13 @@ func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
 
 	err = gcp.DeleteImages(project.Images, collectionName)
 	if err != nil {
-		return err
+		log.Println("=====Delete images failed!!", project.Images, "======")
 	}
 	return nil
 }
 
 func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID) (*UpdateProject, errors.CustomError) {
-	oldProject, err := FindById(oid)
+	oldProject, err := GetById(oid)
 	if err != nil {
 		return up, err
 	}
@@ -113,10 +113,10 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 
 	if len(up.DeleteImages) > 0 {
 		// remove deleteImages from Images attrs
-		oldProject.Images = RemoveSliceFromSlice(oldProject.Images, up.DeleteImages)
+		up.Images = RemoveSliceFromSlice(up.Images, up.DeleteImages)
 		err = gcp.DeleteImages(up.DeleteImages, collectionName)
 		if err != nil {
-			return up, err
+			log.Println("=====Delete images failed!!", up.DeleteImages, "======")
 		}
 	}
 
@@ -143,32 +143,32 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 	return up, nil
 }
 
-func FindById(oid primitive.ObjectID) (ProjectForDecode, errors.CustomError) {
-	b, err := database.GetElementById(oid, collectionName)
-	if err != nil {
-		return ProjectForDecode{}, err
-	}
-	// log.Println(b)
+// func FindById(oid primitive.ObjectID) (ProjectForDecode, errors.CustomError) {
+// 	b, err := database.GetElementById(oid, collectionName)
+// 	if err != nil {
+// 		return ProjectForDecode{}, err
+// 	}
+// 	// log.Println(b)
 
-	return BsonToProjectForDecode(b), nil
-}
+// 	return BsonToProjectForDecode(b), nil
+// }
 
-func BsonToProjectForDecode(b interface{}) ProjectForDecode {
-	// convert bson to project
-	var p ProjectForDecode
-	bsonBytes, err := bson.Marshal(b)
-	if err != nil {
-		log.Println("ERROR", err.Error())
-	}
-	err = bson.Unmarshal(bsonBytes, &p)
-	if err != nil {
-		log.Println("ERROR 2", err.Error())
-	}
-	//NOTE: these errors make p.Images cannot found sometime
-	// resulting in false image management
-	// log.Println(p.Images)
-	return p
-}
+// func BsonToProjectForDecode(b interface{}) ProjectForDecode {
+// 	// convert bson to project
+// 	var p ProjectForDecode
+// 	bsonBytes, err := bson.Marshal(b)
+// 	if err != nil {
+// 		log.Println("ERROR", err.Error())
+// 	}
+// 	err = bson.Unmarshal(bsonBytes, &p)
+// 	if err != nil {
+// 		log.Println("ERROR 2", err.Error())
+// 	}
+// 	//NOTE: these errors make p.Images cannot found sometime
+// 	// resulting in false image management
+// 	// log.Println(p.Images)
+// 	return p
+// }
 
 // this function remove the slice remove from the slice base
 // ex:  base := []string{"test", "abc", "def", "ghi"}
