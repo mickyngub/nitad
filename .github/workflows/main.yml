@@ -2,9 +2,9 @@ name: Deployment
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -15,23 +15,28 @@ jobs:
         run: |
           echo "Github act1: $CI"
           echo "Github act2: $GITHUB_ACTOR"
-          echo "Github act3: $GCP_PROJECTID"
-          
+          echo "Github act3: ${{ GCP_PROJECTID }}"
+          echo "giyhub act4: $GCP_PROJECTID"
+
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+
       - name: Google Cloud Authentication
-        uses: 'google-github-actions/auth@v0'
-          
-        
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Google Cloud App Engine
         id: deploy
-        uses: google-github-actions/deploy-appengine@v0.4.0
+        uses: google-github-actions/deploy-appengine@v0
         with:
           deliverables: app.yaml
           project_id: ${{ secrets.GCP_PROJECTID}}
           credentials: ${{ secrets.GCP_CREDENTIALS }}
-          
+
       - name: Test
         run: curl "${{ steps.deploy.outputs.url }}"
-          
