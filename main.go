@@ -45,8 +45,8 @@ func main() {
 	defer database.DisconnectDb()
 	err := app.Listen(PORT)
 	if err != nil {
-		log.Printf("Listen to %s Failed", PORT)
-		log.Fatal("Error: ", err.Error())
+		log.Println("Listen to " + PORT + " Failed!")
+		log.Println("Error: ", err.Error())
 	}
 
 }
