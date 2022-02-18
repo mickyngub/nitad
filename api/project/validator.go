@@ -40,11 +40,12 @@ func AddProjectValidator(c *fiber.Ctx) error {
 	project.Abstract = pr.Abstract
 	project.Videos = pr.Videos
 	project.Keywords = pr.Keywords
+	project.Status = pr.Status
 	project.Subcategory = subcategories
 	project.Category = categories
 
 	c.Locals("projectBody", project)
-	c.Locals("cid", cids)
+	c.Locals("cids", cids)
 	c.Locals("sids", sids)
 
 	return c.Next()
@@ -82,6 +83,7 @@ func EditProjectValidator(c *fiber.Ctx) error {
 	project.Abstract = upr.Abstract
 	project.Videos = upr.Videos
 	project.Keywords = upr.Keywords
+	project.Status = upr.Status
 	project.Subcategory = subcategories
 	project.Category = categories
 	project.DeleteImages = upr.DeleteImages

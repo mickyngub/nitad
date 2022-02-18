@@ -65,6 +65,7 @@ func Add(p *Project, cids []primitive.ObjectID, sids []primitive.ObjectID) (*Pro
 	collection, ctx := database.GetCollection(collectionName)
 
 	now := time.Now()
+
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: p.Title},
 		{Key: "description", Value: p.Description},
@@ -75,6 +76,7 @@ func Add(p *Project, cids []primitive.ObjectID, sids []primitive.ObjectID) (*Pro
 		{Key: "images", Value: p.Images},
 		{Key: "videos", Value: p.Videos},
 		{Key: "keywords", Value: p.Keywords},
+		{Key: "status", Value: p.Status},
 		{Key: "category", Value: cids},
 		{Key: "subcategory", Value: sids},
 		{Key: "views", Value: 0},
@@ -113,6 +115,7 @@ func Edit(oid primitive.ObjectID, p *UpdateProject, cids []primitive.ObjectID, s
 				{Key: "images", Value: p.Images},
 				{Key: "videos", Value: p.Videos},
 				{Key: "keywords", Value: p.Keywords},
+				{Key: "status", Value: p.Status},
 				{Key: "category", Value: cids},
 				{Key: "subcategory", Value: sids},
 				{Key: "updatedAt", Value: now},
