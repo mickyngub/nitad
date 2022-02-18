@@ -7,9 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func CreateAdmin(a *Admin) (*Admin, errors.CustomError) {
+func CreateAdmin(a Admin) (Admin, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
+	// TODO: check for existing one
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "username", Value: a.Username},
 		{Key: "password", Value: a.Password},

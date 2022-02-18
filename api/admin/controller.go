@@ -47,7 +47,12 @@ func (contc *Controller) Signup(c *fiber.Ctx) error {
 		Password: hashedPassword,
 	}
 
-	result, err := CreateAdmin(&admin)
+	newAdmin, err := CreateAdmin(admin)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	result, err := CreateJWTToken(newAdmin)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
