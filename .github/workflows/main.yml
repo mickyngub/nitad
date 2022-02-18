@@ -1,33 +1,32 @@
-# This is a basic workflow to help you get started with Actions
+name: Deployment
 
-name: CI Deploy to GAE
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
-    name: Deploying to Google Cloud
+    name: Deploying to Google Cloud APP Engine
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
+      - name: Display GH default env vars
+        run: |
+          echo "Github act1: $CI"
+          echo "Github act2: $GITHUB_ACTOR"
+          echo "Github act3: $GCP_PROJECTID"
+          
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Deploy to app engine
+      - name: Google Cloud Authentication
+        uses: 'google-github-actions/auth@v0'
+          
+        
+      - name: Google Cloud App Engine
         id: deploy
-        uses: google-github-actions/deploy-appengine@v0.2.0
+        uses: google-github-actions/deploy-appengine@v0.4.0
         with:
           deliverables: app.yaml
           project_id: ${{ secrets.GCP_PROJECTID}}
