@@ -26,7 +26,7 @@ func main() {
 	api.CreateAPI(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v3 !"})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.2 !"})
 	})
 
 	app.All("*", func(c *fiber.Ctx) error {

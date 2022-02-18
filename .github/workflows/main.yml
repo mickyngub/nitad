@@ -1,0 +1,44 @@
+name: Deployment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Deploying to Google Cloud APP Engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: env setup
+        uses: golang-enthusiast/app-yaml-env-compiler@v1.0
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          GCP_PROJECTID: ${{ secrets.GCP_PROJECTID }}
+          GCP_BUCKETNAME: ${{ secrets.GCP_BUCKETNAME }}
+          GCP_API_PREFIX: ${{ secrets.GCP_API_PREFIX }}
+
+      - name: Google Cloud Authentication
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+
+      - name: Google Cloud App Engine
+        id: deploy
+        uses: google-github-actions/deploy-appengine@v0
+        with:
+          deliverables: app.yaml
+          project_id: ${{ secrets.GCP_PROJECTID }}
+          credentials: ${{ secrets.GCP_CREDENTIALS }}
+          args: app deploy app.yaml
+
+      - name: Test
+        run: curl "${{ steps.deploy.outputs.url }}"
