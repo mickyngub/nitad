@@ -43,7 +43,7 @@ func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	}
 
 	stages := GetLookupStage()
-	stages = AppendSortStage(stages, pq)
+	stages = AppendQueryStage(stages, pq)
 
 	for _, sid := range sids {
 		stages = database.AppendMatchStage(stages, "subcategory._id", sid)

@@ -31,12 +31,39 @@ var SORTING = map[string]string{
 }
 
 // this will not sort updatedAt and createdAt
-func AppendSortStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
-	// pq = SetDefaultSort(pq)
+func AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+	pq = SetDefaultQuery(pq)
 
+	pipe = AppendSortStage(pipe, pq)
+	pipe = AppendPaginationStage(pipe, pq)
+	// return append(pipe, bson.D{{Key: "$sort", Value: bson.D{
+	// 	{Key: SORTING[pq.Sort], Value: pq.By},
+	// 	{Key: "title", Value: pq.ByName},
+	// 	{Key: "updatedAt", Value: pq.ByUpdatedAt},
+	// 	{Key: "createdAt", Value: pq.ByCreatedAt},
+	// 	{Key: pq}
+	// }}})
+	return pipe
+}
+
+func AppendSortStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+	return append(pipe, bson.D{
+		{Key: "$sort", Value: bson.D{{
+			Key: SORTING[pq.Sort], Value: pq.By,
+		}}}})
+}
+
+func AppendPaginationStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+	return append(pipe,
+		bson.D{{Key: "$skip", Value: (pq.Page - 1) * pq.Limit}},
+		bson.D{{Key: "$limit", Value: pq.Limit}})
+}
+
+func SetDefaultQuery(pq *ProjectQuery) *ProjectQuery {
 	if pq.Sort == "" {
 		pq.Sort = "views"
 	}
+
 	if pq.By == 0 {
 		if pq.Sort == "name" {
 			pq.By = 1
@@ -45,34 +72,15 @@ func AppendSortStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 		}
 	}
 
-	return append(pipe, bson.D{{Key: "$sort", Value: bson.D{
-		{Key: SORTING[pq.Sort], Value: pq.By},
-		// {Key: "title", Value: pq.ByName},
-		// {Key: "updatedAt", Value: pq.ByUpdatedAt},
-		// {Key: "createdAt", Value: pq.ByCreatedAt},
-		// {Key: pq}
-	}}})
+	if pq.Page == 0 {
+		pq.Page = 1
+	}
+
+	if pq.Limit == 0 {
+		pq.Limit = 15
+	}
+	return pq
 }
-
-// func SetDefaultSort(pq *ProjectQuery) *ProjectQuery {
-// 	if pq.ByViews == 0 {
-// 		// sort for most view
-// 		pq.ByViews = -1
-// 	}
-// 	if pq.ByName == 0 {
-// 		// sort by alphabet
-// 		pq.ByName = 1
-// 	}
-// 	if pq.ByUpdatedAt == 0 {
-// 		pq.ByUpdatedAt = -1
-// 	}
-
-// 	if pq.ByCreatedAt == 0 {
-// 		pq.ByCreatedAt = -1
-// 	}
-
-// 	return pq
-// }
 
 func IncrementView(id primitive.ObjectID) {
 	projectCollection, ctx := database.GetCollection(collectionName)

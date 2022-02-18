@@ -35,8 +35,10 @@ type ProjectQuery struct {
 	// ByName        int      `query:"byName"`
 	// ByCreatedAt   int      `query:"byCreatedAt"`
 	// ByUpdatedAt   int      `query:"byUpdatedAt"`
-	Sort string `query:"sort"`
-	By   int    `query:"by"`
+	Sort  string `query:"sort"`
+	By    int    `query:"by"`
+	Page  int    `query:"page"`
+	Limit int    `query:"limit"`
 }
 
 // list all projects
