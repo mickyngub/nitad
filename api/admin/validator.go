@@ -20,3 +20,18 @@ func SignupValidator(c *fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func LoginValidator(c *fiber.Ctx) error {
+	a := new(Admin)
+
+	if err := c.BodyParser(a); err != nil {
+		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+	}
+
+	err := validators.ValidateStruct(*a)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Next()
+}
