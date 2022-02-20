@@ -16,7 +16,7 @@ func NewController(
 	//TODO Add auth
 
 	adminRoute.Post("/signup", SignupValidator, controller.Signup)
-	// adminRoute.Post("/login", LoginValidator, controller.Login)
+	adminRoute.Post("/login", LoginValidator, controller.Login)
 	//adminRoute.Post("/logout", controller.Logout)
 
 }
@@ -62,7 +62,29 @@ func (contc *Controller) Signup(c *fiber.Ctx) error {
 
 // login
 func (contc *Controller) Login(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "result"})
+	a := new(Admin)
+	c.BodyParser(a)
+
+	admin, err := FindByUsername(a.Username)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	if admin == nil {
+		return errors.Throw(c, errors.NewBadRequestError("Invalid Credentials"))
+	}
+
+	err = ComparePassword(admin.Password, a.Password)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	result, err := CreateJWTToken(*admin)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
 
 // logout

@@ -17,6 +17,14 @@ func HashPassword(password string) (string, errors.CustomError) {
 
 }
 
+func ComparePassword(hashed, password string) errors.CustomError {
+	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
+	if err != nil {
+		return errors.NewBadRequestError("Invalid Credentials")
+	}
+	return nil
+}
+
 func CreateJWTToken(a Admin) (map[string]interface{}, errors.CustomError) {
 	var result map[string]interface{}
 	exp := time.Now().Add(time.Minute * 30).Unix()
