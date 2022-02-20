@@ -17,6 +17,7 @@ func NewController(
 
 	adminRoute.Post("/signup", SignupValidator, controller.Signup)
 	adminRoute.Post("/login", LoginValidator, controller.Login)
+
 	//adminRoute.Post("/logout", controller.Logout)
 
 }
@@ -71,7 +72,7 @@ func (contc *Controller) Login(c *fiber.Ctx) error {
 	}
 
 	if admin == nil {
-		return errors.Throw(c, errors.NewBadRequestError("Invalid Credentials"))
+		return errors.Throw(c, errors.NewInvalidCredentials)
 	}
 
 	err = ComparePassword(admin.Password, a.Password)

@@ -20,7 +20,7 @@ func HashPassword(password string) (string, errors.CustomError) {
 func ComparePassword(hashed, password string) errors.CustomError {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
 	if err != nil {
-		return errors.NewBadRequestError("Invalid Credentials")
+		return errors.NewInvalidCredentials
 	}
 	return nil
 }
