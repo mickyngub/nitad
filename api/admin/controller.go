@@ -5,6 +5,7 @@ import (
 
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func NewController(
@@ -17,6 +18,9 @@ func NewController(
 
 	adminRoute.Post("/signup", SignupValidator, controller.Signup)
 	adminRoute.Post("/login", LoginValidator, controller.Login)
+
+	adminRoute.Use(IsAuth())
+	adminRoute.Get("/profile", controller.Profile)
 
 	//adminRoute.Post("/logout", controller.Logout)
 
@@ -53,12 +57,17 @@ func (contc *Controller) Signup(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	result, err := CreateJWTToken(newAdmin)
+	token, err := CreateToken(&newAdmin)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": fiber.Map{
+		"username":     a.Username,
+		"accessToken":  token.AccessToken,
+		"refreshToken": token.RefreshToken,
+	}})
+
 }
 
 // login
@@ -80,15 +89,31 @@ func (contc *Controller) Login(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	result, err := CreateJWTToken(*admin)
+	token, err := CreateToken(admin)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": fiber.Map{
+		"username":     a.Username,
+		"accessToken":  token.AccessToken,
+		"refreshToken": token.RefreshToken,
+	}})
 }
 
 // logout
 func (contc *Controller) Logout(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "result"})
+}
+
+// get admin profile
+func (contc *Controller) Profile(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": fiber.Map{
+		"username": claims["username"],
+		"exp":      claims["exp"],
+	}})
+
 }
