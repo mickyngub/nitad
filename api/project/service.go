@@ -61,10 +61,11 @@ func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	return result, nil
 }
 
-func Add(p *Project, cid primitive.ObjectID, sids []primitive.ObjectID) (*Project, errors.CustomError) {
+func Add(p *Project, cids []primitive.ObjectID, sids []primitive.ObjectID) (*Project, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	now := time.Now()
+
 	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: p.Title},
 		{Key: "description", Value: p.Description},
@@ -75,7 +76,8 @@ func Add(p *Project, cid primitive.ObjectID, sids []primitive.ObjectID) (*Projec
 		{Key: "images", Value: p.Images},
 		{Key: "videos", Value: p.Videos},
 		{Key: "keywords", Value: p.Keywords},
-		{Key: "category", Value: cid},
+		{Key: "status", Value: p.Status},
+		{Key: "category", Value: cids},
 		{Key: "subcategory", Value: sids},
 		{Key: "views", Value: 0},
 		{Key: "createdAt", Value: now},
@@ -94,7 +96,7 @@ func Add(p *Project, cid primitive.ObjectID, sids []primitive.ObjectID) (*Projec
 	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, p *UpdateProject, cid primitive.ObjectID, sids []primitive.ObjectID) (*UpdateProject, errors.CustomError) {
+func Edit(oid primitive.ObjectID, p *UpdateProject, cids []primitive.ObjectID, sids []primitive.ObjectID) (*UpdateProject, errors.CustomError) {
 
 	collection, ctx := database.GetCollection(collectionName)
 
@@ -113,7 +115,8 @@ func Edit(oid primitive.ObjectID, p *UpdateProject, cid primitive.ObjectID, sids
 				{Key: "images", Value: p.Images},
 				{Key: "videos", Value: p.Videos},
 				{Key: "keywords", Value: p.Keywords},
-				{Key: "category", Value: cid},
+				{Key: "status", Value: p.Status},
+				{Key: "category", Value: cids},
 				{Key: "subcategory", Value: sids},
 				{Key: "updatedAt", Value: now},
 			},

@@ -1,6 +1,7 @@
 package category
 
 import (
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -17,8 +18,7 @@ func NewController(
 	categoryRoute.Get("/", controller.ListCategory)
 	categoryRoute.Get("/:categoryId", controller.GetCategory)
 
-	//TODO add AUTH for POST/PUT/DELETE
-
+	categoryRoute.Use(admin.IsAuth())
 	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
 	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)

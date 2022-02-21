@@ -1,10 +1,15 @@
 package project
 
 import (
+	"log"
+	"strconv"
+
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -18,7 +23,7 @@ func NewController(
 	projectRoute.Get("/", controller.ListProject)
 	projectRoute.Get("/:projectId", controller.GetProject)
 
-	//TODO Add auth
+	projectRoute.Use(admin.IsAuth())
 	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
 	projectRoute.Put("/:projectId", EditProjectValidator, controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
@@ -49,7 +54,28 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
+	queryString := pq.Sort + strconv.Itoa(pq.By) + strconv.Itoa(pq.Page) + strconv.Itoa(pq.Limit)
+
+	for _, sid := range pq.SubcategoryId {
+		queryString += sid
+	}
+
+	var p []*Project
+	err := redis.GetCache(queryString, &p)
+	if err != nil && err.Error() != "Key does not exist" {
+		return errors.Throw(c, err)
+	}
+	if p != nil {
+		log.Println("getting from cache", queryString)
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
+	}
+
 	projects, err := FindAll(pq)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	err = redis.SetCache(queryString, projects)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -61,26 +87,57 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
 
+	log.Println("heelo 1")
 	objectId, err := functions.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+
+	log.Println("heelo 2")
+
+	var p *Project
+	err = redis.GetCache(projectId, &p)
+	if err != nil && err.Error() != "Key does not exist" {
+		return errors.Throw(c, err)
+	}
+
+	log.Println("heelo 4")
+
+	if p != nil {
+		log.Println("getting from cache", p.ID)
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
+	}
+
+	log.Println("heelo 5")
 
 	var result Project
 	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 
+	log.Println("heelo 6")
+
+	err = redis.SetCache(projectId, result)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	log.Println("heelo 7")
+
 	defer IncrementView(objectId)
+	log.Println("heelo 8")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
 
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
-	projectBody := c.Locals("projectBody").(*Project)
-	cid := c.Locals("cid").(primitive.ObjectID)
-	sids := c.Locals("sids").([]primitive.ObjectID)
+	projectBody, ok1 := c.Locals("projectBody").(*Project)
+	cids, ok2 := c.Locals("cids").([]primitive.ObjectID)
+	sids, ok3 := c.Locals("sids").([]primitive.ObjectID)
+	if !ok1 || !ok2 || !ok3 {
+		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
+	}
 
 	files, err := functions.ExtractFiles(c, "images")
 	if err != nil {
@@ -93,7 +150,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	}
 	projectBody.Images = imageURLs
 
-	result, err := Add(projectBody, cid, sids)
+	result, err := Add(projectBody, cids, sids)
 	if err != nil {
 		// if there is any error, remove the uploaded file from gcp
 		defer gcp.DeleteImages(imageURLs, collectionName)
@@ -111,16 +168,19 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	updateProjectBody := c.Locals("updateProjectBody").(*UpdateProject)
-	cid := c.Locals("cid").(primitive.ObjectID)
-	sids := c.Locals("sids").([]primitive.ObjectID)
+	updateProjectBody, ok1 := c.Locals("updateProjectBody").(*UpdateProject)
+	cids, ok2 := c.Locals("cids").([]primitive.ObjectID)
+	sids, ok3 := c.Locals("sids").([]primitive.ObjectID)
+	if !ok1 || !ok2 || !ok3 {
+		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
+	}
 
 	updateProjectBody, err = HandleUpdateImages(c, updateProjectBody, projectIdObjectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(projectIdObjectId, updateProjectBody, cid, sids)
+	result, err := Edit(projectIdObjectId, updateProjectBody, cids, sids)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

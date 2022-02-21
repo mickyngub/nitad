@@ -12,17 +12,15 @@ var validate = validator.New()
 type Request interface{}
 
 func ValidateStruct(req Request) errors.CustomError {
-
 	var errfields []string
 	err := validate.Struct(req)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			failedField := strings.Split(err.StructNamespace(), ".")[1]
+			failedFieldArr := strings.Split(err.StructNamespace(), ".")
+			failedField := failedFieldArr[len(failedFieldArr)-1]
 			errfields = append(errfields, failedField+" "+err.Tag())
 		}
 		return errors.NewInvalidInputError(errfields)
-
 	}
 	return nil
-
 }
