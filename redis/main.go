@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/errors"
@@ -14,8 +15,9 @@ var ctx = context.Background()
 var rdb *redis.Client
 
 func SetCache(key string, value interface{}) errors.CustomError {
+	log.Println("setting cached", key)
 	expired := time.Hour
-	b, marshalErr := MarshalBinary(value)
+	b, marshalErr := json.Marshal(value)
 	if marshalErr != nil {
 		return errors.NewCacheError("Marshal binary failed: " + marshalErr.Error())
 	}
@@ -26,17 +28,17 @@ func SetCache(key string, value interface{}) errors.CustomError {
 	return nil
 }
 
-func GetCache(key string) (interface{}, errors.CustomError) {
+func GetCache(key string, dest interface{}) errors.CustomError {
 	val, err := rdb.Get(ctx, key).Result()
 	val, resultErr := CheckResult(val, err)
-	if err != nil {
-		return nil, resultErr
+	if resultErr != nil {
+		return resultErr
 	}
-	return val, nil
-}
-
-func MarshalBinary(i interface{}) ([]byte, error) {
-	return json.Marshal(i)
+	err = json.Unmarshal([]byte(val), dest)
+	if err != nil {
+		return errors.NewCacheError(err.Error())
+	}
+	return nil
 }
 
 func Init() {
@@ -45,6 +47,27 @@ func Init() {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
+
+	// subcate := subcategory.Subcategory{
+	// 	Title: "cache subcategory test",
+	// 	Image: "None",
+	// }
+
+	// log.Println("test 1")
+
+	// sbyte, _ := MarshalBinary(subcate)
+	// err := SetCache(subcate.ID.Hex(), sbyte)
+	// if err != nil {
+	// 	log.Println("error setting cache", err.Error())
+	// }
+
+	// log.Println("test 2")
+
+	// val, err := GetCache(subcate.ID.Hex())
+	// if err != nil {
+	// 	log.Println("error getting cache", err.Error())
+	// }
+	// log.Println("test 3", val)
 
 }
 
