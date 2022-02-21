@@ -13,9 +13,10 @@ const API_PREFIX = "/api/v1"
 func CreateAPI(app *fiber.App) {
 	v1 := app.Group(API_PREFIX)
 
-	admin.NewController(v1.Group("/admin"))
 	subcategory.NewController(v1.Group("/subcategory"))
 	category.NewController(v1.Group("/category"))
 	project.NewController(v1.Group("/project"))
+
+	admin.NewController(v1.Group("/admin"))
 
 }

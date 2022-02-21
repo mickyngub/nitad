@@ -1,6 +1,7 @@
 package subcategory
 
 import (
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -17,7 +18,7 @@ func NewController(
 	subcategoryRoute.Get("/", controller.ListSubcategory)
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
-	//TODO add AUTH for POST/PUT/DELETE
+	subcategoryRoute.Use(admin.IsAuth())
 	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
