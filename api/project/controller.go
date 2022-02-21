@@ -1,10 +1,15 @@
 package project
 
 import (
+	"log"
+	"strconv"
+
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -18,7 +23,7 @@ func NewController(
 	projectRoute.Get("/", controller.ListProject)
 	projectRoute.Get("/:projectId", controller.GetProject)
 
-	//TODO Add auth
+	projectRoute.Use(admin.IsAuth())
 	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
 	projectRoute.Put("/:projectId", EditProjectValidator, controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
@@ -49,10 +54,25 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
+	queryString := pq.Sort + strconv.Itoa(pq.By) + strconv.Itoa(pq.Page) + strconv.Itoa(pq.Limit)
+
+	for _, sid := range pq.SubcategoryId {
+		queryString += sid
+	}
+
+	var p []*Project
+	redis.GetCache(queryString, &p)
+	if p != nil {
+		log.Println("getting from cache", queryString)
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
+	}
+
 	projects, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+
+	redis.SetCache(queryString, projects)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
 }
@@ -66,10 +86,19 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
+	var p *Project
+	redis.GetCache(projectId, &p)
+	if p != nil {
+		log.Println("getting from cache", p.ID)
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
+	}
+
 	var result Project
 	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
+
+	redis.SetCache(projectId, result)
 
 	defer IncrementView(objectId)
 
