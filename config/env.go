@@ -30,9 +30,9 @@ func Checkenv() errors.CustomError {
 	if os.Getenv("GCP_BUCKETNAME") == "" {
 		return errors.NewInternalServerError("GCP_BUCKETNAME required")
 	}
-	if os.Getenv("GCP_SERVICE_ACCOUNT") == "" {
-		return errors.NewInternalServerError("GCP_SERVICE_ACCOUNT required")
-	}
+	// if os.Getenv("GCP_SERVICE_ACCOUNT") == "" {
+	// 	return errors.NewInternalServerError("GCP_SERVICE_ACCOUNT required")
+	// }
 	if os.Getenv("GCP_API_PREFIX") == "" {
 		return errors.NewInternalServerError("GCP_API_PREFIX required")
 	}
