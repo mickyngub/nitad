@@ -9,6 +9,7 @@ import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -18,11 +19,9 @@ func main() {
 
 	config.Loadenv()
 	database.ConnectDb()
-
 	gcp.Init()
-
+	redis.Init()
 	app := config.InitApp()
-
 	api.CreateAPI(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -37,13 +36,11 @@ func main() {
 		PORT = "3000"
 	}
 
-	PORT = ":" + PORT
-
 	log.Println("===== Running on", os.Getenv("APP_ENV"), "stage =====")
-	log.Println("===== Listening to PORT", PORT, "======")
+	log.Println("===== Listening to port", PORT, "======")
 
 	defer database.DisconnectDb()
-	err := app.Listen(PORT)
+	err := app.Listen(":" + PORT)
 	if err != nil {
 		log.Println("Listen to " + PORT + " Failed!")
 		log.Println("Error: ", err.Error())
