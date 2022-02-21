@@ -42,12 +42,13 @@ func Checkenv() errors.CustomError {
 	if os.Getenv("REDIS_ENDPOINT") == "" {
 		return errors.NewInternalServerError("REDIS_ENDPOINT required")
 	}
-	// if os.Getenv("REDIS_DB_PASSWORD") == "" {
-	// 	return errors.NewInternalServerError("REDIS_DB_PASSWORD required")
-	// }
+
+	if os.Getenv("REDIS_DB_PASSWORD") == "" {
+		return errors.NewInternalServerError("REDIS_DB_PASSWORD required")
+	}
+
 	if os.Getenv("JWT_SECRET") == "" {
 		return errors.NewInternalServerError("JWT_SECRET required")
 	}
-
 	return nil
 }
