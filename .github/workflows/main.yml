@@ -24,7 +24,7 @@ jobs:
           GCP_API_PREFIX: ${{ secrets.GCP_API_PREFIX }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_ENDPOINT: ${{ secrets.REDIS_ENDPOINT }}
-          REDIS_DB_PASSWORD: ${{ secrets.REDIS_DB_PASSWORD}}
+          REDIS_DB_PASSWORD: ${{ secrets.REDIS_DB_PASSWORD }}
 
       - name: Google Cloud Authentication
         uses: google-github-actions/auth@v0
