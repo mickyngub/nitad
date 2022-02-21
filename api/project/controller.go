@@ -87,13 +87,10 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
 
-	log.Println("heelo 1")
 	objectId, err := functions.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-
-	log.Println("heelo 2")
 
 	var p *Project
 	err = redis.GetCache(projectId, &p)
@@ -101,31 +98,22 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	log.Println("heelo 4")
-
 	if p != nil {
 		log.Println("getting from cache", p.ID)
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
-
-	log.Println("heelo 5")
 
 	var result Project
 	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
 
-	log.Println("heelo 6")
-
 	err = redis.SetCache(projectId, result)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	log.Println("heelo 7")
-
 	defer IncrementView(objectId)
-	log.Println("heelo 8")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
