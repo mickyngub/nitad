@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/errors"
@@ -43,32 +44,12 @@ func GetCache(key string, dest interface{}) errors.CustomError {
 
 func Init() {
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     ":6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr: os.Getenv("REDIS_ENDPOINT"),
+		// Addr: ":6379",
+		Password: os.Getenv("REDIS_DB_PASSWORD"),
+		// Password: "",
+		DB: 0, // use default DB
 	})
-
-	// subcate := subcategory.Subcategory{
-	// 	Title: "cache subcategory test",
-	// 	Image: "None",
-	// }
-
-	// log.Println("test 1")
-
-	// sbyte, _ := MarshalBinary(subcate)
-	// err := SetCache(subcate.ID.Hex(), sbyte)
-	// if err != nil {
-	// 	log.Println("error setting cache", err.Error())
-	// }
-
-	// log.Println("test 2")
-
-	// val, err := GetCache(subcate.ID.Hex())
-	// if err != nil {
-	// 	log.Println("error getting cache", err.Error())
-	// }
-	// log.Println("test 3", val)
-
 }
 
 func CheckResult(val string, err error) (string, errors.CustomError) {
