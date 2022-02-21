@@ -16,8 +16,13 @@ import (
 var PORT = os.Getenv("PORT")
 
 func main() {
-
 	config.Loadenv()
+	envErr := config.Checkenv()
+	if envErr != nil {
+		log.Println(envErr.Error())
+		os.Exit(1)
+	}
+
 	database.ConnectDb()
 	gcp.Init()
 	redis.Init()
