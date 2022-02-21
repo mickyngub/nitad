@@ -22,6 +22,8 @@ jobs:
           GCP_PROJECTID: ${{ secrets.GCP_PROJECTID }}
           GCP_BUCKETNAME: ${{ secrets.GCP_BUCKETNAME }}
           GCP_API_PREFIX: ${{ secrets.GCP_API_PREFIX }}
+          REDIS_ENDPOINT: ${{ REDIS_ENDPOINT }}
+          JWT_SECRET: ${{ JWT_SECRET }}
 
       - name: Google Cloud Authentication
         uses: google-github-actions/auth@v0
