@@ -6,6 +6,7 @@ import (
 
 	"github.com/birdglove2/nitad-backend/api"
 	"github.com/birdglove2/nitad-backend/config"
+	"github.com/birdglove2/nitad-backend/cronjob"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
@@ -28,6 +29,7 @@ func main() {
 	redis.Init()
 	app := config.InitApp()
 	api.CreateAPI(app)
+	cronjob.Init()
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.5 !"})
