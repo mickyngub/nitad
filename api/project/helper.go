@@ -7,6 +7,7 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -82,14 +83,26 @@ func SetDefaultQuery(pq *ProjectQuery) *ProjectQuery {
 	return pq
 }
 
-func IncrementView(id primitive.ObjectID) {
+func IncrementViewCache(id string, views int) {
+	key := "views" + id
+
+	countInt := redis.GetCacheInt(key)
+	if countInt != 0 {
+		redis.SetCacheInt(key, countInt+1)
+		return
+	}
+
+	redis.SetCacheInt(key, 1)
+}
+
+func IncrementView(id primitive.ObjectID, val int) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
 	_, err := projectCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": id},
 		bson.D{
-			{Key: "$inc", Value: bson.D{{Key: "views", Value: 1}}},
+			{Key: "$inc", Value: bson.D{{Key: "views", Value: val}}},
 		},
 	)
 
