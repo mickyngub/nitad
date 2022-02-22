@@ -1,9 +1,18 @@
 config:
-  target: 'http://localhost:3000'
+  # target: 'http://localhost:3000'
+  target: 'https://dorasteel.as.r.appspot.com'
   phases:
     - duration: 60
       arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 50
+      name: Ramp up load
+    - duration: 600
+      arrivalRate: 50
+      name: Sustained load
 scenarios:
   - flow:
       - get:
-          url: '/api/v1/project/620f984167b61369646f6e65'
+          url: '/api/v1/project'

@@ -14,8 +14,6 @@ func NewController(
 
 	controller := &Controller{}
 
-	//TODO Add private route
-
 	adminRoute.Post("/signup", SignupValidator, controller.Signup)
 	adminRoute.Post("/login", LoginValidator, controller.Login)
 

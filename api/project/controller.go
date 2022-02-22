@@ -36,14 +36,10 @@ var collectionName = database.COLLECTIONS["PROJECT"]
 
 type ProjectQuery struct {
 	SubcategoryId []string `query:"subcategoryId"`
-	// ByViews       int      `query:"byViews"`
-	// ByName        int      `query:"byName"`
-	// ByCreatedAt   int      `query:"byCreatedAt"`
-	// ByUpdatedAt   int      `query:"byUpdatedAt"`
-	Sort  string `query:"sort"`
-	By    int    `query:"by"`
-	Page  int    `query:"page"`
-	Limit int    `query:"limit"`
+	Sort          string   `query:"sort"`
+	By            int      `query:"by"`
+	Page          int      `query:"page"`
+	Limit         int      `query:"limit"`
 }
 
 // list all projects
@@ -100,6 +96,7 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 
 	if p != nil {
 		log.Println("getting from cache", p.ID)
+		IncrementViewCache(projectId, p.Views)
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
 
@@ -113,8 +110,7 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	//TODO: increment view when caching
-	defer IncrementView(objectId)
+	defer IncrementView(objectId, 1)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
