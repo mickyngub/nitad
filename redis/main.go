@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/errors"
@@ -12,13 +13,25 @@ import (
 )
 
 var ctx = context.Background()
-
 var rdb *redis.Client
 
-func SetCache(key string, value interface{}) errors.CustomError {
+func Init() {
+	rdb = redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_ENDPOINT"),
+		Password: os.Getenv("REDIS_DB_PASSWORD"),
+		DB:       0, // use default DB
+	})
+}
+
+func GetClient() (*redis.Client, context.Context) {
+	return rdb, ctx
+}
+
+// Set cache for any struct value ex: project/category
+func SetCache(key string, val interface{}) errors.CustomError {
 	log.Println("setting cached", key)
-	expired := time.Hour
-	b, marshalErr := json.Marshal(value)
+	expired := time.Hour * 5
+	b, marshalErr := json.Marshal(val)
 	if marshalErr != nil {
 		return errors.NewCacheError("Marshal binary failed: " + marshalErr.Error())
 	}
@@ -29,6 +42,7 @@ func SetCache(key string, value interface{}) errors.CustomError {
 	return nil
 }
 
+// get cache for any struct value ex: project/category
 func GetCache(key string, dest interface{}) errors.CustomError {
 	val, err := rdb.Get(ctx, key).Result()
 	val, resultErr := CheckResult(val, err)
@@ -42,24 +56,45 @@ func GetCache(key string, dest interface{}) errors.CustomError {
 	return nil
 }
 
-func Init() {
-	rdb = redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_ENDPOINT"),
-		// Addr: ":6379",
-		Password: os.Getenv("REDIS_DB_PASSWORD"),
-		// Password: "",
-		DB: 0, // use default DB
-	})
+// set cache for any int value ex: views
+func SetCacheInt(key string, val int) {
+	err := rdb.Set(ctx, key, val, 0).Err()
+	if err != nil {
+		log.Println("set view cache error: ", err.Error())
+	}
+	log.Println(key, " incrementing view... ", val)
+
 }
 
-func CheckResult(val string, err error) (string, errors.CustomError) {
-	switch {
-	case err == redis.Nil:
-		return "", errors.NewCacheError("Key does not exist")
-	case err != nil:
-		return "", errors.NewCacheError("Get failed" + err.Error())
-	case val == "":
-		return "", errors.NewCacheError("Value is empty")
+// get cache for any int value ex: views
+func GetCacheInt(key string) int {
+	count, err := rdb.Get(ctx, key).Result()
+	if err != nil && err.Error() != "Key does not exist" {
+		log.Println("get view cache error: ", err.Error())
 	}
-	return val, nil
+
+	countInt, err := strconv.Atoi(count)
+	if err != nil {
+		log.Println("views: string to int error: ", err.Error())
+	}
+	return countInt
+}
+
+func DeleteCache(key string) {
+	err := rdb.Del(ctx, key).Err()
+	if err != nil {
+		log.Println("Delete ", key, " failed!", err.Error())
+	}
+	log.Println("Deleting... ", key)
+}
+
+func FindAllCacheByPrefix(prefix string) ([]string, uint64) {
+	var keys []string
+	var err error
+	var cursor uint64
+	keys, cursor, err = rdb.Scan(ctx, cursor, prefix+"*", 0).Result()
+	if err != nil {
+		log.Println("find all prefix=", prefix, " cache error:", err.Error())
+	}
+	return keys, cursor
 }
