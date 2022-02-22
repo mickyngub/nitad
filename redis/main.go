@@ -30,7 +30,7 @@ func GetClient() (*redis.Client, context.Context) {
 // Set cache for any struct value ex: project/category
 func SetCache(key string, val interface{}) errors.CustomError {
 	log.Println("setting cached", key)
-	expired := time.Hour * 5
+	expired := time.Second * 15
 	b, marshalErr := json.Marshal(val)
 	if marshalErr != nil {
 		return errors.NewCacheError("Marshal binary failed: " + marshalErr.Error())

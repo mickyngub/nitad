@@ -110,7 +110,6 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	//TODO: increment view when caching
 	defer IncrementView(objectId, 1)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
