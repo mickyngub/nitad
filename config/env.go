@@ -43,7 +43,7 @@ func Checkenv() errors.CustomError {
 		return errors.NewInternalServerError("REDIS_ENDPOINT required")
 	}
 
-	if os.Getenv("REDIS_DB_PASSWORD") == "" {
+	if os.Getenv("REDIS_DB_PASSWORD") == "" && os.Getenv("APP_ENV") != "development" {
 		return errors.NewInternalServerError("REDIS_DB_PASSWORD required")
 	}
 
