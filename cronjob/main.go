@@ -12,8 +12,7 @@ import (
 func Init() {
 	c := cron.New()
 
-	//TODO: change this to like 12 hour or sth.
-	c.AddFunc("1 * * * *", UpdateProjectViews)
+	c.AddFunc("0 */12 * * *", UpdateProjectViews) // every 12 hours
 
 	c.Start()
 }
