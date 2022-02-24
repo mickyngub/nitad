@@ -25,8 +25,12 @@ func AddProjectValidator(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	categories, cids, err := category.FindByIds(pr.Category)
+	categories, _, err := category.FindByIds(pr.Category)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
 
+	finalCategories, err := category.FilterCatesWithSids(categories, sids)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -41,12 +45,9 @@ func AddProjectValidator(c *fiber.Ctx) error {
 	project.Videos = pr.Videos
 	project.Keywords = pr.Keywords
 	project.Status = pr.Status
-	// project.Subcategory = subcategories
-	project.Category = categories
+	project.Category = finalCategories
 
 	c.Locals("projectBody", project)
-	c.Locals("cids", cids)
-	c.Locals("sids", sids)
 
 	return c.Next()
 }
@@ -68,8 +69,12 @@ func EditProjectValidator(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	categories, cids, err := category.FindByIds(upr.Category)
+	categories, _, err := category.FindByIds(upr.Category)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
 
+	finalCategories, err := category.FilterCatesWithSids(categories, sids)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -84,13 +89,10 @@ func EditProjectValidator(c *fiber.Ctx) error {
 	project.Videos = upr.Videos
 	project.Keywords = upr.Keywords
 	project.Status = upr.Status
-	// project.Subcategory = subcategories
-	project.Category = categories
+	project.Category = finalCategories
 	project.DeleteImages = upr.DeleteImages
 
 	c.Locals("updateProjectBody", project)
-	c.Locals("cids", cids)
-	c.Locals("sids", sids)
 
 	return c.Next()
 }
