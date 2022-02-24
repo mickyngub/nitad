@@ -49,7 +49,7 @@ func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	pipe = AppendQueryStage(pipe, pq)
 
 	for _, sid := range sids {
-		pipe = database.AppendMatchStage(pipe, "subcategory._id", sid)
+		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
 	}
 
 	cursor, aggregateErr := projectCollection.Aggregate(ctx, pipe)
