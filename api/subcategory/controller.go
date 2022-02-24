@@ -62,7 +62,7 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	imageURLs, err := gcp.UploadImages(files, collectionName)
+	imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -112,7 +112,7 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = HandleDeleteImage(objectId)
+	err = HandleDeleteImage(c.Context(), objectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

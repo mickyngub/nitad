@@ -1,6 +1,8 @@
 package subcategory
 
 import (
+	"context"
+
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
@@ -66,13 +68,13 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*S
 		s.Image = oldSubcategory.Image
 	} else {
 		// delete old files
-		gcp.DeleteImages([]string{s.Image}, collectionName)
+		gcp.DeleteImages(c.Context(), []string{s.Image}, collectionName)
 
 		// upload new files
-		imageURLs, err := gcp.UploadImages(files, collectionName)
+		imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
-			gcp.DeleteImages(imageURLs, collectionName)
+			gcp.DeleteImages(c.Context(), imageURLs, collectionName)
 			return s, err
 		}
 
@@ -84,13 +86,13 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*S
 	return s, nil
 }
 
-func HandleDeleteImage(oid primitive.ObjectID) errors.CustomError {
+func HandleDeleteImage(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	oldSubcategory, err := GetById(oid)
 	if err != nil {
 		return err
 	}
 
-	err = gcp.DeleteImages([]string{oldSubcategory.Image}, collectionName)
+	err = gcp.DeleteImages(ctx, []string{oldSubcategory.Image}, collectionName)
 	if err != nil {
 		return err
 	}

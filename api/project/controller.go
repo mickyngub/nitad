@@ -126,7 +126,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	imageURLs, err := gcp.UploadImages(files, collectionName)
+	imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -135,7 +135,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	result, err := Add(projectBody)
 	if err != nil {
 		// if there is any error, remove the uploaded file from gcp
-		gcp.DeleteImages(imageURLs, collectionName)
+		gcp.DeleteImages(c.Context(), imageURLs, collectionName)
 		return errors.Throw(c, err)
 	}
 
@@ -176,7 +176,7 @@ func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = HandleDeleteImages(objectId)
+	err = HandleDeleteImages(c.Context(), objectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

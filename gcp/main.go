@@ -40,8 +40,8 @@ func Init() {
 }
 
 // UploadFile uploads an object
-func UploadFile(f multipart.File, object string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*50)
+func UploadFile(ctx context.Context, f multipart.File, object string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	// Upload an object with storage.Writer.
@@ -56,7 +56,7 @@ func UploadFile(f multipart.File, object string) error {
 	return nil
 }
 
-func UploadImages(files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError) {
+func UploadImages(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError) {
 	urls := []string{}
 	for _, file := range files {
 		blobFile, err := file.Open()
@@ -67,7 +67,7 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		filename := functions.GetUniqueFilename(file.Filename)
 
 		//TODO: channel this
-		err = UploadFile(blobFile, collectionName+"/"+filename)
+		err = UploadFile(ctx, blobFile, collectionName+"/"+filename)
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}
@@ -77,12 +77,12 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 	return urls, nil
 }
 
-func DeleteImages(imageURLS []string, collectionName string) errors.CustomError {
+func DeleteImages(ctx context.Context, imageURLS []string, collectionName string) errors.CustomError {
 	for _, url := range imageURLS {
 		filepath := collectionName + "/" + url
 
 		//TODO: channel this
-		err := DeleteFile(filepath)
+		err := DeleteFile(ctx, filepath)
 		if err != nil {
 			return err
 		}
@@ -91,8 +91,8 @@ func DeleteImages(imageURLS []string, collectionName string) errors.CustomError 
 }
 
 // deleteFile removes specified object.
-func DeleteFile(object string) errors.CustomError {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func DeleteFile(ctx context.Context, object string) errors.CustomError {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	o := uploader.cl.Bucket(uploader.bucketName).Object(object)

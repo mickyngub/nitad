@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"log"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -110,13 +111,13 @@ func IncrementView(id primitive.ObjectID, val int) {
 	}
 }
 
-func HandleDeleteImages(oid primitive.ObjectID) errors.CustomError {
+func HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	project, err := GetById(oid)
 	if err != nil {
 		return err
 	}
 
-	err = gcp.DeleteImages(project.Images, collectionName)
+	err = gcp.DeleteImages(ctx, project.Images, collectionName)
 	if err != nil {
 		log.Println("=====Delete images failed!!", project.Images, "======")
 	}
@@ -134,7 +135,7 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 	if len(up.DeleteImages) > 0 {
 		// remove deleteImages from Images attrs
 		up.Images = RemoveSliceFromSlice(up.Images, up.DeleteImages)
-		err = gcp.DeleteImages(up.DeleteImages, collectionName)
+		err = gcp.DeleteImages(c.Context(), up.DeleteImages, collectionName)
 		if err != nil {
 			log.Println("=====Delete images failed!!", up.DeleteImages, "======")
 		}
@@ -147,11 +148,11 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 
 	if len(files) > 0 {
 		// if file pass, upload file
-		imageURLs, err := gcp.UploadImages(files, collectionName)
+		imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
 
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
-			gcp.DeleteImages(imageURLs, collectionName)
+			gcp.DeleteImages(c.Context(), imageURLs, collectionName)
 			return up, err
 		}
 
