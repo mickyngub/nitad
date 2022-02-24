@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/birdglove2/nitad-backend/api/admin"
+	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -123,6 +124,12 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	if !ok1 || !ok2 || !ok3 {
 		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
 	}
+
+	finalCate, err := category.FilterCatesWithSids(projectBody.Category, sids)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	projectBody.Category = finalCate
 
 	files, err := functions.ExtractFiles(c, "images")
 	if err != nil {
