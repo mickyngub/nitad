@@ -1,8 +1,6 @@
 package category
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
@@ -26,10 +24,7 @@ func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomEr
 			return categories, objectIds, err
 		}
 
-		// bson, err := database.GetElementById(oid, collectionName)
 		category, err := GetById(oid)
-		// category := BsonToCategory(bson)
-		log.Println("check1", category)
 		if err != nil {
 			return categories, objectIds, err
 		}
@@ -76,7 +71,7 @@ func BsonToCategory(b bson.M) Category {
 func FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
 	finalCate := []Category{}
 	for _, cate := range categories {
-		subcateThatIsInCate := []subcategory.SubcategoryClean{}
+		subcateThatIsInCate := []subcategory.Subcategory{}
 		for _, subcate := range cate.Subcategory {
 			for index, id := range sids {
 				if subcate.ID == id {
