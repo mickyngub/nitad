@@ -151,7 +151,7 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
-			defer gcp.DeleteImages(imageURLs, collectionName)
+			gcp.DeleteImages(imageURLs, collectionName)
 			return up, err
 		}
 

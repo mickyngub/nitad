@@ -53,7 +53,6 @@ func UploadFile(f multipart.File, object string) error {
 		return fmt.Errorf("GCP Writer.Close: %v", err)
 	}
 
-	defer f.Close()
 	return nil
 }
 
@@ -64,6 +63,7 @@ func UploadImages(files []*multipart.FileHeader, collectionName string) ([]strin
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}
+		defer blobFile.Close()
 		filename := functions.GetUniqueFilename(file.Filename)
 
 		//TODO: channel this

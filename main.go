@@ -28,6 +28,8 @@ func main() {
 	}
 
 	database.ConnectDb()
+	defer database.DisconnectDb()
+
 	gcp.Init()
 	redis.Init()
 	app := config.InitApp()
@@ -49,7 +51,6 @@ func main() {
 	log.Println("===== Running on", os.Getenv("APP_ENV"), "stage =====")
 	log.Println("===== Listening to port", PORT, "======")
 
-	defer database.DisconnectDb()
 	err := app.Listen(":" + PORT)
 	if err != nil {
 		log.Println("Listen to " + PORT + " Failed!")

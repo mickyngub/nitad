@@ -66,13 +66,13 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*S
 		s.Image = oldSubcategory.Image
 	} else {
 		// delete old files
-		defer gcp.DeleteImages([]string{s.Image}, collectionName)
+		gcp.DeleteImages([]string{s.Image}, collectionName)
 
 		// upload new files
 		imageURLs, err := gcp.UploadImages(files, collectionName)
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
-			defer gcp.DeleteImages(imageURLs, collectionName)
+			gcp.DeleteImages(imageURLs, collectionName)
 			return s, err
 		}
 

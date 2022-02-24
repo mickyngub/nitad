@@ -109,7 +109,7 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	defer IncrementView(objectId, 1)
+	IncrementView(objectId, 1)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
@@ -135,7 +135,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	result, err := Add(projectBody)
 	if err != nil {
 		// if there is any error, remove the uploaded file from gcp
-		defer gcp.DeleteImages(imageURLs, collectionName)
+		gcp.DeleteImages(imageURLs, collectionName)
 		return errors.Throw(c, err)
 	}
 
