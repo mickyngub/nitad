@@ -33,11 +33,13 @@ func SetCache(key string, val interface{}) errors.CustomError {
 	expired := time.Second * 15
 	b, marshalErr := json.Marshal(val)
 	if marshalErr != nil {
-		return errors.NewCacheError("Marshal binary failed: " + marshalErr.Error())
+		log.Println("Cache: Marshal binary failed: " + marshalErr.Error())
+		return nil
 	}
 	err := rdb.Set(ctx, key, b, expired).Err()
 	if err != nil {
-		return errors.NewCacheError("Set cache error: " + err.Error())
+		log.Println("Set cache error: ", err.Error())
+		return nil
 	}
 	return nil
 }
@@ -47,11 +49,14 @@ func GetCache(key string, dest interface{}) errors.CustomError {
 	val, err := rdb.Get(ctx, key).Result()
 	val, resultErr := CheckResult(val, err)
 	if resultErr != nil {
-		return resultErr
+		log.Println("Cache: get failed: " + resultErr.Error())
+		return nil
 	}
 	err = json.Unmarshal([]byte(val), dest)
 	if err != nil {
-		return errors.NewCacheError(err.Error())
+		log.Println("Cache: get failed: " + err.Error())
+		return nil
+
 	}
 	return nil
 }

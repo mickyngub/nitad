@@ -14,6 +14,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+//FIXME: defer / context / log / cache
+// TODO: cache fiber storage แยก branch
+
 var PORT = os.Getenv("PORT")
 
 func main() {
