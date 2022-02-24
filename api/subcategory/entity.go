@@ -8,7 +8,7 @@ import (
 )
 
 type Subcategory struct {
-	ID        primitive.ObjectID `bson:"_id" json:"id"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Title     string             `bson:"title" json:"title"`
 	Image     string             `bson:"image" json:"image"`
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
