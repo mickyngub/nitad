@@ -8,12 +8,14 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	pipe := GetLookupStage()
+	// pipe := GetLookupStage()
+	pipe := mongo.Pipeline{}
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
 
 	cursor, err := projectCollection.Aggregate(ctx, pipe)
@@ -42,14 +44,15 @@ func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 		return result, err
 	}
 
-	stages := GetLookupStage()
-	stages = AppendQueryStage(stages, pq)
+	// stages := GetLookupStage()
+	pipe := mongo.Pipeline{}
+	pipe = AppendQueryStage(pipe, pq)
 
 	for _, sid := range sids {
-		stages = database.AppendMatchStage(stages, "subcategory._id", sid)
+		pipe = database.AppendMatchStage(pipe, "subcategory._id", sid)
 	}
 
-	cursor, aggregateErr := projectCollection.Aggregate(ctx, stages)
+	cursor, aggregateErr := projectCollection.Aggregate(ctx, pipe)
 	if aggregateErr != nil {
 		return result, errors.NewBadRequestError(aggregateErr.Error())
 	}
@@ -61,7 +64,7 @@ func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
 	return result, nil
 }
 
-func Add(p *Project, cids []primitive.ObjectID, sids []primitive.ObjectID) (*Project, errors.CustomError) {
+func Add(p *Project) (*Project, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	now := time.Now()
@@ -77,8 +80,7 @@ func Add(p *Project, cids []primitive.ObjectID, sids []primitive.ObjectID) (*Pro
 		{Key: "videos", Value: p.Videos},
 		{Key: "keywords", Value: p.Keywords},
 		{Key: "status", Value: p.Status},
-		{Key: "category", Value: cids},
-		{Key: "subcategory", Value: sids},
+		{Key: "category", Value: p.Category},
 		{Key: "views", Value: 0},
 		{Key: "createdAt", Value: now},
 		{Key: "updatedAt", Value: now},
@@ -96,7 +98,7 @@ func Add(p *Project, cids []primitive.ObjectID, sids []primitive.ObjectID) (*Pro
 	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, p *UpdateProject, cids []primitive.ObjectID, sids []primitive.ObjectID) (*UpdateProject, errors.CustomError) {
+func Edit(oid primitive.ObjectID, p *UpdateProject) (*UpdateProject, errors.CustomError) {
 
 	collection, ctx := database.GetCollection(collectionName)
 
@@ -116,8 +118,7 @@ func Edit(oid primitive.ObjectID, p *UpdateProject, cids []primitive.ObjectID, s
 				{Key: "videos", Value: p.Videos},
 				{Key: "keywords", Value: p.Keywords},
 				{Key: "status", Value: p.Status},
-				{Key: "category", Value: cids},
-				{Key: "subcategory", Value: sids},
+				{Key: "category", Value: p.Category},
 				{Key: "updatedAt", Value: now},
 			},
 		},

@@ -16,10 +16,9 @@ import (
 
 func GetLookupStage() mongo.Pipeline {
 	pipe := mongo.Pipeline{}
-	pipe = database.AppendLookupStage(pipe, "category")
+	// pipe = database.AppendLookupStage(pipe, "category")
+	// pipe = database.AppendLookupStage(pipe, "category.subcategory")
 	// pipe = database.AppendUnwindStage(pipe, "category")
-
-	// pipe = database.AppendLookupStage(pipe, "subcategory")
 
 	return pipe
 }

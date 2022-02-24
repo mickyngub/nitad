@@ -15,11 +15,11 @@ type Subcategory struct {
 	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
-type SubcategoryClean struct {
-	ID    primitive.ObjectID `bson:"_id" json:"id"`
-	Title string             `bson:"title" json:"title"`
-	Image string             `bson:"image" json:"image"`
-}
+// type SubcategoryClean struct {
+// 	ID    primitive.ObjectID `bson:"_id" json:"id"`
+// 	Title string             `bson:"title" json:"title"`
+// 	Image string             `bson:"image" json:"image"`
+// }
 
 type SubcategoryRequest struct {
 	Title string `form:"title" validate:"required"`

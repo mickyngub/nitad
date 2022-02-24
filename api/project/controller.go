@@ -5,14 +5,12 @@ import (
 	"strconv"
 
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func NewController(
@@ -118,18 +116,10 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 
 // add a project
 func (contc *Controller) AddProject(c *fiber.Ctx) error {
-	projectBody, ok1 := c.Locals("projectBody").(*Project)
-	cids, ok2 := c.Locals("cids").([]primitive.ObjectID)
-	sids, ok3 := c.Locals("sids").([]primitive.ObjectID)
-	if !ok1 || !ok2 || !ok3 {
+	projectBody, ok := c.Locals("projectBody").(*Project)
+	if !ok {
 		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
 	}
-
-	finalCate, err := category.FilterCatesWithSids(projectBody.Category, sids)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-	projectBody.Category = finalCate
 
 	files, err := functions.ExtractFiles(c, "images")
 	if err != nil {
@@ -142,7 +132,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	}
 	projectBody.Images = imageURLs
 
-	result, err := Add(projectBody, cids, sids)
+	result, err := Add(projectBody)
 	if err != nil {
 		// if there is any error, remove the uploaded file from gcp
 		defer gcp.DeleteImages(imageURLs, collectionName)
@@ -160,10 +150,8 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	updateProjectBody, ok1 := c.Locals("updateProjectBody").(*UpdateProject)
-	cids, ok2 := c.Locals("cids").([]primitive.ObjectID)
-	sids, ok3 := c.Locals("sids").([]primitive.ObjectID)
-	if !ok1 || !ok2 || !ok3 {
+	updateProjectBody, ok := c.Locals("updateProjectBody").(*UpdateProject)
+	if !ok {
 		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
 	}
 
@@ -172,7 +160,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(projectIdObjectId, updateProjectBody, cids, sids)
+	result, err := Edit(projectIdObjectId, updateProjectBody)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
