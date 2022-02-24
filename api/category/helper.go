@@ -76,33 +76,28 @@ func BsonToCategory(b bson.M) Category {
 func FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
 	finalCate := []Category{}
 	for _, cate := range categories {
-		cateWithCorrectSubcate := FilterACateWithSids(cate, sids)
-		finalCate = append(finalCate, cateWithCorrectSubcate)
+		subcateThatIsInCate := []subcategory.SubcategoryClean{}
+		for _, subcate := range cate.Subcategory {
+			for index, id := range sids {
+				if subcate.ID == id {
+					subcateThatIsInCate = append(subcateThatIsInCate, subcate)
+					sids = remove(sids, index)
+					index--
+				}
+			}
+		}
+		cate.Subcategory = subcateThatIsInCate
+		finalCate = append(finalCate, cate)
 	}
+
 	if len(sids) > 0 {
-		return finalCate, errors.NewBadRequestError("some subcategories are not in any categories")
+		return finalCate, errors.NewBadRequestError("conflict: some subcategories are not in any categories")
 	}
 	return finalCate, nil
 }
 
-// filter a single category with the list of sids
-// just written out to shorten the "multiple filter" function
-func FilterACateWithSids(category Category, sids []primitive.ObjectID) Category {
-	subcateThatIsInCate := []subcategory.SubcategoryClean{}
-	for _, subcate := range category.Subcategory {
-		for index, id := range sids {
-			if subcate.ID == id {
-				subcateThatIsInCate = append(subcateThatIsInCate, subcate)
-				sids = remove(sids, index)
-				index--
-			}
-		}
-	}
-	category.Subcategory = subcateThatIsInCate
-	return category
-}
-
-// remove the value at index in slice
-func remove(slice []primitive.ObjectID, index int) []primitive.ObjectID {
-	return append(slice[:index], slice[index+1:]...)
+// remove the value at index in slice unordered
+func remove(slice []primitive.ObjectID, i int) []primitive.ObjectID {
+	slice[i] = slice[len(slice)-1]
+	return slice[:len(slice)-1]
 }
