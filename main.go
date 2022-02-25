@@ -9,24 +9,24 @@ import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
-	"github.com/birdglove2/nitad-backend/logger"
 	"github.com/birdglove2/nitad-backend/redis"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
 
-//FIXME: log / cache
+//FIXME:  cache
 // TODO: cache fiber storage แยก branch
 
 var PORT = os.Getenv("PORT")
 
 func main() {
-	logger.InitZap()
+	utils.InitZap()
 
 	config.Loadenv()
 	envErr := config.Checkenv()
 	if envErr != nil {
-		zap.S().Fatal(envErr.Error())
+		zap.S().Warn(envErr.Error())
 		os.Exit(1)
 	}
 
@@ -56,8 +56,8 @@ func main() {
 
 	err := app.Listen(":" + PORT)
 	if err != nil {
-		zap.S().Fatal("Listen to " + PORT + " Failed!")
-		zap.S().Fatal("Error: ", err.Error())
+		zap.S().Warn("Listen to " + PORT + " Failed!")
+		zap.S().Warn("Error: ", err.Error())
 	}
 
 }

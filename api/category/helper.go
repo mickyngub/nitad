@@ -3,7 +3,7 @@ package category
 import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
+	"github.com/birdglove2/nitad-backend/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,10 +16,10 @@ func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomEr
 	var objectIds []primitive.ObjectID
 	var categories []Category
 
-	cids = functions.RemoveDuplicateIds(cids)
+	cids = utils.RemoveDuplicateIds(cids)
 
 	for _, cid := range cids {
-		oid, err := functions.IsValidObjectId(cid)
+		oid, err := utils.IsValidObjectId(cid)
 		if err != nil {
 			return categories, objectIds, err
 		}
@@ -42,7 +42,7 @@ func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomEr
 // and return valid objectId, otherwise error
 func ValidateId(cid string) (Category, errors.CustomError) {
 	var c Category
-	objectId, err := functions.IsValidObjectId(cid)
+	objectId, err := utils.IsValidObjectId(cid)
 	if err != nil {
 		return c, err
 	}

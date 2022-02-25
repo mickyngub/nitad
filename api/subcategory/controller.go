@@ -4,8 +4,8 @@ import (
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -42,7 +42,7 @@ func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {
 func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
 
-	objectId, err := functions.IsValidObjectId(subcategoryId)
+	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -57,7 +57,7 @@ func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
 
 // add a subcategory
 func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
-	files, err := functions.ExtractFiles(c, "image")
+	files, err := utils.ExtractFiles(c, "image")
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -84,7 +84,7 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 // // edit the subcategory
 func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
-	objectId, err := functions.IsValidObjectId(subcategoryId)
+	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -107,7 +107,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 // delete the subcategory
 func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
-	objectId, err := functions.IsValidObjectId(subcategoryId)
+	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

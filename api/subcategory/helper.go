@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,10 +17,10 @@ func FindByIds(sids []string) ([]Subcategory, []primitive.ObjectID, errors.Custo
 	var objectIds []primitive.ObjectID
 	var subcategories []Subcategory
 
-	sids = functions.RemoveDuplicateIds(sids)
+	sids = utils.RemoveDuplicateIds(sids)
 
 	for _, sid := range sids {
-		oid, err := functions.IsValidObjectId(sid)
+		oid, err := utils.IsValidObjectId(sid)
 		if err != nil {
 			return subcategories, objectIds, err
 		}
@@ -40,7 +40,7 @@ func FindByIds(sids []string) ([]Subcategory, []primitive.ObjectID, errors.Custo
 // and return valid objectId, otherwise error
 func ValidateId(sid string) (Subcategory, errors.CustomError) {
 	var s Subcategory
-	objectId, err := functions.IsValidObjectId(sid)
+	objectId, err := utils.IsValidObjectId(sid)
 	if err != nil {
 		return s, err
 	}
@@ -58,7 +58,7 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*S
 		return s, err
 	}
 
-	files, err := functions.ExtractUpdatedFiles(c, "image")
+	files, err := utils.ExtractUpdatedFiles(c, "image")
 
 	if err != nil {
 		return s, err

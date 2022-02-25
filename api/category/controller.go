@@ -4,8 +4,8 @@ import (
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/redis"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -59,7 +59,7 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
 
-	objectId, err := functions.IsValidObjectId(categoryId)
+	objectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -91,7 +91,7 @@ func (contc *Controller) AddCategory(c *fiber.Ctx) error {
 // edit the category
 func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 	categoryId := c.Params("categoryId")
-	categoryObjectId, err := functions.IsValidObjectId(categoryId)
+	categoryObjectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -111,7 +111,7 @@ func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 // delete the category
 func (cont *Controller) DeleteCategory(c *fiber.Ctx) error {
 	categoryId := c.Params("categoryId")
-	objectId, err := functions.IsValidObjectId(categoryId)
+	objectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
