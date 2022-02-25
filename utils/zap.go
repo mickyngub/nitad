@@ -23,7 +23,7 @@ func getEncoder() zapcore.Encoder {
 	encoderConfig.TimeKey = "time"
 	encoderConfig.MessageKey = "key"
 	encoderConfig.EncodeTime = zapcore.TimeEncoder(func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
-		loc, err := time.LoadLocation("asia/bangkok")
+		loc, err := time.LoadLocation("Asia/Bangkok")
 		if err != nil {
 			panic(err)
 		}
