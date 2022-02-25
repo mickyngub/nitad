@@ -1,7 +1,7 @@
 package project
 
 import (
-	"strconv"
+	"log"
 
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
@@ -48,54 +48,42 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
-	queryString := pq.Sort + strconv.Itoa(pq.By) + strconv.Itoa(pq.Page) + strconv.Itoa(pq.Limit)
-
-	for _, sid := range pq.SubcategoryId {
-		queryString += sid
-	}
-
-	var p []*Project
-	redis.GetCache(queryString, &p)
-
-	if p != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
-	}
-
 	projects, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-
-	redis.SetCache(queryString, projects)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
 }
 
 // get project by id
 func (contc *Controller) GetProject(c *fiber.Ctx) error {
+	// GetProjectValidator(c)
+
 	projectId := c.Params("projectId")
+	// objectId, _ := primitive.ObjectIDFromHex(projectId)
 
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+	// log.Println("5", projectId)
 
-	var p *Project
-	redis.GetCache(projectId, &p)
-
-	if p != nil {
-		IncrementViewCache(projectId, p.Views)
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
+	cacheProject := HandleCacheGetProjectById(c, projectId)
+	// log.Println("6", projectId)
+	if cacheProject != nil {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result from cache": cacheProject})
 	}
 
-	var result Project
-	if result, err = GetById(objectId); err != nil {
+	log.Println("7")
+	result, err := GetById(objectId)
+	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	redis.SetCache(projectId, result)
-
 	IncrementView(objectId, 1)
+	redis.SetCache(c.Path(), result)
+	// log.Println("8")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }

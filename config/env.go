@@ -42,6 +42,9 @@ func Checkenv() errors.CustomError {
 	if os.Getenv("REDIS_ENDPOINT") == "" {
 		return errors.NewInternalServerError("REDIS_ENDPOINT required")
 	}
+	if os.Getenv("REDIS_PORT") == "" {
+		return errors.NewInternalServerError("REDIS_PORT required")
+	}
 
 	if os.Getenv("REDIS_DB_PASSWORD") == "" && os.Getenv("APP_ENV") != "development" {
 		return errors.NewInternalServerError("REDIS_DB_PASSWORD required")

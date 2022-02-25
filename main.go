@@ -2,10 +2,9 @@ package main
 
 import (
 	"os"
-	"time"
 
 	"github.com/birdglove2/nitad-backend/api"
-	"github.com/birdglove2/nitad-backend/api/category"
+	"github.com/birdglove2/nitad-backend/api/project"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/cronjob"
 	"github.com/birdglove2/nitad-backend/database"
@@ -13,10 +12,10 @@ import (
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-
 	"go.uber.org/zap"
 )
 
@@ -39,28 +38,21 @@ func main() {
 	defer database.DisconnectDb()
 
 	gcp.Init()
-	redis.Init()
 
 	app := config.InitApp()
-
 	app.Use(logger.New(logger.Config{
 		Format:     "[${ip}]:${port} ${status} - ${method} ${path}\n",
 		TimeFormat: "02-Jan-2006",
 		TimeZone:   "Asia/Bangkok",
 	}))
 
+	redisStore := redis.Init()
 	app.Use(cache.New(cache.Config{
-		Expiration:   30 * time.Minute,
-		CacheControl: true,
-		New:          category.ListCategoryCache(),
+		Expiration: redis.DefaultCacheExpireTime,
+		Storage:    redisStore,
 		Next: func(c *fiber.Ctx) bool {
-			path := c.Path()
-			if path == "/api/v1/category" {
-				category.ListCategoryCache(c)
-				return true
-			}
-
-			return true
+			// log.Println("0")
+			return project.IsGetProjectPath(c) // handle incrementing view in cache
 		},
 	}))
 
@@ -87,5 +79,4 @@ func main() {
 		zap.S().Warn("Listen to " + PORT + " Failed!")
 		zap.S().Warn("Error: ", err.Error())
 	}
-
 }

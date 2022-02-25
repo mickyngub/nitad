@@ -1,12 +1,31 @@
 package project
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/api/validators"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
+
+func GetProjectValidator(c *fiber.Ctx) error {
+	projectId := c.Params("projectId")
+	log.Println("4", projectId)
+
+	_, err := utils.IsValidObjectId(projectId)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	log.Println("5", projectId)
+
+	HandleCacheGetProjectById(c, projectId)
+	log.Println("6", projectId)
+
+	return c.Next()
+}
 
 func AddProjectValidator(c *fiber.Ctx) error {
 	pr := new(ProjectRequest)

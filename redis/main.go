@@ -1,62 +1,56 @@
 package redis
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 )
 
-var ctx = context.Background()
-var rdb *redis.Client
+// type Storage struct {
+// 	db *redis.Client
+// }
 
-func Init() {
-	rdb = redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ENDPOINT"),
-		Password: os.Getenv("REDIS_DB_PASSWORD"),
-		DB:       0, // use default DB
+var store *Storage
+var DefaultCacheExpireTime time.Duration = time.Second * 15
+
+func GetStore() *Storage {
+	return store
+}
+
+func Init() *Storage {
+	port, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
+
+	store = New(Config{
+		Host:      os.Getenv("REDIS_ENDPOINT"),
+		Port:      port,
+		Username:  "",
+		Password:  os.Getenv("REDIS_DB_PASSWORD"),
+		URL:       "",
+		Database:  0,
+		Reset:     false,
+		TLSConfig: nil,
 	})
+	return store
 }
 
-func GetClient() (*redis.Client, context.Context) {
-	return rdb, ctx
-}
-
-// Set cache for any struct value ex: project/category
 func SetCache(key string, val interface{}) {
-	expired := time.Second * 15
 	b, marshalErr := json.Marshal(val)
 	if marshalErr != nil {
 		zap.S().Warn("Cache: Marshal binary failed: " + marshalErr.Error())
 	}
-	err := rdb.Set(ctx, key, b, expired).Err()
+	err := store.Set(key, b, DefaultCacheExpireTime)
 	if err != nil {
 		zap.S().Warn("Set Cache error: " + err.Error())
 	}
 }
 
-// get cache for any struct value ex: project/category
-func GetCache(key string, dest interface{}) {
-	val, err := rdb.Get(ctx, key).Result()
-	val, resultErr := CheckResult(val, err)
-	if resultErr != nil && resultErr.Error() != "Key does not exist" {
-		zap.S().Warn("Get Cache error: " + resultErr.Error())
-	}
-	err = json.Unmarshal([]byte(val), dest)
-	if err != nil {
-		zap.S().Warn("Get Cache Unmarshal error: " + err.Error())
-	}
-	zap.S().Info("Geting from Cache  " + key)
-
-}
-
 // set cache for any int value ex: views
 func SetCacheInt(key string, val int) {
-	err := rdb.Set(ctx, key, val, 0).Err()
+	err := store.Set(key, []byte(fmt.Sprint(val)), 0)
 	if err != nil {
 		zap.S().Warn("Set View cache error: ", err.Error())
 	}
@@ -64,33 +58,39 @@ func SetCacheInt(key string, val int) {
 
 // get cache for any int value ex: views
 func GetCacheInt(key string) int {
-	count, err := rdb.Get(ctx, key).Result()
-	count, err = CheckResult(count, err)
-	if err != nil && err.Error() != "Key does not exist" {
+	bytes, err := store.Get(key)
+	if err != nil {
 		zap.S().Warn("Get View cache error: ", err.Error())
+		return 0
 	}
 
-	countInt, err := strconv.Atoi(count)
-	if err != nil {
+	count, err := strconv.Atoi(string(bytes))
+	if err != nil && count != 0 {
 		zap.S().Warn("Set View cache string to int error: ", err.Error())
+		return 0
 	}
-	return countInt
+	return count
 }
 
 func DeleteCache(key string) {
-	err := rdb.Del(ctx, key).Err()
+	err := store.Delete(key)
 	if err != nil {
 		zap.S().Warn("Delete cache failed, key=", key, ", error: ", err.Error())
 	}
 }
 
-func FindAllCacheByPrefix(prefix string) ([]string, uint64) {
-	var keys []string
-	var err error
-	var cursor uint64
-	keys, cursor, err = rdb.Scan(ctx, cursor, prefix+"*", 0).Result()
-	if err != nil {
-		zap.S().Warn("find all prefix=", prefix, " cache error:", err.Error())
-	}
-	return keys, cursor
-}
+// func m() {
+// 	redis.NewClient()
+// }
+
+// func FindAllCacheByPrefix(prefix string) ([]string, uint64) {
+// 	var keys []string
+// 	var err error
+// 	var cursor uint64
+// 	return store.Scan(prefix)
+// 	keys, cursor, err = store.db.Scan(ctx, cursor, prefix+"*", 0).Result()
+// 	if err != nil {
+// 		zap.S().Warn("find all prefix=", prefix, " cache error:", err.Error())
+// 	}
+// 	return keys, cursor
+// }

@@ -31,19 +31,11 @@ var SORTING = map[string]string{
 	"createdAt": "createdAt",
 }
 
-// this will not sort updatedAt and createdAt
 func AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 	pq = SetDefaultQuery(pq)
 
 	pipe = AppendSortStage(pipe, pq)
 	pipe = AppendPaginationStage(pipe, pq)
-	// return append(pipe, bson.D{{Key: "$sort", Value: bson.D{
-	// 	{Key: SORTING[pq.Sort], Value: pq.By},
-	// 	{Key: "title", Value: pq.ByName},
-	// 	{Key: "updatedAt", Value: pq.ByUpdatedAt},
-	// 	{Key: "createdAt", Value: pq.ByCreatedAt},
-	// 	{Key: pq}
-	// }}})
 	return pipe
 }
 
@@ -85,13 +77,14 @@ func SetDefaultQuery(pq *ProjectQuery) *ProjectQuery {
 
 func IncrementViewCache(id string, views int) {
 	key := "views" + id
-
+	// log.Println("9")
 	countInt := redis.GetCacheInt(key)
+	// log.Println("10")
 	if countInt != 0 {
 		redis.SetCacheInt(key, countInt+1)
+		zap.S().Info("incrementing view of ", key, " = ", countInt+1)
 		return
 	}
-
 	redis.SetCacheInt(key, 1)
 }
 
