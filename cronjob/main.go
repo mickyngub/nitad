@@ -1,12 +1,11 @@
 package cronjob
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/project"
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/robfig/cron"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func Init() {
@@ -38,5 +37,5 @@ func UpdateProjectViews() {
 		}
 	}
 
-	log.Println("updating project views")
+	zap.S().Info("updating project views")
 }

@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 var client *mongo.Client
@@ -60,8 +61,8 @@ func DisconnectDb() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err := client.Disconnect(ctx)
 	if err != nil {
-		log.Println("error", err)
+		zap.S().Fatal("Error disconnecting mongodb: ", err.Error())
 	} else {
-		log.Println("disconnecting mongodb...")
+		zap.S().Info("disconnecting mongodb...")
 	}
 }

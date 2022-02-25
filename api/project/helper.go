@@ -2,7 +2,6 @@ package project
 
 import (
 	"context"
-	"log"
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -13,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 func GetLookupStage() mongo.Pipeline {
@@ -107,7 +107,7 @@ func IncrementView(id primitive.ObjectID, val int) {
 	)
 
 	if err != nil {
-		log.Println("=====Incrementing view error: ", err.Error())
+		zap.S().Fatal("Incrementing view error: ", err.Error())
 	}
 }
 
@@ -119,7 +119,7 @@ func HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.Cust
 
 	err = gcp.DeleteImages(ctx, project.Images, collectionName)
 	if err != nil {
-		log.Println("=====Delete images failed!!", project.Images, "======")
+		zap.S().Fatal("Delete images failed", project.Images)
 	}
 	return nil
 }
@@ -137,7 +137,7 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 		up.Images = RemoveSliceFromSlice(up.Images, up.DeleteImages)
 		err = gcp.DeleteImages(c.Context(), up.DeleteImages, collectionName)
 		if err != nil {
-			log.Println("=====Delete images failed!!", up.DeleteImages, "======")
+			zap.S().Fatal("Delete images failed", up.DeleteImages)
 		}
 	}
 

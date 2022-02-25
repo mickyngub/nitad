@@ -1,8 +1,6 @@
 package category
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -35,23 +33,17 @@ var collectionName = database.COLLECTIONS["CATEGORY"]
 func (contc *Controller) ListCategory(c *fiber.Ctx) error {
 	var cate []*Category
 	key := "allcate"
-	err := redis.GetCache(key, &cate)
-	if err != nil && err.Error() != "Key does not exist" {
-		return errors.Throw(c, err)
-	}
+	redis.GetCache(key, &cate)
 	if cate != nil {
-		log.Println("getting from cache", key)
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cate})
 	}
+
 	categories, err := FindAll()
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	err = redis.SetCache(key, categories)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
+	redis.SetCache(key, categories)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": categories})
 }
@@ -61,12 +53,9 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 	categoryId := c.Params("categoryId")
 
 	var p []*Category
-	err := redis.GetCache(categoryId, &p)
-	if err != nil && err.Error() != "Key does not exist" {
-		return errors.Throw(c, err)
-	}
+	redis.GetCache(categoryId, &p)
+
 	if p != nil {
-		log.Println("getting from cache", categoryId)
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
 
@@ -79,10 +68,7 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
-	err = redis.SetCache(categoryId, result)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
+	redis.SetCache(categoryId, result)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }

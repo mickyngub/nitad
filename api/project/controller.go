@@ -1,7 +1,6 @@
 package project
 
 import (
-	"log"
 	"strconv"
 
 	"github.com/birdglove2/nitad-backend/api/admin"
@@ -56,12 +55,9 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 	}
 
 	var p []*Project
-	err := redis.GetCache(queryString, &p)
-	if err != nil && err.Error() != "Key does not exist" {
-		return errors.Throw(c, err)
-	}
+	redis.GetCache(queryString, &p)
+
 	if p != nil {
-		log.Println("getting from cache", queryString)
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
 
@@ -70,10 +66,7 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = redis.SetCache(queryString, projects)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
+	redis.SetCache(queryString, projects)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
 }
@@ -88,13 +81,9 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	}
 
 	var p *Project
-	err = redis.GetCache(projectId, &p)
-	if err != nil && err.Error() != "Key does not exist" {
-		return errors.Throw(c, err)
-	}
+	redis.GetCache(projectId, &p)
 
 	if p != nil {
-		log.Println("getting from cache", p.ID)
 		IncrementViewCache(projectId, p.Views)
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
@@ -104,10 +93,7 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = redis.SetCache(projectId, result)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
+	redis.SetCache(projectId, result)
 
 	IncrementView(objectId, 1)
 
