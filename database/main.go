@@ -2,8 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -41,27 +39,27 @@ func ConnectDb() {
 	var err error
 	client, err = mongo.NewClient(options.Client().ApplyURI(MONGO_URI))
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err.Error())
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err.Error())
 	}
 
 	// List databases
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err.Error())
 	}
-	fmt.Println(databases)
+	zap.S().Info("databases: ", databases)
 }
 
 func DisconnectDb() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err := client.Disconnect(ctx)
 	if err != nil {
-		zap.S().Fatal("Error disconnecting mongodb: ", err.Error())
+		zap.S().Warn("Error disconnecting mongodb: ", err.Error())
 	} else {
 		zap.S().Info("disconnecting mongodb...")
 	}

@@ -2,16 +2,15 @@ package gcp
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"os"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
+	"github.com/birdglove2/nitad-backend/utils"
+	"go.uber.org/zap"
 )
 
 type ClientUploader struct {
@@ -29,7 +28,7 @@ func Init() {
 
 	client, err := storage.NewClient(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to create gcp client: %v", err)
+		zap.S().Fatal("Failed to create gcp client: ", err.Error())
 	}
 
 	uploader = &ClientUploader{
@@ -47,10 +46,10 @@ func UploadFile(ctx context.Context, f multipart.File, object string) error {
 	// Upload an object with storage.Writer.
 	wc := uploader.cl.Bucket(uploader.bucketName).Object(object).NewWriter(ctx)
 	if _, err := io.Copy(wc, f); err != nil {
-		return fmt.Errorf("GCP io.Copy: %v", err)
+		zap.S().Fatal("GCP io.Copy: ", err.Error())
 	}
 	if err := wc.Close(); err != nil {
-		return fmt.Errorf("GCP Writer.Close: %v", err)
+		zap.S().Fatal("GCP Writer.Close: ", err.Error())
 	}
 
 	return nil
@@ -64,7 +63,7 @@ func UploadImages(ctx context.Context, files []*multipart.FileHeader, collection
 			return urls, errors.NewBadRequestError(err.Error())
 		}
 		defer blobFile.Close()
-		filename := functions.GetUniqueFilename(file.Filename)
+		filename := utils.GetUniqueFilename(file.Filename)
 
 		//TODO: channel this
 		err = UploadFile(ctx, blobFile, collectionName+"/"+filename)

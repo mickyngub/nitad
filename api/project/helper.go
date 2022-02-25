@@ -5,9 +5,9 @@ import (
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -107,7 +107,7 @@ func IncrementView(id primitive.ObjectID, val int) {
 	)
 
 	if err != nil {
-		zap.S().Fatal("Incrementing view error: ", err.Error())
+		zap.S().Warn("Incrementing view error: ", err.Error())
 	}
 }
 
@@ -119,7 +119,7 @@ func HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.Cust
 
 	err = gcp.DeleteImages(ctx, project.Images, collectionName)
 	if err != nil {
-		zap.S().Fatal("Delete images failed", project.Images)
+		zap.S().Warn("Delete images failed", project.Images)
 	}
 	return nil
 }
@@ -137,11 +137,11 @@ func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID)
 		up.Images = RemoveSliceFromSlice(up.Images, up.DeleteImages)
 		err = gcp.DeleteImages(c.Context(), up.DeleteImages, collectionName)
 		if err != nil {
-			zap.S().Fatal("Delete images failed", up.DeleteImages)
+			zap.S().Warn("Delete images failed", up.DeleteImages)
 		}
 	}
 
-	files, err := functions.ExtractUpdatedFiles(c, "images")
+	files, err := utils.ExtractUpdatedFiles(c, "images")
 	if err != nil {
 		return up, err
 	}

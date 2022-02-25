@@ -6,9 +6,9 @@ import (
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/functions"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -75,7 +75,7 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
 
-	objectId, err := functions.IsValidObjectId(projectId)
+	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -107,7 +107,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
 	}
 
-	files, err := functions.ExtractFiles(c, "images")
+	files, err := utils.ExtractFiles(c, "images")
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -131,7 +131,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 
 func (contc *Controller) EditProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
-	projectIdObjectId, err := functions.IsValidObjectId(projectId)
+	projectIdObjectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -157,7 +157,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 // delete the project
 func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
-	objectId, err := functions.IsValidObjectId(projectId)
+	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
