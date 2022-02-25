@@ -12,6 +12,7 @@ import (
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.uber.org/zap"
 )
 
@@ -38,6 +39,11 @@ func main() {
 	app := config.InitApp()
 	api.CreateAPI(app)
 	cronjob.Init()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "https://main.d2awhr68ui4egx.amplifyapp.com, http://localhost:3000",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.7 !"})
