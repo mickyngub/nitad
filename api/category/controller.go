@@ -1,6 +1,8 @@
 package category
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -31,21 +33,23 @@ var collectionName = database.COLLECTIONS["CATEGORY"]
 
 // list all categories
 func (contc *Controller) ListCategory(c *fiber.Ctx) error {
-	var cate []*Category
-	key := "allcate"
-	redis.GetCache(key, &cate)
-	if cate != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cate})
-	}
+	// var cate []*Category
+	// redis.GetCache(key, &cate)
+	// if cate != nil {
+	// 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cate})
+	// }
+	log.Println("check3")
 
 	categories, err := FindAll()
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+	log.Println("check4")
 
+	key := "allcate"
 	redis.SetCache(key, categories)
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": categories})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "database"})
 }
 
 // get category by id

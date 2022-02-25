@@ -50,6 +50,8 @@ func GetCache(key string, dest interface{}) {
 	if err != nil {
 		zap.S().Warn("Get Cache Unmarshal error: " + err.Error())
 	}
+	zap.S().Info("Geting from Cache  " + key)
+
 }
 
 // set cache for any int value ex: views
