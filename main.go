@@ -37,13 +37,16 @@ func main() {
 	gcp.Init()
 	redis.Init()
 	app := config.InitApp()
-	api.CreateAPI(app)
-	cronjob.Init()
-
+	
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "https://main.d2awhr68ui4egx.amplifyapp.com, http://localhost:3000",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
+	
+	api.CreateAPI(app)
+	cronjob.Init()
+
+	
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.7 !"})
