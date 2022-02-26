@@ -11,7 +11,7 @@ import (
 
 func NewController(
 	subcategoryRoute fiber.Router,
-) {
+) *Controller {
 
 	controller := &Controller{}
 
@@ -22,6 +22,8 @@ func NewController(
 	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
+
+	return controller
 }
 
 type Controller struct{}

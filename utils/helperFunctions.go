@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
+
+// RandomString generate random string of length n
+func RandomString(n int) string {
+	alphabet := "abcdefghijklmnopqrstuvwxyz"
+
+	var sb strings.Builder
+	k := len(alphabet)
+
+	for i := 0; i < n; i++ {
+		c := alphabet[rand.Intn(k)]
+		sb.WriteByte(c)
+	}
+
+	return sb.String()
+}
 
 func IsValidObjectId(id string) (primitive.ObjectID, errors.CustomError) {
 	objectId, err := primitive.ObjectIDFromHex(id)
