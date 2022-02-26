@@ -40,7 +40,6 @@ func HandleCacheGetProjectById(c *fiber.Ctx, projectId string) *Project {
 		}
 		log.Println("not nexting")
 
-		// return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result from cache": p})
 		return &p
 	}
 	log.Println("nexting")

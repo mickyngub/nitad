@@ -72,7 +72,7 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	cacheProject := HandleCacheGetProjectById(c, projectId)
 	// log.Println("6", projectId)
 	if cacheProject != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result from cache": cacheProject})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
 	}
 
 	log.Println("7")

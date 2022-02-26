@@ -1,7 +1,6 @@
 package category
 
 import (
-	"log"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -50,7 +49,7 @@ func FindAll() ([]Category, errors.CustomError) {
 	if err = cursor.All(ctx, &result); err != nil {
 		return result, errors.NewBadRequestError(err.Error())
 	}
-	log.Println("check 6")
+	// log.Println("check 6")
 
 	return result, nil
 }

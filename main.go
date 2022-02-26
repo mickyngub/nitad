@@ -56,6 +56,9 @@ func main() {
 	app.Use(cache.New(cache.Config{
 		Expiration: redis.DefaultCacheExpireTime,
 		Storage:    redisStore,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.Path() + "?" + string(c.Request().URI().QueryString())
+		},
 		Next: func(c *fiber.Ctx) bool {
 			// log.Println("0")
 			isTrue := project.IsGetProjectPath(c) // handle incrementing view in cache
