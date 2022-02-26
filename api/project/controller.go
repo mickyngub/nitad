@@ -61,14 +61,14 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
 	}
 
-	projects, err := FindAll(pq)
+	projects, paginate, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
 	redis.SetCache(queryString, projects)
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 }
 
 // get project by id

@@ -3,6 +3,7 @@ package project
 import (
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -34,34 +35,53 @@ func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	return result[0], nil
 }
 
-func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
+type Count struct {
+	ID int64
+}
+
+func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
+	pagin := paginate.Paginate{}
 	result := []Project{}
 
 	_, sids, err := subcategory.FindByIds(pq.SubcategoryId)
 	if err != nil {
-		return result, err
+		return result, pagin, err
 	}
 
 	// stages := GetLookupStage()
 	pipe := mongo.Pipeline{}
-	pipe = AppendQueryStage(pipe, pq)
 
 	for _, sid := range sids {
 		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
 	}
 
-	cursor, aggregateErr := projectCollection.Aggregate(ctx, pipe)
+	countPipe := AppendCountStage(pipe)
+
+	count := []Count{}
+	cursor, aggregateErr := projectCollection.Aggregate(ctx, countPipe)
 	if aggregateErr != nil {
-		return result, errors.NewBadRequestError(aggregateErr.Error())
+		return result, pagin, errors.NewBadRequestError(aggregateErr.Error())
+	}
+
+	if curErr := cursor.All(ctx, &count); curErr != nil {
+		return result, pagin, errors.NewBadRequestError(curErr.Error())
+	}
+
+	queryPipe := AppendQueryStage(pipe, pq)
+	cursor, aggregateErr = projectCollection.Aggregate(ctx, queryPipe)
+	if aggregateErr != nil {
+		return result, pagin, errors.NewBadRequestError(aggregateErr.Error())
 	}
 
 	if curErr := cursor.All(ctx, &result); curErr != nil {
-		return result, errors.NewBadRequestError(curErr.Error())
+		return result, pagin, errors.NewBadRequestError(curErr.Error())
 	}
 
-	return result, nil
+	pagin = *(paginate.New(pq.Limit, pq.Page, count[0].ID))
+
+	return result, pagin, nil
 }
 
 func Add(p *Project) (*Project, errors.CustomError) {
