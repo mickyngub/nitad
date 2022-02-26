@@ -11,9 +11,10 @@ import (
 
 func NewController(
 	subcategoryRoute fiber.Router,
+	gcpService gcp.ClientUploader,
 ) *Controller {
 
-	controller := &Controller{}
+	controller := &Controller{gcpService}
 
 	subcategoryRoute.Get("/", controller.ListSubcategory)
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
@@ -26,7 +27,9 @@ func NewController(
 	return controller
 }
 
-type Controller struct{}
+type Controller struct {
+	gcpService gcp.ClientUploader
+}
 
 var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
@@ -64,7 +67,8 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
+	contc.gcpService.UploadImages()
+	// imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}

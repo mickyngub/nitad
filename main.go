@@ -31,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	database.ConnectDb()
+	database.ConnectDb(os.Getenv("MONGO_URI"))
 	defer database.DisconnectDb()
 
 	gcp.Init()

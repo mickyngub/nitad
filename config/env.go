@@ -10,7 +10,7 @@ import (
 
 func Loadenv() {
 	if os.Getenv("APP_ENV") != "production" {
-		err := godotenv.Load(".env")
+		err := godotenv.Load()
 		if err != nil {
 			fmt.Println("Error loading .env file!", err.Error())
 		}

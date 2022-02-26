@@ -13,15 +13,20 @@ import (
 	"go.uber.org/zap"
 )
 
-type ClientUploader struct {
+type ClientUploader interface {
+	UploadFile(ctx context.Context, f multipart.File, object string) error
+	UploadImages(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError)
+	DeleteFile(ctx context.Context, object string) errors.CustomError
+	DeleteImages(ctx context.Context, imageURLS []string, collectionName string) errors.CustomError
+}
+
+type clientUploader struct {
 	cl         *storage.Client
 	bucketName string
 	apiPrefix  string
 }
 
-var uploader *ClientUploader
-
-func Init() {
+func Init() ClientUploader {
 	if os.Getenv("APP_ENV") != "production" {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
 	}
@@ -31,15 +36,16 @@ func Init() {
 		zap.S().Fatal("Failed to create gcp client: ", err.Error())
 	}
 
-	uploader = &ClientUploader{
+	return &clientUploader{
 		cl:         client,
 		bucketName: os.Getenv("GCP_BUCKETNAME"),
 		apiPrefix:  os.Getenv("GCP_API_PREFIX"),
 	}
+
 }
 
 // UploadFile uploads an object
-func UploadFile(ctx context.Context, f multipart.File, object string) error {
+func (uploader *clientUploader) UploadFile(ctx context.Context, f multipart.File, object string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -55,7 +61,7 @@ func UploadFile(ctx context.Context, f multipart.File, object string) error {
 	return nil
 }
 
-func UploadImages(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError) {
+func (uploader *clientUploader) UploadImages(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError) {
 	urls := []string{}
 	for _, file := range files {
 		blobFile, err := file.Open()
@@ -66,7 +72,7 @@ func UploadImages(ctx context.Context, files []*multipart.FileHeader, collection
 		filename := utils.GetUniqueFilename(file.Filename)
 
 		//TODO: channel this
-		err = UploadFile(ctx, blobFile, collectionName+"/"+filename)
+		err = uploader.UploadFile(ctx, blobFile, collectionName+"/"+filename)
 		if err != nil {
 			return urls, errors.NewBadRequestError(err.Error())
 		}
@@ -76,12 +82,12 @@ func UploadImages(ctx context.Context, files []*multipart.FileHeader, collection
 	return urls, nil
 }
 
-func DeleteImages(ctx context.Context, imageURLS []string, collectionName string) errors.CustomError {
+func (uploader *clientUploader) DeleteImages(ctx context.Context, imageURLS []string, collectionName string) errors.CustomError {
 	for _, url := range imageURLS {
 		filepath := collectionName + "/" + url
 
 		//TODO: channel this
-		err := DeleteFile(ctx, filepath)
+		err := uploader.DeleteFile(ctx, filepath)
 		if err != nil {
 			return err
 		}
@@ -90,7 +96,7 @@ func DeleteImages(ctx context.Context, imageURLS []string, collectionName string
 }
 
 // deleteFile removes specified object.
-func DeleteFile(ctx context.Context, object string) errors.CustomError {
+func (uploader *clientUploader) DeleteFile(ctx context.Context, object string) errors.CustomError {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 

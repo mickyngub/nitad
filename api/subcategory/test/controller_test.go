@@ -1,48 +1,17 @@
 package subcategory_test
 
 import (
+	"bytes"
 	"encoding/json"
-	"io/ioutil"
-	"log"
+	"fmt"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"testing"
 
 	"github.com/birdglove2/nitad-backend/utils"
-	"github.com/go-playground/assert/v2"
+	gomock "github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
-
-// type Subcategory struct {
-// 	ID        primitive.ObjectID `bson:"_id,omitempty`
-// 	Title     string             `bson:"title,omitempty`
-// 	Image     string             `bson:"image,omitempty`
-// 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-// 	updatedAt time.Time          `bson:"updated_at" json:"updated_at"`
-// }
-
-// type SubcategoryResponse struct {
-// 	success bool
-// 	result  Subcategory
-// }
-
-// func TestDoStuffWithTestServer(t *testing.T) {
-
-// 	config.Loadenv()
-// 	database.ConnectDb()
-// 	app := config.InitApp()
-// 	api.CreateAPI(app)
-
-// 	req := httptest.NewRequest("GET", "/subcategory", nil)
-// 	req.Header.Set("X-Custom-Header", "hi")
-
-// 	resp, _ := app.Test(req)
-// 	bodyByte, _ := ioutil.ReadAll(resp.Body)
-
-// 	var jsonMap map[string]interface{}
-// 	json.Unmarshal(bodyByte, &jsonMap)
-// 	fmt.Println("this is getting method", jsonMap)
-// }
 
 //
 func randomImages(n int) []*multipart.FileHeader {
@@ -55,45 +24,120 @@ func randomImages(n int) []*multipart.FileHeader {
 	return results
 }
 
-func TestListSubcategory(t *testing.T) {
-
-	url := "http://localhost:3000/api/v1/subcategory"
-	resp, err := http.Get(url)
-
-	bodyByte, _ := ioutil.ReadAll(resp.Body)
-
-	var jsonMap map[string]interface{}
-	json.Unmarshal(bodyByte, &jsonMap)
-	log.Println(jsonMap["result"])
-
-	assert.Equal(t, err, nil)
-	assert.Equal(t, true, jsonMap["success"])
-	assert.Equal(t, "dummy subcategory title", jsonMap["result"].(map[string]interface{})["title"])
-	assert.Equal(t, "dummy subcategory image", jsonMap["result"].(map[string]interface{})["image"])
-}
-
-func TestAddSubcategory(t *testing.T) {
-	form := url.Values{}
-	form.Add("title", "dummy subcategory title")
-	form.Add("image", "randomImages(2)[0]")
-
-	URL := "http://localhost:3000/api/v1/subcategory"
-	resp, _ := http.PostForm(URL, form)
-	bodyByte, _ := ioutil.ReadAll(resp.Body)
-
-	var jsonMap map[string]interface{}
-	json.Unmarshal(bodyByte, &jsonMap)
-	log.Println(jsonMap["result"])
-
-	assert.Equal(t, true, jsonMap["success"])
-	assert.Equal(t, "dummy subcategory title", jsonMap["result"].(map[string]interface{})["title"])
-	assert.Equal(t, "dummy subcategory image", jsonMap["result"].(map[string]interface{})["image"])
-
-}
-
 // func TestGetSubcategoryById(t *testing.T) {
+// 	testCases := []struct {
+// 		name          string
+// 		checkResponse func(*testing.T, *http.Response)
+// 	}{
+// 		{
+// 			name: "OK",
+// 			checkResponse: func(t *testing.T, resp *http.Response) {
+// 				require.Equal(t, http.StatusOK, resp.StatusCode)
+// 			},
+// 		},
+// 		{
+// 			name: "Unauthorized",
+// 			checkResponse: func(t *testing.T, resp *http.Response) {
+// 				require.Equal(t, http.StatusOK, resp.StatusCode)
+// 			},
+// 		},
+// 	}
 
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			fmt.Println(3)
+
+// 			server := newTestServer(t)
+
+// 			url := "/api/v1/subcategory"
+// 			request, err := http.NewRequest(http.MethodGet, url, nil)
+// 			fmt.Println(1)
+// 			require.Equal(t, err, nil)
+
+// 			fmt.Println(2)
+
+// 			resp, err := server.Test(request)
+
+// 			fmt.Println(resp)
+
+// 			require.Equal(t, err, nil)
+
+// 			tc.checkResponse(t, resp)
+
+// 		})
+// 	}
 // }
+
+func TestAddSubcategoryById(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// gcpService := NewMockClientUploader(ctrl)
+
+	// gcpService.EXPECT
+
+	testCases := []struct {
+		name           string
+		body           map[string]interface{}
+		collectionName string
+		buildMock      func(gcpService *MockClientUploader, collectionName string)
+		checkResponse  func(*testing.T, *http.Response)
+	}{
+		{
+			name: "OK",
+			body: map[string]interface{}{
+				"title": "test title dummy subcategory",
+				"image": randomImages(2),
+			},
+			collectionName: "asdfasdfasdf",
+			buildMock: func(gcpService *MockClientUploader, collectionName string) {
+				gcpService.EXPECT().UploadImages(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return([]string{"dummy url"}, nil)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+		},
+		{
+			name: "FAIL",
+			buildMock: func(gcpService *MockClientUploader, collectionName string) {
+				gcpService.EXPECT().UploadImages(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return(nil, nil)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			gcpService := NewMockClientUploader(ctrl)
+
+			tc.buildMock(gcpService, tc.collectionName)
+
+			server := newTestServer(t, gcpService)
+
+			url := "/api/v1/subcategory"
+
+			data, _ := json.Marshal(tc.body)
+			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+
+			require.Equal(t, err, nil)
+
+			resp, err := server.Test(request)
+
+			fmt.Println(resp)
+
+			require.Equal(t, err, nil)
+
+			tc.checkResponse(t, resp)
+
+		})
+	}
+}
 
 // it should add a subcategory successfully
 // it should not add a subcategory if required fields are not provided correctly
