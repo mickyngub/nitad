@@ -50,5 +50,10 @@ func Checkenv() errors.CustomError {
 	if os.Getenv("JWT_SECRET") == "" {
 		return errors.NewInternalServerError("JWT_SECRET required")
 	}
+
+	if os.Getenv("ALLOW_ORIGINS_ENDPOINT") == "" {
+		return errors.NewInternalServerError("ALLOW_ORIGINS_ENDPOINT required")
+	}
+
 	return nil
 }
