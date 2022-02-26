@@ -25,6 +25,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_ENDPOINT: ${{ secrets.REDIS_ENDPOINT }}
           REDIS_DB_PASSWORD: ${{ secrets.REDIS_DB_PASSWORD }}
+          ALLOW_ORIGINS_ENDPOINT: ${{ secrets.ALLOW_ORIGINS_ENDPOINT }}
 
       - name: Google Cloud Authentication
         uses: google-github-actions/auth@v0
