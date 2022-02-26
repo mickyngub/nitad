@@ -15,8 +15,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/zap"
 )
 
@@ -46,7 +46,6 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	
 	app.Use(logger.New(logger.Config{
 		Format:     "[${ip}]:${port} ${status} - ${method} ${path}\n",
 		TimeFormat: "02-Jan-2006",
@@ -59,15 +58,17 @@ func main() {
 		Storage:    redisStore,
 		Next: func(c *fiber.Ctx) bool {
 			// log.Println("0")
-			return project.IsGetProjectPath(c) // handle incrementing view in cache
+			isTrue := project.IsGetProjectPath(c) // handle incrementing view in cache
+			// zap.S().Info(isTrue)
+			return isTrue
 		},
-
+	}))
 
 	api.CreateAPI(app)
 	cronjob.Init()
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.8  !"})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.9  !"})
 	})
 
 	app.All("*", func(c *fiber.Ctx) error {

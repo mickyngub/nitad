@@ -28,7 +28,8 @@ func New(config ...Config) *Storage {
 		options, err = redis.ParseURL(cfg.URL)
 		options.TLSConfig = cfg.TLSConfig
 		if err != nil {
-			panic(err)
+			zap.S().Warn(err.Error())
+
 		}
 	} else {
 		options = &redis.Options{
@@ -44,13 +45,15 @@ func New(config ...Config) *Storage {
 
 	// Test connection
 	if err := db.Ping(context.Background()).Err(); err != nil {
-		panic(err)
+		zap.S().Warn(err.Error())
+
 	}
 
 	// Empty collection if Clear is true
 	if cfg.Reset {
 		if err := db.FlushDB(context.Background()).Err(); err != nil {
-			panic(err)
+			zap.S().Warn(err.Error())
+
 		}
 	}
 
