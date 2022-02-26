@@ -31,6 +31,10 @@ var SORTING = map[string]string{
 	"createdAt": "createdAt",
 }
 
+func AppendCountStage(pipe mongo.Pipeline) mongo.Pipeline {
+	return append(pipe, bson.D{{Key: "$count", Value: "id"}})
+}
+
 func AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 	pq = SetDefaultQuery(pq)
 
