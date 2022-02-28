@@ -89,67 +89,29 @@ func Add(p *Project) (*Project, errors.CustomError) {
 
 	now := time.Now()
 
-	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
-		{Key: "title", Value: p.Title},
-		{Key: "description", Value: p.Description},
-		{Key: "authors", Value: p.Authors},
-		{Key: "emails", Value: p.Emails},
-		{Key: "inspiration", Value: p.Inspiration},
-		{Key: "abstract", Value: p.Abstract},
-		{Key: "images", Value: p.Images},
-		{Key: "videos", Value: p.Videos},
-		{Key: "keywords", Value: p.Keywords},
-		{Key: "status", Value: p.Status},
-		{Key: "category", Value: p.Category},
-		{Key: "views", Value: 0},
-		{Key: "createdAt", Value: now},
-		{Key: "updatedAt", Value: now},
-	})
+	p.Views = 0
+	p.CreatedAt = now
+	p.UpdatedAt = now
+	insertRes, insertErr := collection.InsertOne(ctx, &p)
 
 	if insertErr != nil {
 		return p, errors.NewBadRequestError(insertErr.Error())
 	}
 
 	p.ID = insertRes.InsertedID.(primitive.ObjectID)
-	p.CreatedAt = now
-	p.UpdatedAt = now
-	p.Views = 0
-
 	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, p *UpdateProject) (*UpdateProject, errors.CustomError) {
-
+func Edit(p *Project) (*Project, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	now := time.Now()
-	_, updateErr := collection.UpdateByID(
-		ctx,
-		oid,
-		bson.D{{
-			Key: "$set", Value: bson.D{
-				{Key: "title", Value: p.Title},
-				{Key: "description", Value: p.Description},
-				{Key: "authors", Value: p.Authors},
-				{Key: "emails", Value: p.Emails},
-				{Key: "inspiration", Value: p.Inspiration},
-				{Key: "abstract", Value: p.Abstract},
-				{Key: "images", Value: p.Images},
-				{Key: "videos", Value: p.Videos},
-				{Key: "keywords", Value: p.Keywords},
-				{Key: "status", Value: p.Status},
-				{Key: "category", Value: p.Category},
-				{Key: "updatedAt", Value: now},
-			},
-		},
-		})
+	p.UpdatedAt = now
+	_, updateErr := collection.UpdateByID(ctx, p.ID, bson.D{{Key: "$set", Value: &p}})
 
 	if updateErr != nil {
 		return p, errors.NewBadRequestError("edit project error: " + updateErr.Error())
 	}
-
-	p.ID = oid
-	p.UpdatedAt = now
 
 	return p, nil
 }

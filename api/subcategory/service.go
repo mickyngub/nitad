@@ -36,53 +36,34 @@ func Add(s *Subcategory) (*Subcategory, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	now := time.Now()
-	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
-		{Key: "title", Value: s.Title},
-		{Key: "image", Value: s.Image},
-		{Key: "createdAt", Value: now},
-		{Key: "updatedAt", Value: now},
-	})
-
+	s.CreatedAt = now
+	s.UpdatedAt = now
+	insertRes, insertErr := collection.InsertOne(ctx, &s)
 	if insertErr != nil {
 		return s, errors.NewBadRequestError(insertErr.Error())
 	}
 
 	s.ID = insertRes.InsertedID.(primitive.ObjectID)
-	s.CreatedAt = now
-	s.UpdatedAt = now
 
 	return s, nil
 }
 
-func Edit(oid primitive.ObjectID, ns *Subcategory) (*Subcategory, errors.CustomError) {
+func Edit(s *Subcategory) (*Subcategory, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
-	result := new(Subcategory)
-
 	now := time.Now()
+	s.UpdatedAt = now
 	_, updateErr := collection.UpdateByID(
 		ctx,
-		oid,
+		s.ID,
 		bson.D{{
-			Key: "$set", Value: bson.D{
-				{Key: "title", Value: ns.Title},
-				{Key: "image", Value: ns.Image},
-				{Key: "updatedAt", Value: now},
-			},
-		},
-		})
+			Key: "$set", Value: &s}})
 
 	if updateErr != nil {
-		return result, errors.NewBadRequestError(updateErr.Error())
+		return s, errors.NewBadRequestError(updateErr.Error())
 	}
 
-	result.ID = oid
-	result.Title = ns.Title
-	result.Image = ns.Image
-	result.CreatedAt = ns.CreatedAt
-	result.UpdatedAt = now
-
-	return result, nil
+	return s, nil
 }
 
 func Delete(oid primitive.ObjectID) errors.CustomError {

@@ -22,8 +22,8 @@ func NewController(
 	projectRoute.Get("/:projectId", controller.GetProject)
 
 	projectRoute.Use(admin.IsAuth())
-	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
-	projectRoute.Put("/:projectId", EditProjectValidator, controller.EditProject)
+	projectRoute.Post("/", AddAndEditProjectValidator, controller.AddProject)
+	projectRoute.Put("/:projectId", AddAndEditProjectValidator, controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
 }
@@ -95,21 +95,32 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
 	}
 
-	files, err := utils.ExtractFiles(c, "images")
+	files, err := utils.ExtractFiles(c, "report")
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	reportURL, err := gcp.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
+	files, err = utils.ExtractFiles(c, "images")
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+	imageURLs, err := gcp.UploadFiles(c.Context(), files, collectionName)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	projectBody.Report = reportURL
 	projectBody.Images = imageURLs
 
 	result, err := Add(projectBody)
 	if err != nil {
-		// if there is any error, remove the uploaded file from gcp
-		gcp.DeleteImages(c.Context(), imageURLs, collectionName)
+		// if there is any error, remove the uploaded files from gcp
+		imageURLs = append(imageURLs, reportURL)
+		gcp.DeleteFiles(c.Context(), imageURLs, collectionName)
 		return errors.Throw(c, err)
 	}
 
@@ -119,22 +130,23 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 
 func (contc *Controller) EditProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
-	projectIdObjectId, err := utils.IsValidObjectId(projectId)
+	oid, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	updateProjectBody, ok := c.Locals("updateProjectBody").(*UpdateProject)
+	updateProject, ok := c.Locals("projectBody").(*Project)
 	if !ok {
 		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
 	}
 
-	updateProjectBody, err = HandleUpdateImages(c, updateProjectBody, projectIdObjectId)
+	updateProject.ID = oid
+	updateProject, err = HandleUpdateReportAndImages(c, updateProject)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(projectIdObjectId, updateProjectBody)
+	result, err := Edit(updateProject)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -150,16 +162,19 @@ func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = HandleDeleteImages(c.Context(), objectId)
+	project, err := GetById(objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return err
 	}
+
+	gcp.DeleteFile(c.Context(), project.Report, collectionName)
+	gcp.DeleteFiles(c.Context(), project.Images, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + projectId + " successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
 
 }
