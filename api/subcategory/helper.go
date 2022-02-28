@@ -1,12 +1,9 @@
 package subcategory
 
 import (
-	"context"
-
 	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
 
-	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -78,17 +75,6 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory) (*Subcategory, errors.Custo
 
 	s.CreatedAt = oldSubcategory.CreatedAt
 	return s, nil
-}
-
-func HandleDeleteImage(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
-	oldSubcategory, err := GetById(oid)
-	if err != nil {
-		return err
-	}
-
-	gcp.DeleteFile(ctx, oldSubcategory.Image, collectionName)
-
-	return nil
 }
 
 func BsonToSubcategory(b bson.M) Subcategory {

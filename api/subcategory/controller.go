@@ -119,10 +119,12 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = HandleDeleteImage(c.Context(), objectId)
+	oldSubcategory, err := GetById(objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return err
 	}
+
+	gcp.DeleteFile(c.Context(), oldSubcategory.Image, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {
