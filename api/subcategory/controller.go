@@ -1,6 +1,8 @@
 package subcategory
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -62,7 +64,7 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
+	imageFilename, err := gcp.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -71,7 +73,7 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 	c.BodyParser(sr)
 	var subcategory Subcategory
 	subcategory.Title = sr.Title
-	subcategory.Image = imageURLs[0]
+	subcategory.Image = imageFilename
 
 	result, err := Add(&subcategory)
 	if err != nil {
@@ -89,14 +91,19 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	subcategory := new(Subcategory)
-	c.BodyParser(subcategory)
-	subcategory, err = HandleUpdateImage(c, subcategory, objectId)
+	updateSubcategory, ok := c.Locals("subcategoryBody").(*Subcategory)
+	if !ok {
+		return errors.Throw(c, errors.NewInternalServerError("Edit subcategory went wrong!"))
+	}
+
+	updateSubcategory.ID = objectId
+	updateSubcategory, err = HandleUpdateImage(c, updateSubcategory)
+	log.Println(updateSubcategory)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(objectId, subcategory)
+	result, err := Edit(updateSubcategory)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
