@@ -1,8 +1,6 @@
 package project
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/api/validators"
@@ -13,23 +11,22 @@ import (
 
 func GetProjectValidator(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
-	log.Println("4", projectId)
+	// log.Println("4", projectId)
 
 	_, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	log.Println("5", projectId)
+	// log.Println("5", projectId)
 
 	HandleCacheGetProjectById(c, projectId)
-	log.Println("6", projectId)
+	// log.Println("6", projectId)
 
 	return c.Next()
 }
 
 func AddAndEditProjectValidator(c *fiber.Ctx) error {
 	pr := new(ProjectRequest)
-	c.BodyParser(pr)
 
 	if err := c.BodyParser(pr); err != nil {
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
