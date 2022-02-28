@@ -4,19 +4,14 @@ import (
 	"os"
 
 	"github.com/birdglove2/nitad-backend/api"
-	"github.com/birdglove2/nitad-backend/api/project"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/cronjob"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cache"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/zap"
 )
 
@@ -41,33 +36,9 @@ func main() {
 	gcp.Init()
 
 	app := config.InitApp()
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
-		AllowHeaders: "Origin, Content-Type, Accept",
-	}))
-
-	app.Use(logger.New(logger.Config{
-		Format:     "[${ip}]:${port} ${status} - ${method} ${path}\n",
-		TimeFormat: "02-Jan-2006",
-		TimeZone:   "Asia/Bangkok",
-	}))
-
-	redisStore := redis.Init()
-	app.Use(cache.New(cache.Config{
-		Expiration: redis.DefaultCacheExpireTime,
-		Storage:    redisStore,
-		KeyGenerator: func(c *fiber.Ctx) string {
-			return c.Path() + "?" + string(c.Request().URI().QueryString())
-		},
-		Next: func(c *fiber.Ctx) bool {
-			// log.Println("0")
-			isTrue := project.IsGetProjectPath(c) // handle incrementing view in cache
-			// zap.S().Info(isTrue)
-			return isTrue
-		},
-	}))
 
 	api.CreateAPI(app)
+
 	cronjob.Init()
 
 	app.Get("/", func(c *fiber.Ctx) error {
