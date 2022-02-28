@@ -2,9 +2,9 @@ package errors
 
 import "github.com/gofiber/fiber/v2"
 
-// func NewTooManyRequestsError() CustomError {
-// 	return &tooManyRequestsError{}
-// }
+func NewTooManyRequestsError() CustomError {
+	return &tooManyRequestsError{}
+}
 
 type tooManyRequestsError struct{}
 
