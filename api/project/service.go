@@ -79,7 +79,11 @@ func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError
 		return result, pagin, errors.NewBadRequestError(curErr.Error())
 	}
 
-	pagin = *(paginate.New(pq.Limit, pq.Page, count[0].ID))
+	if len(count) > 0 {
+		pagin = *(paginate.New(pq.Limit, pq.Page, count[0].ID))
+	} else {
+		pagin = *(paginate.New(pq.Limit, pq.Page, 0))
+	}
 
 	return result, pagin, nil
 }
