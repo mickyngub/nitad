@@ -10,6 +10,7 @@ import (
 
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jinzhu/copier"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
@@ -84,4 +85,14 @@ func WriteFileToPath(f *multipart.FileHeader, filename string) {
 	if newErr != nil {
 		zap.S().Warn(newErr.Error())
 	}
+}
+
+// CopyStruct use `copier` pkg to copy struct field
+// it log error if occurred, and return error from `copier` pkg
+func CopyStruct(from interface{}, to interface{}) errors.CustomError {
+	if err := copier.Copy(to, from); err != nil {
+		return errors.NewInternalServerError("Copy struct failed" + err.Error())
+	}
+
+	return nil
 }
