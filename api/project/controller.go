@@ -162,16 +162,19 @@ func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = HandleDeleteImages(c.Context(), objectId)
+	project, err := GetById(objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return err
 	}
+
+	gcp.DeleteFile(c.Context(), project.Report, collectionName)
+	gcp.DeleteFiles(c.Context(), project.Images, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + projectId + " successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
 
 }

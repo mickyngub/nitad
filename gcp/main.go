@@ -3,7 +3,6 @@ package gcp
 import (
 	"context"
 	"io"
-	"log"
 	"mime/multipart"
 	"os"
 	"time"
@@ -103,10 +102,8 @@ func DeleteFile(ctx context.Context, filename string, collectionName string) {
 	defer cancel()
 
 	filepath := collectionName + "/" + filename
-	log.Println("deleting..", filepath)
 	o := uploader.cl.Bucket(uploader.bucketName).Object(filepath)
 	if err := o.Delete(ctx); err != nil {
 		zap.S().Warn("gcp deletion error, file= ", filename, " ", err.Error())
 	}
-
 }
