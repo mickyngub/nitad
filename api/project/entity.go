@@ -19,6 +19,8 @@ type Project struct {
 	Images      []string            `bson:"images,omitempty" json:"images"`
 	Videos      []string            `bson:"videos" json:"videos"`
 	Keywords    []string            `bson:"keywords" json:"keywords"`
+	Report      string              `bson:"report" json:"report"`
+	VirtualLink string              `bson:"virtualLink" json:"virtualLink"`
 	Status      string              `bson:"status" json:"status"`
 	Category    []category.Category `bson:"category" json:"category"`
 	Views       int                 `bson:"views" json:"views"`
@@ -35,7 +37,9 @@ type ProjectRequest struct {
 	Abstract    string                 `form:"abstract" validate:"required"`
 	Images      []multipart.FileHeader `form:"-"`
 	Videos      []string               `form:"videos" validate:"required"`
-	Keywords    []string               `form:"keywords" validate:"required"`
+	Keywords    []string               `form:"keywords"`
+	Report      multipart.FileHeader   `form:"-"`
+	VirtualLink string                 `form:"virtualLink"`
 	Status      string                 `form:"status" validate:"required"`
 	Category    []string               `form:"category" validate:"required"`
 	Subcategory []string               `form:"subcategory" validate:"required"`
