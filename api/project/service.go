@@ -118,7 +118,7 @@ func Add(p *Project) (*Project, errors.CustomError) {
 	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, p *UpdateProject) (*UpdateProject, errors.CustomError) {
+func Edit(oid primitive.ObjectID, p *Project) (*Project, errors.CustomError) {
 
 	collection, ctx := database.GetCollection(collectionName)
 

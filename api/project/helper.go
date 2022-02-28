@@ -121,7 +121,7 @@ func HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.Cust
 	return nil
 }
 
-func HandleUpdateImages(c *fiber.Ctx, up *UpdateProject, oid primitive.ObjectID) (*UpdateProject, errors.CustomError) {
+func HandleUpdateImages(c *fiber.Ctx, up *Project, oid primitive.ObjectID) (*Project, errors.CustomError) {
 	oldProject, err := GetById(oid)
 	if err != nil {
 		return up, err

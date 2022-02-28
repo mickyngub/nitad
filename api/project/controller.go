@@ -22,8 +22,8 @@ func NewController(
 	projectRoute.Get("/:projectId", controller.GetProject)
 
 	projectRoute.Use(admin.IsAuth())
-	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
-	projectRoute.Put("/:projectId", EditProjectValidator, controller.EditProject)
+	projectRoute.Post("/", AddAndEditProjectValidator, controller.AddProject)
+	projectRoute.Put("/:projectId", AddAndEditProjectValidator, controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
 }
@@ -124,7 +124,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	updateProjectBody, ok := c.Locals("updateProjectBody").(*UpdateProject)
+	updateProjectBody, ok := c.Locals("projectBody").(*Project)
 	if !ok {
 		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
 	}
