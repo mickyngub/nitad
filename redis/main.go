@@ -10,12 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// type Storage struct {
-// 	db *redis.Client
-// }
-
 var store *Storage
-var DefaultCacheExpireTime time.Duration = time.Second * 15
+var DefaultCacheExpireTime time.Duration = time.Second * 3
 
 func GetStore() *Storage {
 	return store

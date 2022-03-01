@@ -14,7 +14,6 @@ import (
 func IsGetProjectPath(c *fiber.Ctx) bool {
 	path := c.Path()
 	if strings.Contains(path, "/api/v1/project") {
-		// log.Println("2", c.Params("projectId")) //WARNING :wtf  ไม่เจอ งง ????
 		pathArr := strings.Split(path, "/")
 		projectId := pathArr[len(pathArr)-1]
 		_, err := utils.IsValidObjectId(projectId)
@@ -22,7 +21,6 @@ func IsGetProjectPath(c *fiber.Ctx) bool {
 			return false
 		}
 		if len(projectId) > 0 {
-			// log.Println("2")
 			return true
 		}
 	}

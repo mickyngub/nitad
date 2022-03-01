@@ -15,9 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-//FIXME:  cache
-// TODO: cache fiber storage แยก branch
-
 var PORT = os.Getenv("PORT")
 
 func main() {
