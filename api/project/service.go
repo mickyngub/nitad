@@ -39,6 +39,22 @@ type Count struct {
 	ID int64
 }
 
+func FindAllNoLimit() ([]Project, errors.CustomError) {
+	collection, ctx := database.GetCollection(collectionName)
+
+	var result []Project
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
+}
+
 func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 

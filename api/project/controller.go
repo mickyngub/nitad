@@ -48,12 +48,20 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
-	projects, paginate, err := FindAll(pq)
-	if err != nil {
-		return errors.Throw(c, err)
+	if pq.Limit == -1 {
+		projects, err := FindAllNoLimit()
+		if err != nil {
+			return errors.Throw(c, err)
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
+	} else {
+		projects, paginate, err := FindAll(pq)
+		if err != nil {
+			return errors.Throw(c, err)
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 }
 
 // get project by id
