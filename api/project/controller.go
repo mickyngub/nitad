@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/birdglove2/nitad-backend/api/admin"
+	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
@@ -48,19 +49,20 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
+	var projects []Project
+	var pagin paginate.Paginate
+	var err errors.CustomError
 	if pq.Limit == -1 {
-		projects, err := FindAllNoLimit()
-		if err != nil {
-			return errors.Throw(c, err)
-		}
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
+		projects, pagin, err = FindAllNoLimit()
 	} else {
-		projects, paginate, err := FindAll(pq)
-		if err != nil {
-			return errors.Throw(c, err)
-		}
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
+		projects, pagin, err = FindAll(pq)
 	}
+
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": pagin})
 
 }
 

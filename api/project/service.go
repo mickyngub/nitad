@@ -39,20 +39,22 @@ type Count struct {
 	ID int64
 }
 
-func FindAllNoLimit() ([]Project, errors.CustomError) {
+func FindAllNoLimit() ([]Project, paginate.Paginate, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
+	pagin := paginate.Paginate{}
 	var result []Project
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return result, pagin, errors.NewBadRequestError(err.Error())
 	}
 
 	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return result, pagin, errors.NewBadRequestError(err.Error())
 	}
 
-	return result, nil
+	pagin = *(paginate.New(len(result), 1, int64(len(result))))
+	return result, pagin, nil
 }
 
 func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError) {
