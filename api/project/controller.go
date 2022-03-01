@@ -1,10 +1,7 @@
 package project
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
@@ -49,43 +46,28 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
-	var projects []Project
-	var pagin paginate.Paginate
-	var err errors.CustomError
-	if pq.Limit == -1 {
-		projects, pagin, err = FindAllNoLimit()
-	} else {
-		projects, pagin, err = FindAll(pq)
-	}
-
+	projects, paginate, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": pagin})
-
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 }
 
 // get project by id
 func (contc *Controller) GetProject(c *fiber.Ctx) error {
-	// GetProjectValidator(c)
-
 	projectId := c.Params("projectId")
-	// objectId, _ := primitive.ObjectIDFromHex(projectId)
 
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	// log.Println("5", projectId)
 
 	cacheProject := HandleCacheGetProjectById(c, projectId)
-	// log.Println("6", projectId)
+
 	if cacheProject != nil {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
 	}
 
-	log.Println("7")
 	result, err := GetById(objectId)
 	if err != nil {
 		return errors.Throw(c, err)
@@ -93,7 +75,6 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 
 	IncrementView(objectId, 1)
 	redis.SetCache(c.Path(), result)
-	// log.Println("8")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }

@@ -25,3 +25,8 @@ type SubcategoryRequest struct {
 	Title string `form:"title" validate:"required"`
 	Image multipart.FileHeader
 }
+
+type SubcategorySearch struct {
+	ID    primitive.ObjectID `bson:"_id" json:"id"`
+	Title string             `bson:"title" json:"title"`
+}

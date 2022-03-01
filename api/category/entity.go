@@ -24,3 +24,9 @@ type CategoryRequest struct {
 	Title       string   `form:"title" validate:"required"`
 	Subcategory []string `form:"subcategory" validate:"required"`
 }
+
+type CategorySearch struct {
+	ID          primitive.ObjectID              `bson:"_id" json:"id"`
+	Title       string                          `bson:"title" json:"title"`
+	Subcategory []subcategory.SubcategorySearch `bson:"subcategory" json:"subcategory"`
+}

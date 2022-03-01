@@ -15,7 +15,6 @@ import (
 func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	// pipe := GetLookupStage()
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
 
@@ -39,22 +38,23 @@ type Count struct {
 	ID int64
 }
 
-func FindAllNoLimit() ([]Project, paginate.Paginate, errors.CustomError) {
+func SearchAll() ([]ProjectSearch, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
-	pagin := paginate.Paginate{}
-	var result []Project
-	cursor, err := collection.Find(ctx, bson.M{})
+	var result []ProjectSearch
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendProjectStage(pipe, []string{"title"})
+
+	cursor, err := collection.Aggregate(ctx, pipe)
 	if err != nil {
-		return result, pagin, errors.NewBadRequestError(err.Error())
+		return result, errors.NewBadRequestError(err.Error())
 	}
 
 	if err = cursor.All(ctx, &result); err != nil {
-		return result, pagin, errors.NewBadRequestError(err.Error())
+		return result, errors.NewBadRequestError(err.Error())
 	}
 
-	pagin = *(paginate.New(len(result), 1, int64(len(result))))
-	return result, pagin, nil
+	return result, nil
 }
 
 func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError) {
@@ -68,14 +68,13 @@ func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError
 		return result, pagin, err
 	}
 
-	// stages := GetLookupStage()
 	pipe := mongo.Pipeline{}
 
 	for _, sid := range sids {
 		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
 	}
 
-	countPipe := AppendCountStage(pipe)
+	countPipe := database.AppendCountStage(pipe)
 
 	count := []Count{}
 	cursor, aggregateErr := projectCollection.Aggregate(ctx, countPipe)

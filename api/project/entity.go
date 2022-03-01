@@ -47,12 +47,7 @@ type ProjectRequest struct {
 	DeleteImages []string               `form:"deleteImages"`
 }
 
-// type UpdateProject struct {
-// 	Project
-// 	DeleteImages []string `form:"deleteImages"`
-// }
-
-// type UpdateProjectRequest struct {
-// 	ProjectRequest
-// 	DeleteImages []string `form:"deleteImages"`
-// }
+type ProjectSearch struct {
+	ID    primitive.ObjectID `bson:"_id" json:"id"`
+	Title string             `bson:"title" json:"title"`
+}

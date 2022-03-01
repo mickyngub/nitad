@@ -5,24 +5,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func GetLookupStage() mongo.Pipeline {
-	pipe := mongo.Pipeline{}
-	// pipe = database.AppendLookupStage(pipe, "category")
-	// pipe = database.AppendLookupStage(pipe, "category.subcategory")
-	// pipe = database.AppendUnwindStage(pipe, "category")
-
-	return pipe
-}
-
 var SORTING = map[string]string{
 	"views":     "views",
 	"name":      "title",
 	"updatedAt": "updatedAt",
 	"createdAt": "createdAt",
-}
-
-func AppendCountStage(pipe mongo.Pipeline) mongo.Pipeline {
-	return append(pipe, bson.D{{Key: "$count", Value: "id"}})
 }
 
 func AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
