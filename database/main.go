@@ -20,6 +20,7 @@ var COLLECTIONS = map[string]string{
 	"CATEGORY":    "category",
 	"SUBCATEGORY": "subcategory",
 	"ADMIN":       "admin",
+	"SPATIAL":     "spatial",
 }
 
 func GetCollection(collectionName string) (*mongo.Collection, context.Context) {

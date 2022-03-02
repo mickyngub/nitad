@@ -5,8 +5,11 @@ import (
 	"time"
 
 	"github.com/birdglove2/nitad-backend/api/category"
+	"github.com/birdglove2/nitad-backend/database"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+var collectionName = database.COLLECTIONS["PROJECT"]
 
 type Project struct {
 	ID           primitive.ObjectID  `bson:"_id,omitempty" json:"id,omitempty"`
@@ -50,4 +53,12 @@ type ProjectRequest struct {
 type ProjectSearch struct {
 	ID    primitive.ObjectID `bson:"_id" json:"id"`
 	Title string             `bson:"title" json:"title"`
+}
+
+type ProjectQuery struct {
+	SubcategoryId []string `query:"subcategoryId"`
+	Sort          string   `query:"sort"`
+	By            int      `query:"by"`
+	Page          int      `query:"page"`
+	Limit         int      `query:"limit"`
 }

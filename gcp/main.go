@@ -34,7 +34,6 @@ func Init() {
 	uploader = &ClientUploader{
 		cl:         client,
 		bucketName: os.Getenv("GCP_BUCKETNAME"),
-		apiPrefix:  os.Getenv("GCP_API_PREFIX"),
 	}
 }
 

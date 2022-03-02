@@ -2,7 +2,6 @@ package project
 
 import (
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
@@ -27,16 +26,6 @@ func NewController(
 }
 
 type Controller struct{}
-
-var collectionName = database.COLLECTIONS["PROJECT"]
-
-type ProjectQuery struct {
-	SubcategoryId []string `query:"subcategoryId"`
-	Sort          string   `query:"sort"`
-	By            int      `query:"by"`
-	Page          int      `query:"page"`
-	Limit         int      `query:"limit"`
-}
 
 // list all projects
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
