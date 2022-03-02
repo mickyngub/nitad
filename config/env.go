@@ -33,9 +33,7 @@ func Checkenv() errors.CustomError {
 	// if os.Getenv("GCP_SERVICE_ACCOUNT") == "" {
 	// 	return errors.NewInternalServerError("GCP_SERVICE_ACCOUNT required")
 	// }
-	if os.Getenv("GCP_API_PREFIX") == "" {
-		return errors.NewInternalServerError("GCP_API_PREFIX required")
-	}
+
 	// if os.Getenv("GCP_WORKLOAD_IDENTITY_PROVIDER") == "" {
 	// 	return errors.NewInternalServerError("GCP_WORKLOAD_IDENTITY_PROVIDER required")
 	// }
