@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/api/project"
@@ -9,7 +8,6 @@ import (
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
@@ -31,11 +29,12 @@ func InitApp() *fiber.App {
 		AppName:       "Nitad",
 	})
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
-		AllowMethods: "GET,POST,PUT,DELETE",
-		AllowHeaders: "Origin, Content-Type, Accept",
-	}))
+	// WARNING: uncomment this in prod
+	// app.Use(cors.New(cors.Config{
+	// 	AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
+	// 	AllowMethods: "GET,POST,PUT,DELETE",
+	// 	AllowHeaders: "Origin, Content-Type, Accept",
+	// }))
 
 	app.Use(limiter.New(limiter.Config{
 		Max:        100,
