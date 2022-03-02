@@ -32,7 +32,7 @@ func InitApp() *fiber.App {
 	})
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
+		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
