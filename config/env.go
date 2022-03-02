@@ -57,5 +57,7 @@ func Checkenv() errors.CustomError {
 		return errors.NewInternalServerError("ALLOW_ORIGINS_ENDPOINT required")
 	}
 
+	zap.S().Info(os.Getenv("ALLOW_ORIGINS_ENDPOINT"))
+
 	return nil
 }
