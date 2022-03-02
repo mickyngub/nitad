@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -27,8 +26,6 @@ func NewController(
 }
 
 type Controller struct{}
-
-var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
 // list all subcategories
 func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {

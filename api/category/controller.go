@@ -2,7 +2,6 @@ package category
 
 import (
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -25,8 +24,6 @@ func NewController(
 }
 
 type Controller struct{}
-
-var collectionName = database.COLLECTIONS["CATEGORY"]
 
 // list all categories
 func (contc *Controller) ListCategory(c *fiber.Ctx) error {
