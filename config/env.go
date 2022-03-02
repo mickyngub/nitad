@@ -1,18 +1,19 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 func Loadenv() {
+	zap.S().Info("APP_ENV==", os.Getenv("APP_ENV"))
 	if os.Getenv("APP_ENV") != "production" {
 		err := godotenv.Load(".env")
 		if err != nil {
-			fmt.Println("Error loading .env file!")
+			zap.S().Fatal("Error loading .env ")
 		}
 	}
 }
