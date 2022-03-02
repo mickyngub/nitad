@@ -47,7 +47,7 @@ func main() {
 	})
 
 	if PORT == "" {
-		PORT = "3000"
+		PORT = "8000"
 	}
 
 	zap.S().Info("===== Running on ", os.Getenv("APP_ENV"), " stage =====")

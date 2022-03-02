@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/api/project"
@@ -32,8 +31,10 @@ func InitApp() *fiber.App {
 	})
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
-		AllowHeaders: "Origin, Content-Type, Accept",
+		// AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
+		AllowOrigins: "*",
+		AllowHeaders: "*",
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
 	app.Use(limiter.New(limiter.Config{
