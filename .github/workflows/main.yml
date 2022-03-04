@@ -21,10 +21,11 @@ jobs:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           GCP_PROJECTID: ${{ secrets.GCP_PROJECTID }}
           GCP_BUCKETNAME: ${{ secrets.GCP_BUCKETNAME }}
-          GCP_API_PREFIX: ${{ secrets.GCP_API_PREFIX }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_ENDPOINT: ${{ secrets.REDIS_ENDPOINT }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
           REDIS_DB_PASSWORD: ${{ secrets.REDIS_DB_PASSWORD }}
+          ALLOW_ORIGINS_ENDPOINT: ${{ secrets.ALLOW_ORIGINS_ENDPOINT }}
 
       - name: Google Cloud Authentication
         uses: google-github-actions/auth@v0

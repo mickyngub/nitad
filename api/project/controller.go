@@ -1,10 +1,7 @@
 package project
 
 import (
-	"strconv"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
@@ -22,23 +19,13 @@ func NewController(
 	projectRoute.Get("/:projectId", controller.GetProject)
 
 	projectRoute.Use(admin.IsAuth())
-	projectRoute.Post("/", AddProjectValidator, controller.AddProject)
-	projectRoute.Put("/:projectId", EditProjectValidator, controller.EditProject)
+	projectRoute.Post("/", AddAndEditProjectValidator, controller.AddProject)
+	projectRoute.Put("/:projectId", AddAndEditProjectValidator, controller.EditProject)
 	projectRoute.Delete("/:projectId", controller.DeleteProject)
 
 }
 
 type Controller struct{}
-
-var collectionName = database.COLLECTIONS["PROJECT"]
-
-type ProjectQuery struct {
-	SubcategoryId []string `query:"subcategoryId"`
-	Sort          string   `query:"sort"`
-	By            int      `query:"by"`
-	Page          int      `query:"page"`
-	Limit         int      `query:"limit"`
-}
 
 // list all projects
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
@@ -48,27 +35,11 @@ func (contc *Controller) ListProject(c *fiber.Ctx) error {
 		return err
 	}
 
-	queryString := pq.Sort + strconv.Itoa(pq.By) + strconv.Itoa(pq.Page) + strconv.Itoa(pq.Limit)
-
-	for _, sid := range pq.SubcategoryId {
-		queryString += sid
-	}
-
-	var p []*Project
-	redis.GetCache(queryString, &p)
-
-	if p != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
-	}
-
-	projects, err := FindAll(pq)
+	projects, paginate, err := FindAll(pq)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-
-	redis.SetCache(queryString, projects)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 }
 
 // get project by id
@@ -80,22 +51,19 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	var p *Project
-	redis.GetCache(projectId, &p)
+	cacheProject := HandleCacheGetProjectById(c, projectId)
 
-	if p != nil {
-		IncrementViewCache(projectId, p.Views)
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
+	if cacheProject != nil {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
 	}
 
-	var result Project
-	if result, err = GetById(objectId); err != nil {
+	result, err := GetById(objectId)
+	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	redis.SetCache(projectId, result)
-
 	IncrementView(objectId, 1)
+	redis.SetCache(c.Path(), result)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }
@@ -107,21 +75,32 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
 	}
 
-	files, err := utils.ExtractFiles(c, "images")
+	files, err := utils.ExtractFiles(c, "report")
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+	reportURL, err := gcp.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
+	files, err = utils.ExtractFiles(c, "images")
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+	imageURLs, err := gcp.UploadFiles(c.Context(), files, collectionName)
+	if err != nil {
+		return errors.Throw(c, err)
+	}
+
+	projectBody.Report = reportURL
 	projectBody.Images = imageURLs
 
 	result, err := Add(projectBody)
 	if err != nil {
-		// if there is any error, remove the uploaded file from gcp
-		gcp.DeleteImages(c.Context(), imageURLs, collectionName)
+		// if there is any error, remove the uploaded files from gcp
+		imageURLs = append(imageURLs, reportURL)
+		gcp.DeleteFiles(c.Context(), imageURLs, collectionName)
 		return errors.Throw(c, err)
 	}
 
@@ -131,22 +110,23 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 
 func (contc *Controller) EditProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
-	projectIdObjectId, err := utils.IsValidObjectId(projectId)
+	oid, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	updateProjectBody, ok := c.Locals("updateProjectBody").(*UpdateProject)
+	updateProject, ok := c.Locals("projectBody").(*Project)
 	if !ok {
 		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
 	}
 
-	updateProjectBody, err = HandleUpdateImages(c, updateProjectBody, projectIdObjectId)
+	updateProject.ID = oid
+	updateProject, err = HandleUpdateReportAndImages(c, updateProject)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	result, err := Edit(projectIdObjectId, updateProjectBody)
+	result, err := Edit(updateProject)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -162,16 +142,19 @@ func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	err = HandleDeleteImages(c.Context(), objectId)
+	project, err := GetById(objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return err
 	}
+
+	gcp.DeleteFile(c.Context(), project.Report, collectionName)
+	gcp.DeleteFiles(c.Context(), project.Images, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + projectId + " successfully!"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
 
 }

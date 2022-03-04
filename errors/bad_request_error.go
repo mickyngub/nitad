@@ -18,5 +18,5 @@ func (b *badRequestError) Code() int {
 }
 
 func (b *badRequestError) Error() string {
-	return "400: " + b.message
+	return b.message
 }

@@ -12,13 +12,15 @@ func Init() {
 	c := cron.New()
 
 	c.AddFunc("@every 12h", UpdateProjectViews) // every 12 hours
+	// c.AddFunc("@every 50s", UpdateProjectViews) // test
 
 	c.Start()
 }
 
 func UpdateProjectViews() {
+	store := redis.GetStore()
 	for {
-		keys, cursor := redis.FindAllCacheByPrefix("views")
+		keys, cursor := redis.GetStore().Scan("views")
 
 		for _, key := range keys {
 			projectId := key[5:]
@@ -28,8 +30,8 @@ func UpdateProjectViews() {
 
 			project.IncrementView(objectId, countInt)
 
-			redis.DeleteCache(key)
-			redis.DeleteCache(projectId)
+			store.Delete(key)
+			store.Delete(projectId)
 		}
 
 		if cursor == 0 { // no more keys

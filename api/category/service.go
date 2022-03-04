@@ -10,6 +10,46 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func SearchAll() ([]CategorySearch, errors.CustomError) {
+	collection, ctx := database.GetCollection(collectionName)
+
+	var result []CategorySearch
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendLookupStage(pipe, "subcategory")
+	pipe = database.AppendProjectStage(pipe, []string{"title", "subcategory"})
+
+	cursor, err := collection.Aggregate(ctx, pipe)
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
+}
+
+func FindAll() ([]Category, errors.CustomError) {
+	categoryCollection, ctx := database.GetCollection(collectionName)
+
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendLookupStage(pipe, "subcategory")
+
+	cursor, err := categoryCollection.Aggregate(ctx, pipe)
+	var result []Category
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+
+	}
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+	// log.Println("check 6")
+
+	return result, nil
+}
+
 func GetById(oid primitive.ObjectID) (Category, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 
@@ -32,25 +72,6 @@ func GetById(oid primitive.ObjectID) (Category, errors.CustomError) {
 	}
 
 	return result[0], nil
-}
-
-func FindAll() ([]Category, errors.CustomError) {
-	categoryCollection, ctx := database.GetCollection(collectionName)
-
-	pipe := mongo.Pipeline{}
-	pipe = database.AppendLookupStage(pipe, "subcategory")
-
-	cursor, err := categoryCollection.Aggregate(ctx, pipe)
-	var result []Category
-	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-
-	}
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-	}
-
-	return result, nil
 }
 
 func Add(c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError) {

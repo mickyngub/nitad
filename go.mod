@@ -10,11 +10,13 @@ require (
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/gofiber/fiber/v2 v2.27.0
 	github.com/gofiber/jwt/v3 v3.2.6
-	github.com/gofiber/utils v0.0.9
+	github.com/gofiber/utils v0.1.2
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/joho/godotenv v1.4.0
 	github.com/mongo-go/testdb v0.0.0-20201209140737-c4845cc6fe67
 	github.com/robfig/cron v1.2.0
+	github.com/robfig/cron v1.2.0
+	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.8.3
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce

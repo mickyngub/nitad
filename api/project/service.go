@@ -3,6 +3,7 @@ package project
 import (
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -14,7 +15,6 @@ import (
 func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
-	// pipe := GetLookupStage()
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
 
@@ -34,34 +34,75 @@ func GetById(oid primitive.ObjectID) (Project, errors.CustomError) {
 	return result[0], nil
 }
 
-func FindAll(pq *ProjectQuery) ([]Project, errors.CustomError) {
+type Count struct {
+	ID int64
+}
+
+func SearchAll() ([]ProjectSearch, errors.CustomError) {
+	collection, ctx := database.GetCollection(collectionName)
+
+	var result []ProjectSearch
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendProjectStage(pipe, []string{"title"})
+
+	cursor, err := collection.Aggregate(ctx, pipe)
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
+}
+
+func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError) {
 	projectCollection, ctx := database.GetCollection(collectionName)
 
+	pagin := paginate.Paginate{}
 	result := []Project{}
 
 	_, sids, err := subcategory.FindByIds(pq.SubcategoryId)
 	if err != nil {
-		return result, err
+		return result, pagin, err
 	}
 
-	// stages := GetLookupStage()
 	pipe := mongo.Pipeline{}
-	pipe = AppendQueryStage(pipe, pq)
 
 	for _, sid := range sids {
 		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
 	}
 
-	cursor, aggregateErr := projectCollection.Aggregate(ctx, pipe)
+	countPipe := database.AppendCountStage(pipe)
+
+	count := []Count{}
+	cursor, aggregateErr := projectCollection.Aggregate(ctx, countPipe)
 	if aggregateErr != nil {
-		return result, errors.NewBadRequestError(aggregateErr.Error())
+		return result, pagin, errors.NewBadRequestError(aggregateErr.Error())
+	}
+
+	if curErr := cursor.All(ctx, &count); curErr != nil {
+		return result, pagin, errors.NewBadRequestError(curErr.Error())
+	}
+
+	queryPipe := AppendQueryStage(pipe, pq)
+	cursor, aggregateErr = projectCollection.Aggregate(ctx, queryPipe)
+	if aggregateErr != nil {
+		return result, pagin, errors.NewBadRequestError(aggregateErr.Error())
 	}
 
 	if curErr := cursor.All(ctx, &result); curErr != nil {
-		return result, errors.NewBadRequestError(curErr.Error())
+		return result, pagin, errors.NewBadRequestError(curErr.Error())
 	}
 
-	return result, nil
+	if len(count) > 0 {
+		pagin = *(paginate.New(pq.Limit, pq.Page, count[0].ID))
+	} else {
+		pagin = *(paginate.New(pq.Limit, pq.Page, 0))
+	}
+
+	return result, pagin, nil
 }
 
 func Add(p *Project) (*Project, errors.CustomError) {
@@ -69,67 +110,29 @@ func Add(p *Project) (*Project, errors.CustomError) {
 
 	now := time.Now()
 
-	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
-		{Key: "title", Value: p.Title},
-		{Key: "description", Value: p.Description},
-		{Key: "authors", Value: p.Authors},
-		{Key: "emails", Value: p.Emails},
-		{Key: "inspiration", Value: p.Inspiration},
-		{Key: "abstract", Value: p.Abstract},
-		{Key: "images", Value: p.Images},
-		{Key: "videos", Value: p.Videos},
-		{Key: "keywords", Value: p.Keywords},
-		{Key: "status", Value: p.Status},
-		{Key: "category", Value: p.Category},
-		{Key: "views", Value: 0},
-		{Key: "createdAt", Value: now},
-		{Key: "updatedAt", Value: now},
-	})
+	p.Views = 0
+	p.CreatedAt = now
+	p.UpdatedAt = now
+	insertRes, insertErr := collection.InsertOne(ctx, &p)
 
 	if insertErr != nil {
 		return p, errors.NewBadRequestError(insertErr.Error())
 	}
 
 	p.ID = insertRes.InsertedID.(primitive.ObjectID)
-	p.CreatedAt = now
-	p.UpdatedAt = now
-	p.Views = 0
-
 	return p, nil
 }
 
-func Edit(oid primitive.ObjectID, p *UpdateProject) (*UpdateProject, errors.CustomError) {
-
+func Edit(p *Project) (*Project, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
 	now := time.Now()
-	_, updateErr := collection.UpdateByID(
-		ctx,
-		oid,
-		bson.D{{
-			Key: "$set", Value: bson.D{
-				{Key: "title", Value: p.Title},
-				{Key: "description", Value: p.Description},
-				{Key: "authors", Value: p.Authors},
-				{Key: "emails", Value: p.Emails},
-				{Key: "inspiration", Value: p.Inspiration},
-				{Key: "abstract", Value: p.Abstract},
-				{Key: "images", Value: p.Images},
-				{Key: "videos", Value: p.Videos},
-				{Key: "keywords", Value: p.Keywords},
-				{Key: "status", Value: p.Status},
-				{Key: "category", Value: p.Category},
-				{Key: "updatedAt", Value: now},
-			},
-		},
-		})
+	p.UpdatedAt = now
+	_, updateErr := collection.UpdateByID(ctx, p.ID, bson.D{{Key: "$set", Value: &p}})
 
 	if updateErr != nil {
 		return p, errors.NewBadRequestError("edit project error: " + updateErr.Error())
 	}
-
-	p.ID = oid
-	p.UpdatedAt = now
 
 	return p, nil
 }

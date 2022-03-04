@@ -17,5 +17,5 @@ func (b *internalServerError) Code() int {
 }
 
 func (b *internalServerError) Error() string {
-	return "500: " + b.message
+	return "Internal server error: " + b.message + ", please contact developer"
 }

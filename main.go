@@ -9,15 +9,11 @@ import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
+
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.uber.org/zap"
 )
-
-//FIXME:  cache
-// TODO: cache fiber storage แยก branch
 
 var PORT = os.Getenv("PORT")
 
@@ -35,19 +31,15 @@ func main() {
 	defer database.DisconnectDb()
 
 	gcp.Init()
-	redis.Init()
+
 	app := config.InitApp()
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "https://main.d2awhr68ui4egx.amplifyapp.com, http://localhost:3000",
-		AllowHeaders: "Origin, Content-Type, Accept",
-	}))
-
 	api.CreateAPI(app)
+
 	cronjob.Init()
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v1.7 !"})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v2.2  !"})
 	})
 
 	app.All("*", func(c *fiber.Ctx) error {
@@ -55,7 +47,7 @@ func main() {
 	})
 
 	if PORT == "" {
-		PORT = "3000"
+		PORT = "8000"
 	}
 
 	zap.S().Info("===== Running on ", os.Getenv("APP_ENV"), " stage =====")
@@ -66,5 +58,4 @@ func main() {
 		zap.S().Warn("Listen to " + PORT + " Failed!")
 		zap.S().Warn("Error: ", err.Error())
 	}
-
 }

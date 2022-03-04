@@ -38,20 +38,13 @@ func IsValidObjectId(id string) (primitive.ObjectID, errors.CustomError) {
 	return objectId, nil
 }
 
-func RemoveDuplicateIds(ids []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-
-	// If the key(values of the slice) is not equal
-	// to the already present value in new slice (list)
-	// then we append it. else we jump on another element.
-	for _, entry := range ids {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
+func GetUniqueFilename(filename string) (string, string) {
+	// return fmt.Sprintf("%s-%s.png", time.Now().Format("02-Jan-2006-15:04:05"), strings.TrimSuffix(filename, filepath.Ext(filename)))
+	filetype := "images"
+	if filepath.Ext(filename) == ".pdf" {
+		filetype = "reports"
 	}
-	return list
+	return fmt.Sprintf("%s-%s", time.Now().Format("02-Jan-2006-15:04:05"), filename), filetype
 }
 
 //  Extract files from request body, if no file passed, no error
@@ -82,10 +75,6 @@ func ExtractFiles(c *fiber.Ctx, key string) ([]*multipart.FileHeader, errors.Cus
 	}
 
 	return files, nil
-}
-
-func GetUniqueFilename(filename string) string {
-	return fmt.Sprintf("%s-%s.png", time.Now().Format("02-Jan-2006-15:04:05"), strings.TrimSuffix(filename, filepath.Ext(filename)))
 }
 
 // for testing purpose only

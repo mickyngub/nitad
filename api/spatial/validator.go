@@ -1,4 +1,4 @@
-package subcategory
+package spatial
 
 import (
 	"github.com/birdglove2/nitad-backend/api/validators"
@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
-	sr := new(SubcategoryRequest)
+func AddAndEditSpatialValidator(c *fiber.Ctx) error {
+	sr := new(SpatialRequest)
 
 	if err := c.BodyParser(sr); err != nil {
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
@@ -19,13 +19,13 @@ func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	subcategory := new(Subcategory)
-	err = utils.CopyStruct(sr, subcategory)
+	spatial := new(Spatial)
+	err = utils.CopyStruct(sr, spatial)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	c.Locals("subcategoryBody", subcategory)
+	c.Locals("spatialBody", spatial)
 
 	return c.Next()
 }

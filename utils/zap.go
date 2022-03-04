@@ -25,7 +25,7 @@ func getEncoder() zapcore.Encoder {
 	encoderConfig.EncodeTime = zapcore.TimeEncoder(func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		loc, err := time.LoadLocation("Asia/Bangkok")
 		if err != nil {
-			panic(err)
+			zap.S().Warn(err.Error())
 		}
 		encoder.AppendString(t.In(loc).Format("02-Jan-2006 15:04:05"))
 	})

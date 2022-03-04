@@ -2,9 +2,7 @@ package category
 
 import (
 	"github.com/birdglove2/nitad-backend/api/admin"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,23 +25,12 @@ func NewController(
 
 type Controller struct{}
 
-var collectionName = database.COLLECTIONS["CATEGORY"]
-
 // list all categories
 func (contc *Controller) ListCategory(c *fiber.Ctx) error {
-	var cate []*Category
-	key := "allcate"
-	redis.GetCache(key, &cate)
-	if cate != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cate})
-	}
-
 	categories, err := FindAll()
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-
-	redis.SetCache(key, categories)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": categories})
 }
@@ -51,13 +38,6 @@ func (contc *Controller) ListCategory(c *fiber.Ctx) error {
 // get category by id
 func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 	categoryId := c.Params("categoryId")
-
-	var p []*Category
-	redis.GetCache(categoryId, &p)
-
-	if p != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": p})
-	}
 
 	objectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
@@ -68,7 +48,6 @@ func (contc *Controller) GetCategory(c *fiber.Ctx) error {
 	if result, err = GetById(objectId); err != nil {
 		return errors.Throw(c, err)
 	}
-	redis.SetCache(categoryId, result)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }

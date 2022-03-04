@@ -1,10 +1,9 @@
 package subcategory
 
 import (
-	"context"
-
+	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/gcp"
+
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,51 +51,30 @@ func ValidateId(sid string) (Subcategory, errors.CustomError) {
 	return s, nil
 }
 
-func HandleUpdateImage(c *fiber.Ctx, s *Subcategory, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	oldSubcategory, err := GetById(oid)
+func HandleUpdateImage(c *fiber.Ctx, s *Subcategory) (*Subcategory, errors.CustomError) {
+	oldSubcategory, err := GetById(s.ID)
 	if err != nil {
 		return s, err
 	}
 
 	files, err := utils.ExtractUpdatedFiles(c, "image")
-
 	if err != nil {
 		return s, err
 	}
-	if files == nil {
-		// no file passed, use old image url
-		s.Image = oldSubcategory.Image
-	} else {
-		// delete old files
-		gcp.DeleteImages(c.Context(), []string{s.Image}, collectionName)
 
-		// upload new files
-		imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
+	s.Image = oldSubcategory.Image
+	// if there is file passed, delete the old one and upload a new one
+	if len(files) > 0 {
+		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(c.Context(), files[0], s.Image, collectionName)
 		if err != nil {
-			// if upload error, delete uploaded file if it was uploaed
-			gcp.DeleteImages(c.Context(), imageURLs, collectionName)
 			return s, err
 		}
-
 		// if upload success, pass the url to the subcategory struct
-		s.Image = imageURLs[0]
+		s.Image = newUploadFilename
 	}
 
 	s.CreatedAt = oldSubcategory.CreatedAt
 	return s, nil
-}
-
-func HandleDeleteImage(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
-	oldSubcategory, err := GetById(oid)
-	if err != nil {
-		return err
-	}
-
-	err = gcp.DeleteImages(ctx, []string{oldSubcategory.Image}, collectionName)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func BsonToSubcategory(b bson.M) Subcategory {

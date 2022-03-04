@@ -5,7 +5,8 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func CheckResult(val string, err error) (string, errors.CustomError) {
+func CheckResult(b []byte, err error) (string, errors.CustomError) {
+	val := string(b)
 	switch {
 	case err == redis.Nil:
 		return "", errors.NewCacheError("Key does not exist")
