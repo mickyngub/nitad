@@ -13,14 +13,14 @@ import (
 
 const API_PREFIX = "/api/v1"
 
-func CreateAPI(app *fiber.App, gcpService gcp.ClientUploader) {
+func CreateAPI(app *fiber.App, gcpService gcp.Uploader) {
 	v1 := app.Group(API_PREFIX)
 
 	search.NewController(v1.Group("/search"))
 
-	subcategory.NewController(v1.Group("/subcategory"))
+	subcategory.NewController(gcpService, v1.Group("/subcategory"))
 	category.NewController(v1.Group("/category"))
-	project.NewController(v1.Group("/project"))
+	project.NewController(gcpService, v1.Group("/project"))
 
 	spatial.NewController(v1.Group("/spatial"))
 

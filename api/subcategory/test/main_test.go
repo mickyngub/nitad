@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func newTestServer(t *testing.T, gcpService gcp.ClientUploader) *fiber.App {
+func newTestServer(t *testing.T, gcpService gcp.Uploader) *fiber.App {
 	fmt.Println("newTestServer", 0)
 
 	database.ConnectDb(mongo_URI)

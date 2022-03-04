@@ -30,11 +30,11 @@ func main() {
 	database.ConnectDb(os.Getenv("MONGO_URI"))
 	defer database.DisconnectDb()
 
-	gcp.Init()
+	uploader := gcp.Init()
 
 	app := config.InitApp()
 
-	api.CreateAPI(app)
+	api.CreateAPI(app, uploader)
 
 	cronjob.Init()
 
@@ -47,7 +47,7 @@ func main() {
 	})
 
 	if PORT == "" {
-		PORT = "8000"
+		PORT = "3000"
 	}
 
 	zap.S().Info("===== Running on ", os.Getenv("APP_ENV"), " stage =====")

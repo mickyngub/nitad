@@ -6,13 +6,12 @@ import (
 
 	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func HandleUpdateReportAndImages(c *fiber.Ctx, updateProject *Project) (*Project, errors.CustomError) {
+func (contc *Controller) HandleUpdateReportAndImages(c *fiber.Ctx, updateProject *Project) (*Project, errors.CustomError) {
 	oldProject, err := GetById(updateProject.ID)
 	if err != nil {
 		return updateProject, err
@@ -24,12 +23,12 @@ func HandleUpdateReportAndImages(c *fiber.Ctx, updateProject *Project) (*Project
 
 	log.Println("Report", updateProject.Report)
 
-	updateProject, err = HandleUpdateImages(c, updateProject)
+	updateProject, err = contc.HandleUpdateImages(c, updateProject)
 	if err != nil {
 		return updateProject, err
 	}
 
-	updateProject, err = HandleUpdateReport(c, updateProject)
+	updateProject, err = contc.HandleUpdateReport(c, updateProject)
 	if err != nil {
 		return updateProject, err
 	}
@@ -38,7 +37,7 @@ func HandleUpdateReportAndImages(c *fiber.Ctx, updateProject *Project) (*Project
 	return updateProject, nil
 }
 
-func HandleUpdateReport(c *fiber.Ctx, p *Project) (*Project, errors.CustomError) {
+func (contc *Controller) HandleUpdateReport(c *fiber.Ctx, p *Project) (*Project, errors.CustomError) {
 	files, err := utils.ExtractUpdatedFiles(c, "report")
 	if err != nil {
 		return p, err
@@ -46,7 +45,7 @@ func HandleUpdateReport(c *fiber.Ctx, p *Project) (*Project, errors.CustomError)
 
 	// if there is file passed, delete the old one and upload a new one
 	if len(files) > 0 {
-		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(c.Context(), files[0], p.Report, collectionName)
+		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(contc.gcpService, c.Context(), files[0], p.Report, collectionName)
 		if err != nil {
 			return p, err
 		}
@@ -57,12 +56,12 @@ func HandleUpdateReport(c *fiber.Ctx, p *Project) (*Project, errors.CustomError)
 	return p, nil
 }
 
-func HandleUpdateImages(c *fiber.Ctx, up *Project) (*Project, errors.CustomError) {
+func (contc *Controller) HandleUpdateImages(c *fiber.Ctx, up *Project) (*Project, errors.CustomError) {
 	// DELETE FILES
 	if len(up.DeleteImages) > 0 {
 		// remove deleteImages from Images attrs
 		up.Images = utils.RemoveSliceFromSlice(up.Images, up.DeleteImages)
-		gcp.DeleteFiles(c.Context(), up.DeleteImages, collectionName)
+		contc.gcpService.DeleteFiles(c.Context(), up.DeleteImages, collectionName)
 
 	}
 
@@ -73,11 +72,11 @@ func HandleUpdateImages(c *fiber.Ctx, up *Project) (*Project, errors.CustomError
 	}
 	if len(files) > 0 {
 		// if file pass, upload file
-		imageURLs, err := gcp.UploadFiles(c.Context(), files, collectionName)
+		imageURLs, err := contc.gcpService.UploadFiles(c.Context(), files, collectionName)
 
 		if err != nil {
 			// if upload error, delete uploaded file if it was uploaed
-			gcp.DeleteFiles(c.Context(), imageURLs, collectionName)
+			contc.gcpService.DeleteFiles(c.Context(), imageURLs, collectionName)
 			return up, err
 		}
 
@@ -88,13 +87,13 @@ func HandleUpdateImages(c *fiber.Ctx, up *Project) (*Project, errors.CustomError
 	return up, nil
 }
 
-func HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+func (contc *Controller) HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	project, err := GetById(oid)
 	if err != nil {
 		return err
 	}
 
-	gcp.DeleteFiles(ctx, project.Images, collectionName)
+	contc.gcpService.DeleteFiles(ctx, project.Images, collectionName)
 
 	return nil
 }

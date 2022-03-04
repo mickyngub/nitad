@@ -10,10 +10,11 @@ import (
 )
 
 func NewController(
+	gcpService gcp.Uploader,
 	projectRoute fiber.Router,
 ) {
 
-	controller := &Controller{}
+	controller := &Controller{gcpService}
 
 	projectRoute.Get("/", controller.ListProject)
 	projectRoute.Get("/:projectId", controller.GetProject)
@@ -25,7 +26,9 @@ func NewController(
 
 }
 
-type Controller struct{}
+type Controller struct {
+	gcpService gcp.Uploader
+}
 
 // list all projects
 func (contc *Controller) ListProject(c *fiber.Ctx) error {
@@ -79,7 +82,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	reportURL, err := gcp.UploadFile(c.Context(), files[0], collectionName)
+	reportURL, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -88,7 +91,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-	imageURLs, err := gcp.UploadFiles(c.Context(), files, collectionName)
+	imageURLs, err := contc.gcpService.UploadFiles(c.Context(), files, collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -100,7 +103,7 @@ func (contc *Controller) AddProject(c *fiber.Ctx) error {
 	if err != nil {
 		// if there is any error, remove the uploaded files from gcp
 		imageURLs = append(imageURLs, reportURL)
-		gcp.DeleteFiles(c.Context(), imageURLs, collectionName)
+		contc.gcpService.DeleteFiles(c.Context(), imageURLs, collectionName)
 		return errors.Throw(c, err)
 	}
 
@@ -121,7 +124,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 	}
 
 	updateProject.ID = oid
-	updateProject, err = HandleUpdateReportAndImages(c, updateProject)
+	updateProject, err = contc.HandleUpdateReportAndImages(c, updateProject)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -135,7 +138,7 @@ func (contc *Controller) EditProject(c *fiber.Ctx) error {
 }
 
 // delete the project
-func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
+func (contc *Controller) DeleteProject(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
@@ -147,8 +150,8 @@ func (cont *Controller) DeleteProject(c *fiber.Ctx) error {
 		return err
 	}
 
-	gcp.DeleteFile(c.Context(), project.Report, collectionName)
-	gcp.DeleteFiles(c.Context(), project.Images, collectionName)
+	contc.gcpService.DeleteFile(c.Context(), project.Report, collectionName)
+	contc.gcpService.DeleteFiles(c.Context(), project.Images, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {

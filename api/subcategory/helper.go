@@ -3,6 +3,7 @@ package subcategory
 import (
 	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/gcp"
 
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -51,7 +52,7 @@ func ValidateId(sid string) (Subcategory, errors.CustomError) {
 	return s, nil
 }
 
-func HandleUpdateImage(c *fiber.Ctx, s *Subcategory) (*Subcategory, errors.CustomError) {
+func HandleUpdateImage(u gcp.Uploader, c *fiber.Ctx, s *Subcategory) (*Subcategory, errors.CustomError) {
 	oldSubcategory, err := GetById(s.ID)
 	if err != nil {
 		return s, err
@@ -65,7 +66,7 @@ func HandleUpdateImage(c *fiber.Ctx, s *Subcategory) (*Subcategory, errors.Custo
 	s.Image = oldSubcategory.Image
 	// if there is file passed, delete the old one and upload a new one
 	if len(files) > 0 {
-		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(c.Context(), files[0], s.Image, collectionName)
+		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(u, c.Context(), files[0], s.Image, collectionName)
 		if err != nil {
 			return s, err
 		}

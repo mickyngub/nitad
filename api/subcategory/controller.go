@@ -11,8 +11,8 @@ import (
 )
 
 func NewController(
+	gcpService gcp.Uploader,
 	subcategoryRoute fiber.Router,
-	gcpService gcp.ClientUploader,
 ) *Controller {
 
 	controller := &Controller{gcpService}
@@ -29,7 +29,7 @@ func NewController(
 }
 
 type Controller struct {
-	gcpService gcp.ClientUploader
+	gcpService gcp.Uploader
 }
 
 // list all subcategories
@@ -68,7 +68,7 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 
 	// contc.gcpService.UploadImages()
 	// imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
-	imageFilename, err := gcp.UploadFile(c.Context(), files[0], collectionName)
+	imageFilename, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
@@ -101,7 +101,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 	}
 
 	updateSubcategory.ID = objectId
-	updateSubcategory, err = HandleUpdateImage(c, updateSubcategory)
+	updateSubcategory, err = HandleUpdateImage(contc.gcpService, c, updateSubcategory)
 	log.Println(updateSubcategory)
 	if err != nil {
 		return errors.Throw(c, err)
@@ -116,7 +116,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 }
 
 // delete the subcategory
-func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
+func (contc *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
 	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
@@ -128,7 +128,7 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 		return err
 	}
 
-	gcp.DeleteFile(c.Context(), oldSubcategory.Image, collectionName)
+	contc.gcpService.DeleteFile(c.Context(), oldSubcategory.Image, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {
