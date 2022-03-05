@@ -1,6 +1,8 @@
 package project
 
 import (
+	"os"
+
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
@@ -54,10 +56,12 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	cacheProject := HandleCacheGetProjectById(c, projectId)
+	if os.Getenv("APP_ENV") != "test" {
+		cacheProject := HandleCacheGetProjectById(c, projectId)
 
-	if cacheProject != nil {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
+		if cacheProject != nil {
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
+		}
 	}
 
 	result, err := GetById(objectId)
@@ -66,7 +70,9 @@ func (contc *Controller) GetProject(c *fiber.Ctx) error {
 	}
 
 	IncrementView(objectId, 1)
-	redis.SetCache(c.Path(), result)
+	if os.Getenv("APP_ENV") != "test" {
+		redis.SetCache(c.Path(), result)
+	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
 }

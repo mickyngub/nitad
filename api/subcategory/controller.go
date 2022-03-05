@@ -1,9 +1,9 @@
 package subcategory
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -20,7 +20,7 @@ func NewController(
 	subcategoryRoute.Get("/", controller.ListSubcategory)
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
-	subcategoryRoute.Use(admin.IsAuth())
+	// subcategoryRoute.Use(admin.IsAuth())
 	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
@@ -66,12 +66,14 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	// contc.gcpService.UploadImages()
-	// imageURLs, err := gcp.UploadImages(c.Context(), files, collectionName)
+	fmt.Println("This is controller calling 1")
+
 	imageFilename, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+
+	fmt.Println("This is controller calling 2")
 
 	sr := new(SubcategoryRequest)
 	c.BodyParser(sr)

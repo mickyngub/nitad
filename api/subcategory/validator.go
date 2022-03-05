@@ -11,7 +11,7 @@ func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
 	sr := new(SubcategoryRequest)
 
 	if err := c.BodyParser(sr); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+		return errors.Throw(c, errors.NewBadRequestError("EIEI "+err.Error()))
 	}
 
 	err := validators.ValidateStruct(*sr)
