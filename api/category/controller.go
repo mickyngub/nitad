@@ -39,20 +39,20 @@ func (c *Controller) ListCategory(ctx *fiber.Ctx) error {
 }
 
 // get category by id
-func (contc *Controller) GetCategory(c *fiber.Ctx) error {
-	categoryId := c.Params("categoryId")
+func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
+	categoryId := ctx.Params("categoryId")
 
 	objectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	var result Category
-	if result, err = GetById(objectId); err != nil {
-		return errors.Throw(c, err)
+	cate, err := c.service.GetCategoryById(ctx.Context(), objectId)
+	if err != nil {
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cate})
 }
 
 // add a category
