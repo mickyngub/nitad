@@ -7,28 +7,28 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func AddAndEditCategoryValidator(c *fiber.Ctx) error {
+func AddAndEditCategoryValidator(ctx *fiber.Ctx) error {
 	cr := new(CategoryRequest)
 
-	if err := c.BodyParser(cr); err != nil {
-		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
+	if err := ctx.BodyParser(cr); err != nil {
+		return errors.Throw(ctx, errors.NewBadRequestError(err.Error()))
 	}
 
 	err := validators.ValidateStruct(*cr)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
 	category := new(Category)
 	subcategories, sids, err := subcategory.FindByIds(cr.Subcategory)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
 	category.Subcategory = subcategories
 	category.Title = cr.Title
-	c.Locals("categoryBody", category)
-	c.Locals("sids", sids)
+	ctx.Locals("categoryBody", category)
+	ctx.Locals("sids", sids)
 
-	return c.Next()
+	return ctx.Next()
 }
