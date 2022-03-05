@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
-	// AddCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError)
+	AddCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
 	// EditCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError)
 	// DeleteCateListCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
@@ -64,12 +64,18 @@ func (c *categoryRepository) GetCategoryById(ctx context.Context, oid primitive.
 	return &cates[0], nil
 }
 
-func (c *categoryRepository) AddCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
+func (c *categoryRepository) AddCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError) {
+	insertRes, insertErr := c.collection.InsertOne(ctx, cate)
+	if insertErr != nil {
+		return cate, errors.NewBadRequestError(insertErr.Error())
+	}
+	cate.ID = insertRes.InsertedID.(primitive.ObjectID)
+	return cate, nil
+}
+
+func (c *categoryRepository) EditCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
 	return &Category{}, nil
 }
-func (c *categoryRepository) EditCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
-	return &Category{}, nil
-}
-func (c *categoryRepository) DeleteCateListCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+func (c *categoryRepository) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	return nil
 }

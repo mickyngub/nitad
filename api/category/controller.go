@@ -56,18 +56,16 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 }
 
 // add a category
-func (contc *Controller) AddCategory(c *fiber.Ctx) error {
-	categoryBody := c.Locals("categoryBody").(*Category)
-	sids := c.Locals("sids").([]primitive.ObjectID)
+func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
+	cateDTO := new(CategoryDTO)
+	ctx.BodyParser(cateDTO)
 
-	result, err := Add(categoryBody, sids)
-
+	addedCate, err := c.service.AddCategory(ctx.Context(), cateDTO)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
-
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedCate})
 }
 
 // edit the category

@@ -18,7 +18,7 @@ type Category struct {
 	UpdatedAt   time.Time                 `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
 
-type CategoryRequest struct {
+type CategoryDTO struct {
 	Title       string   `form:"title" validate:"required"`
 	Subcategory []string `form:"subcategory" validate:"required"`
 }
