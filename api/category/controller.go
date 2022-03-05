@@ -9,10 +9,11 @@ import (
 )
 
 func NewController(
+	service Service,
 	categoryRoute fiber.Router,
 ) {
 
-	controller := &Controller{}
+	controller := &Controller{service}
 
 	categoryRoute.Get("/", controller.ListCategory)
 	categoryRoute.Get("/:categoryId", controller.GetCategory)
@@ -23,16 +24,18 @@ func NewController(
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
 }
 
-type Controller struct{}
+type Controller struct {
+	service Service
+}
 
 // list all categories
-func (contc *Controller) ListCategory(c *fiber.Ctx) error {
-	categories, err := FindAll()
+func (c *Controller) ListCategory(ctx *fiber.Ctx) error {
+	categories, err := c.service.ListCategory(ctx.Context())
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": categories})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": categories})
 }
 
 // get category by id

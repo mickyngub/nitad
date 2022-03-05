@@ -10,11 +10,11 @@ import (
 )
 
 type Repository interface {
-	FindAll(ctx context.Context) ([]Category, errors.CustomError)
-	GetById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
-	Add(ctx context.Context, cate *Category) (*Category, errors.CustomError)
-	Edit(ctx context.Context, cate *Category) (*Category, errors.CustomError)
-	Delete(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
+	// GetCateListCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
+	// AddCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError)
+	// EditCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError)
+	// DeleteCateListCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
 type categoryRepository struct {
@@ -27,18 +27,18 @@ func NewRepository(client *mongo.Client) Repository {
 	}
 }
 
-func (c *categoryRepository) FindAll(ctx context.Context) ([]Category, errors.CustomError) {
+func (c *categoryRepository) ListCategory(ctx context.Context) ([]Category, errors.CustomError) {
 	return []Category{}, nil
 }
-func (c *categoryRepository) GetById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError) {
+func (c *categoryRepository) GetCateListCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError) {
 	return &Category{}, nil
 }
-func (c *categoryRepository) Add(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
+func (c *categoryRepository) AddCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
 	return &Category{}, nil
 }
-func (c *categoryRepository) Edit(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
+func (c *categoryRepository) EditCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
 	return &Category{}, nil
 }
-func (c *categoryRepository) Delete(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+func (c *categoryRepository) DeleteCateListCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	return nil
 }
