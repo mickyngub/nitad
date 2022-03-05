@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,11 +33,9 @@ func GetClient() *mongo.Client {
 	return client
 }
 
-func ConnectDb() {
-	MONGO_URI := os.Getenv("MONGO_URI")
-
+func ConnectDb(mongoURI string) {
 	var err error
-	client, err = mongo.NewClient(options.Client().ApplyURI(MONGO_URI))
+	client, err = mongo.NewClient(options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		zap.S().Fatal(err.Error())
 	}

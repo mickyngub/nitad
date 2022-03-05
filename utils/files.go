@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
+
+// RandomString generate random string of length n
+func RandomString(n int) string {
+	alphabet := "abcdefghijklmnopqrstuvwxyz"
+
+	var sb strings.Builder
+	k := len(alphabet)
+
+	for i := 0; i < n; i++ {
+		c := alphabet[rand.Intn(k)]
+		sb.WriteByte(c)
+	}
+
+	return sb.String()
+}
 
 func GetUniqueFilename(filename string) (string, string) {
 	// return fmt.Sprintf("%s-%s.png", time.Now().Format("02-Jan-2006-15:04:05"), strings.TrimSuffix(filename, filepath.Ext(filename)))

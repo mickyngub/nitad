@@ -83,7 +83,6 @@ func Add(c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError)
 		{Key: "createdAt", Value: now},
 		{Key: "updatedAt", Value: now},
 	})
-
 	if insertErr != nil {
 		return c, errors.NewBadRequestError(insertErr.Error())
 	}
@@ -95,12 +94,12 @@ func Add(c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError)
 	return c, nil
 }
 
-func Edit(oid primitive.ObjectID, c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError) {
+func Edit(c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 	now := time.Now()
 	_, updateErr := collection.UpdateByID(
 		ctx,
-		oid,
+		c.ID,
 		bson.D{{
 			Key: "$set", Value: bson.D{
 				{Key: "title", Value: c.Title},
@@ -114,7 +113,6 @@ func Edit(oid primitive.ObjectID, c *Category, sids []primitive.ObjectID) (*Cate
 		return c, errors.NewBadRequestError(updateErr.Error())
 	}
 
-	c.ID = oid
 	c.UpdatedAt = now
 
 	return c, nil

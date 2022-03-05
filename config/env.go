@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/birdglove2/nitad-backend/errors"
@@ -9,12 +10,15 @@ import (
 )
 
 func Loadenv() {
-	zap.S().Info("APP_ENV==", os.Getenv("APP_ENV"))
-	if os.Getenv("APP_ENV") != "production" {
-		err := godotenv.Load(".env")
-		if err != nil {
-			zap.S().Fatal("Error loading .env ")
-		}
+	var err error
+	if os.Getenv("APP_ENV") == "test" {
+		err = godotenv.Load("../../../.env")
+	} else {
+		err = godotenv.Load()
+	}
+
+	if err != nil {
+		fmt.Println("Error loading .env", err.Error())
 	}
 }
 
@@ -45,7 +49,7 @@ func Checkenv() errors.CustomError {
 		return errors.NewInternalServerError("REDIS_PORT required")
 	}
 
-	if os.Getenv("REDIS_DB_PASSWORD") == "" && os.Getenv("APP_ENV") != "development" {
+	if os.Getenv("REDIS_DB_PASSWORD") == "" && os.Getenv("APP_ENV") != "development" && os.Getenv("APP_ENV") != "test" {
 		return errors.NewInternalServerError("REDIS_DB_PASSWORD required")
 	}
 

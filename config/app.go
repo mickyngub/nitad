@@ -58,9 +58,7 @@ func InitApp() *fiber.App {
 			return c.Path() + "?" + string(c.Request().URI().QueryString())
 		},
 		Next: func(c *fiber.Ctx) bool {
-			// log.Println("0")
 			isTrue := project.IsGetProjectPath(c) // handle incrementing view in cache
-			// zap.S().Info(isTrue)
 			return isTrue
 		},
 	}))

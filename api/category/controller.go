@@ -78,7 +78,8 @@ func (contc *Controller) EditCategory(c *fiber.Ctx) error {
 	categoryBody := c.Locals("categoryBody").(*Category)
 	sids := c.Locals("sids").([]primitive.ObjectID)
 
-	result, err := Edit(categoryObjectId, categoryBody, sids)
+	categoryBody.ID = categoryObjectId
+	result, err := Edit(categoryBody, sids)
 
 	if err != nil {
 		return errors.Throw(c, err)

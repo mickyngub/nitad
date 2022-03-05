@@ -1,9 +1,9 @@
 package subcategory
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -11,21 +11,26 @@ import (
 )
 
 func NewController(
+	gcpService gcp.Uploader,
 	subcategoryRoute fiber.Router,
-) {
+) *Controller {
 
-	controller := &Controller{}
+	controller := &Controller{gcpService}
 
 	subcategoryRoute.Get("/", controller.ListSubcategory)
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
 
-	subcategoryRoute.Use(admin.IsAuth())
+	// subcategoryRoute.Use(admin.IsAuth())
 	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
+
+	return controller
 }
 
-type Controller struct{}
+type Controller struct {
+	gcpService gcp.Uploader
+}
 
 // list all subcategories
 func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {
@@ -61,10 +66,14 @@ func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
 		return errors.Throw(c, err)
 	}
 
-	imageFilename, err := gcp.UploadFile(c.Context(), files[0], collectionName)
+	fmt.Println("This is controller calling 1")
+
+	imageFilename, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
+
+	fmt.Println("This is controller calling 2")
 
 	sr := new(SubcategoryRequest)
 	c.BodyParser(sr)
@@ -94,7 +103,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 	}
 
 	updateSubcategory.ID = objectId
-	updateSubcategory, err = HandleUpdateImage(c, updateSubcategory)
+	updateSubcategory, err = HandleUpdateImage(contc.gcpService, c, updateSubcategory)
 	log.Println(updateSubcategory)
 	if err != nil {
 		return errors.Throw(c, err)
@@ -109,7 +118,7 @@ func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
 }
 
 // delete the subcategory
-func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
+func (contc *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 	subcategoryId := c.Params("subcategoryId")
 	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
@@ -121,7 +130,7 @@ func (cont *Controller) DeleteSubcategory(c *fiber.Ctx) error {
 		return err
 	}
 
-	gcp.DeleteFile(c.Context(), oldSubcategory.Image, collectionName)
+	contc.gcpService.DeleteFile(c.Context(), oldSubcategory.Image, collectionName)
 
 	err = Delete(objectId)
 	if err != nil {

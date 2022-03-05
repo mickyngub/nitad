@@ -13,15 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type ClientUploader struct {
-	cl         *storage.Client
-	bucketName string
-	apiPrefix  string
+type Uploader interface {
+	UploadFiles(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError)
+	UploadFile(ctx context.Context, file *multipart.FileHeader, collectionName string) (string, errors.CustomError)
+	DeleteFiles(ctx context.Context, filenames []string, collectionName string)
+	DeleteFile(ctx context.Context, filename string, collectionName string)
 }
 
-var uploader *ClientUploader
+type uploader struct {
+	cl         *storage.Client
+	bucketName string
+}
 
-func Init() {
+func Init() uploader {
 	if os.Getenv("APP_ENV") != "production" {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "google-credentials.json")
 	}
@@ -31,21 +35,22 @@ func Init() {
 		zap.S().Fatal("Failed to create gcp client: ", err.Error())
 	}
 
-	uploader = &ClientUploader{
+	return uploader{
 		cl:         client,
 		bucketName: os.Getenv("GCP_BUCKETNAME"),
 	}
+
 }
 
 // UploadFiles uploads multiple files
 // just loop through all files and pass to
 // the UploadFile function one by one
 // return an array of filenames used to concat to the gcp baseURLs
-func UploadFiles(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError) {
+func (u uploader) UploadFiles(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError) {
 	filenames := []string{}
 	for _, file := range files {
 		//TODO: channel this
-		filename, err := UploadFile(ctx, file, collectionName)
+		filename, err := u.UploadFile(ctx, file, collectionName)
 		if err != nil {
 			return filenames, errors.NewBadRequestError(err.Error())
 		}
@@ -58,7 +63,7 @@ func UploadFiles(ctx context.Context, files []*multipart.FileHeader, collectionN
 // return a filename used to concat to the gcp baseURLs
 // ex: reports/28-Feb-2022-18:57:15-dummyReport.pdf
 // 		 images/28-Feb-2022-18:11:11-dummyImage.png
-func UploadFile(ctx context.Context, file *multipart.FileHeader, collectionName string) (string, errors.CustomError) {
+func (u uploader) UploadFile(ctx context.Context, file *multipart.FileHeader, collectionName string) (string, errors.CustomError) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -73,7 +78,7 @@ func UploadFile(ctx context.Context, file *multipart.FileHeader, collectionName 
 
 	// Upload an object with storage.Writer to the uploadPath
 	uploadPath := collectionName + "/" + filetype + "/" + filename
-	wc := uploader.cl.Bucket(uploader.bucketName).Object(uploadPath).NewWriter(ctx)
+	wc := u.cl.Bucket(u.bucketName).Object(uploadPath).NewWriter(ctx)
 	if _, err := io.Copy(wc, blobFile); err != nil {
 		// zap.S().Warn("GCP io.Copy: ", err.Error())
 		return filename, errors.NewInternalServerError("GCP io.Copy: " + err.Error())
@@ -88,20 +93,20 @@ func UploadFile(ctx context.Context, file *multipart.FileHeader, collectionName 
 
 // DeleteFiles delete multiple files by looping through each one
 // and pass through the DeleteFile function
-func DeleteFiles(ctx context.Context, filenames []string, collectionName string) {
+func (u uploader) DeleteFiles(ctx context.Context, filenames []string, collectionName string) {
 	for _, filename := range filenames {
 		//TODO: channel this
-		DeleteFile(ctx, filename, collectionName)
+		u.DeleteFile(ctx, filename, collectionName)
 	}
 }
 
 // DeleteFile removes a specified file.
-func DeleteFile(ctx context.Context, filename string, collectionName string) {
+func (u uploader) DeleteFile(ctx context.Context, filename string, collectionName string) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
 	filepath := collectionName + "/" + filename
-	o := uploader.cl.Bucket(uploader.bucketName).Object(filepath)
+	o := u.cl.Bucket(u.bucketName).Object(filepath)
 	if err := o.Delete(ctx); err != nil {
 		zap.S().Warn("gcp deletion error, file= ", filename, " ", err.Error())
 	}

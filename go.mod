@@ -11,7 +11,10 @@ require (
 	github.com/gofiber/jwt/v3 v3.2.6
 	github.com/gofiber/utils v0.1.2
 	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/golang/mock v1.6.0
+	github.com/jinzhu/copier v0.3.5
 	github.com/joho/godotenv v1.4.0
+	github.com/mongo-go/testdb v0.0.0-20201209140737-c4845cc6fe67
 	github.com/robfig/cron v1.2.0
 	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.8.3
@@ -35,7 +38,6 @@ require (
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
-	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/klauspost/compress v1.14.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
