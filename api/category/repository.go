@@ -5,6 +5,7 @@ import (
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -14,7 +15,7 @@ type Repository interface {
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
 	AddCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
 	EditCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
-	// DeleteCateListCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
 type categoryRepository struct {
@@ -86,6 +87,11 @@ func (c *categoryRepository) EditCategory(ctx context.Context, cate *Category) (
 
 	return cate, nil
 }
+
 func (c *categoryRepository) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+	_, err := c.collection.DeleteOne(ctx, bson.M{"_id": oid})
+	if err != nil {
+		return errors.NewBadRequestError("Delete category failed!" + err.Error())
+	}
 	return nil
 }

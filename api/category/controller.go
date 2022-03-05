@@ -79,12 +79,7 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 	ctx.BodyParser(cateDTO)
 	cateDTO.ID = objectId
 
-	// categoryBody := c.Locals("categoryBody").(*Category)
-	// sids := c.Locals("sids").([]primitive.ObjectID)
-
-	// categoryBody.ID = categoryObjectId
-	// result, err := Edit(categoryBody, sids)
-	editedCate, err := c.service.EditCategory(ctx, cateDTO)
+	editedCate, err := c.service.EditCategory(ctx.Context(), &cateDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -93,17 +88,17 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 }
 
 // delete the category
-func (cont *Controller) DeleteCategory(c *fiber.Ctx) error {
-	categoryId := c.Params("categoryId")
+func (c *Controller) DeleteCategory(ctx *fiber.Ctx) error {
+	categoryId := ctx.Params("categoryId")
 	objectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	err = Delete(objectId)
+	err = c.service.DeleteCategory(ctx.Context(), objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category " + categoryId + " successfully!"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category " + categoryId + " successfully!"})
 }

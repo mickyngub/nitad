@@ -15,7 +15,7 @@ type Service interface {
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
 	AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*Category, errors.CustomError)
 	EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*Category, errors.CustomError)
-	// DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
 type categoryService struct {
@@ -63,5 +63,9 @@ func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO
 	now := time.Now()
 	cate.UpdatedAt = now
 	cate.Subcategory = subcategories
-	return c.repository.AddCategory(ctx, sids, &cate)
+	return c.repository.EditCategory(ctx, sids, &cate)
+}
+
+func (c *categoryService) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+	return c.repository.DeleteCategory(ctx, oid)
 }
