@@ -19,8 +19,11 @@ type Category struct {
 }
 
 type CategoryDTO struct {
+	ID          primitive.ObjectID
 	Title       string   `form:"title" validate:"required"`
 	Subcategory []string `form:"subcategory" validate:"required"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type CategorySearch struct {

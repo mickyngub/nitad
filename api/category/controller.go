@@ -5,7 +5,6 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func NewController(
@@ -69,23 +68,27 @@ func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 }
 
 // edit the category
-func (contc *Controller) EditCategory(c *fiber.Ctx) error {
-	categoryId := c.Params("categoryId")
-	categoryObjectId, err := utils.IsValidObjectId(categoryId)
+func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
+	categoryId := ctx.Params("categoryId")
+	objectId, err := utils.IsValidObjectId(categoryId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	categoryBody := c.Locals("categoryBody").(*Category)
-	sids := c.Locals("sids").([]primitive.ObjectID)
+	cateDTO := CategoryDTO{}
+	ctx.BodyParser(cateDTO)
+	cateDTO.ID = objectId
 
-	categoryBody.ID = categoryObjectId
-	result, err := Edit(categoryBody, sids)
+	// categoryBody := c.Locals("categoryBody").(*Category)
+	// sids := c.Locals("sids").([]primitive.ObjectID)
 
+	// categoryBody.ID = categoryObjectId
+	// result, err := Edit(categoryBody, sids)
+	editedCate, err := c.service.EditCategory(ctx, cateDTO)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedCate})
 
 }
 

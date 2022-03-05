@@ -13,7 +13,7 @@ type Repository interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
 	AddCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
-	// EditCateListCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError)
+	EditCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
 	// DeleteCateListCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
@@ -74,7 +74,17 @@ func (c *categoryRepository) AddCategory(ctx context.Context, sids []primitive.O
 }
 
 func (c *categoryRepository) EditCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
-	return &Category{}, nil
+	_, updateErr := c.collection.UpdateByID(
+		ctx,
+		cate.ID,
+		cate,
+	)
+
+	if updateErr != nil {
+		return cate, errors.NewBadRequestError(updateErr.Error())
+	}
+
+	return cate, nil
 }
 func (c *categoryRepository) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	return nil

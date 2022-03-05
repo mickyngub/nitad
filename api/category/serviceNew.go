@@ -14,7 +14,7 @@ type Service interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
 	AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*Category, errors.CustomError)
-	// EditCategory(ctx *fiber.Ctx, subcate *Category) (*Category, errors.CustomError)
+	EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*Category, errors.CustomError)
 	// DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
@@ -46,6 +46,21 @@ func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO)
 
 	now := time.Now()
 	cate.CreatedAt = now
+	cate.UpdatedAt = now
+	cate.Subcategory = subcategories
+	return c.repository.AddCategory(ctx, sids, &cate)
+}
+
+func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*Category, errors.CustomError) {
+	var cate Category
+	subcategories, sids, err := c.subcategoryService.FindByIds2(ctx, cateDTO.Subcategory)
+	if err != nil {
+		return &cate, err
+	}
+
+	utils.CopyStruct(cateDTO, cate)
+
+	now := time.Now()
 	cate.UpdatedAt = now
 	cate.Subcategory = subcategories
 	return c.repository.AddCategory(ctx, sids, &cate)
