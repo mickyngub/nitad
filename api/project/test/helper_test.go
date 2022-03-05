@@ -1,6 +1,8 @@
 package project_test
 
 import (
+	context "context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -16,19 +18,28 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func newTestApp(t *testing.T) *fiber.App {
+var subcateRepo subcategory.Repository
+var app *fiber.App
+
+func TestMain(m *testing.M) {
+	fmt.Println("hello main1 ")
 	config.Loadenv()
-	database.ConnectDb(os.Getenv("MONGO_URI"))
+	client := database.ConnectDb(os.Getenv("MONGO_URI"))
 
-	app := fiber.New()
+	subcateRepo = subcategory.NewRepository(client)
+	fmt.Println("hello main2 ")
 
+	os.Exit(m.Run())
+}
+
+func newTestApp(t *testing.T) *fiber.App {
 	ctrl := gomock.NewController(t)
-	// defer ctrl.Finish()
+	defer ctrl.Finish()
 
 	gcpService := NewMockUploader(ctrl)
 
+	app = fiber.New()
 	api.CreateAPI(app, gcpService)
-
 	return app
 }
 
@@ -38,7 +49,7 @@ func addMockSubcategory(t *testing.T) *subcategory.Subcategory {
 		Image: "dummy subcate image url",
 	}
 
-	adddedSubcategory, err := subcategory.Add(&dummySubcate)
+	adddedSubcategory, err := subcateRepo.AddSubcategory(context.Background(), &dummySubcate)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummySubcate.Title, adddedSubcategory.Title)
 	require.Equal(t, dummySubcate.Image, adddedSubcategory.Image)
@@ -86,7 +97,8 @@ func addMockProject(t *testing.T, cate *category.Category) *project.Project {
 }
 
 func deleteMock(t *testing.T, proj *project.Project, cate *category.Category, subcate *subcategory.Subcategory) {
-	err := subcategory.Delete(subcate.ID)
+	err := subcateRepo.DeleteSubcategory(context.Background(), subcate.ID)
+
 	require.Nil(t, err, "Delete subcate failed")
 
 	err = category.Delete(cate.ID)
@@ -94,5 +106,4 @@ func deleteMock(t *testing.T, proj *project.Project, cate *category.Category, su
 
 	err = project.Delete(proj.ID)
 	require.Nil(t, err, "Delete proj failed")
-
 }

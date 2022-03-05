@@ -10,16 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddProjectService(t *testing.T) {
-	newTestApp(t)
+// func TestAddProjectService(t *testing.T) {
+// 	newTestApp(t)
 
-	subcate := addMockSubcategory(t)
-	cate := addMockCategory(t, subcate)
+// 	subcate := addMockSubcategory(t)
+// 	cate := addMockCategory(t, subcate)
 
-	addMockProject(t, cate)
-	//TODO: add from http request
+// 	addMockProject(t, cate)
+// 	//TODO: add from http request
 
-}
+// }
 
 type Response struct {
 	Result project.Project
