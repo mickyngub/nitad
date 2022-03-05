@@ -97,3 +97,26 @@ func (s *subcategoryService) HandleUpdateImage(ctx *fiber.Ctx, subcate *Subcateg
 	subcate.CreatedAt = oldSubcategory.CreatedAt
 	return subcate, nil
 }
+
+func (s *subcategoryService) FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var subcategories []Subcategory
+
+	sids = utils.RemoveDuplicateIds(sids)
+
+	for _, sid := range sids {
+		oid, err := utils.IsValidObjectId(sid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+
+		subcate, err := s.repository.GetSubcategoryById(ctx, oid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+		objectIds = append(objectIds, oid)
+		subcategories = append(subcategories, *subcate)
+	}
+
+	return subcategories, objectIds, nil
+}

@@ -25,4 +25,5 @@ type Service interface {
 	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
 	HandleUpdateImage(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
 }

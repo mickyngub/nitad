@@ -1,6 +1,7 @@
 package subcategory
 
 import (
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -14,9 +15,9 @@ func NewController(
 	controller := &Controller{service}
 
 	subcategoryRoute.Get("/", controller.ListSubcategory)
-	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
+	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategoryById)
 
-	// subcategoryRoute.Use(admin.IsAuth())
+	subcategoryRoute.Use(admin.IsAuth())
 	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
@@ -39,7 +40,7 @@ func (c *Controller) ListSubcategory(ctx *fiber.Ctx) error {
 }
 
 // get subcategory by id
-func (c *Controller) GetSubcategory(ctx *fiber.Ctx) error {
+func (c *Controller) GetSubcategoryById(ctx *fiber.Ctx) error {
 	subcategoryId := ctx.Params("subcategoryId")
 
 	objectId, err := utils.IsValidObjectId(subcategoryId)
@@ -68,6 +69,9 @@ func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
 	}
 
 	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), files, subcategory)
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedSubcate})
 }

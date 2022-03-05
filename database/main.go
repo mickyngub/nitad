@@ -33,7 +33,7 @@ func GetClient() *mongo.Client {
 	return client
 }
 
-func ConnectDb(mongoURI string) {
+func ConnectDb(mongoURI string) *mongo.Client {
 	var err error
 	client, err = mongo.NewClient(options.Client().ApplyURI(mongoURI))
 	if err != nil {
@@ -51,6 +51,8 @@ func ConnectDb(mongoURI string) {
 		zap.S().Fatal(err.Error())
 	}
 	zap.S().Info("databases: ", databases)
+
+	return client
 }
 
 func DisconnectDb() {

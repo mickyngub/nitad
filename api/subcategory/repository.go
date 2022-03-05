@@ -21,8 +21,20 @@ func NewRepository(client *mongo.Client) Repository {
 	}
 }
 
-// get the SUBCATEGORY from requested id
-// ** different from FindById
+func (s *subcategoryRepository) ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
+	var subcates []Subcategory
+	cursor, err := s.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return subcates, errors.NewBadRequestError(err.Error())
+	}
+
+	if err = cursor.All(ctx, &subcates); err != nil {
+		return subcates, errors.NewBadRequestError(err.Error())
+	}
+
+	return subcates, nil
+}
+
 func (s *subcategoryRepository) GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
 	var subcate Subcategory
 
@@ -36,20 +48,6 @@ func (s *subcategoryRepository) GetSubcategoryById(ctx context.Context, oid prim
 		}
 	}
 	return &subcate, nil
-}
-
-func (s *subcategoryRepository) ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
-	var subcates []Subcategory
-	cursor, err := s.collection.Find(ctx, bson.M{})
-	if err != nil {
-		return subcates, errors.NewBadRequestError(err.Error())
-	}
-
-	if err = cursor.All(ctx, &subcates); err != nil {
-		return subcates, errors.NewBadRequestError(err.Error())
-	}
-
-	return subcates, nil
 }
 
 func (s *subcategoryRepository) AddSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError) {
