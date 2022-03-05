@@ -28,8 +28,22 @@ func NewRepository(client *mongo.Client) Repository {
 }
 
 func (c *categoryRepository) ListCategory(ctx context.Context) ([]Category, errors.CustomError) {
-	return []Category{}, nil
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendLookupStage(pipe, "subcategory")
+
+	cursor, err := c.collection.Aggregate(ctx, pipe)
+	var cates []Category
+	if err != nil {
+		return cates, errors.NewBadRequestError(err.Error())
+
+	}
+	if err = cursor.All(ctx, &cates); err != nil {
+		return cates, errors.NewBadRequestError(err.Error())
+	}
+
+	return cates, nil
 }
+
 func (c *categoryRepository) GetCateListCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError) {
 	return &Category{}, nil
 }
