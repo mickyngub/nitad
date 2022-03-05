@@ -4,7 +4,6 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -52,14 +51,6 @@ func ValidateId(cid string) (Category, errors.CustomError) {
 	}
 
 	return c, nil
-}
-
-// convert bson to category
-func BsonToCategory(b bson.M) Category {
-	var s Category
-	bsonBytes, _ := bson.Marshal(b)
-	bson.Unmarshal(bsonBytes, &s)
-	return s
 }
 
 // TODO: this function is written in O(n^3), should find a better way to handle this later.
