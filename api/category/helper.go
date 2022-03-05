@@ -3,7 +3,6 @@ package category
 import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -15,42 +14,26 @@ func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomEr
 	var objectIds []primitive.ObjectID
 	var categories []Category
 
-	cids = utils.RemoveDuplicateIds(cids)
+	// cids = utils.RemoveDuplicateIds(cids)
 
-	for _, cid := range cids {
-		oid, err := utils.IsValidObjectId(cid)
-		if err != nil {
-			return categories, objectIds, err
-		}
+	// for _, cid := range cids {
+	// 	oid, err := utils.IsValidObjectId(cid)
+	// 	if err != nil {
+	// 		return categories, objectIds, err
+	// 	}
 
-		category, err := GetById(oid)
-		if err != nil {
-			return categories, objectIds, err
-		}
+	// 	category, err := GetById(oid)
+	// 	if err != nil {
+	// 		return categories, objectIds, err
+	// 	}
 
-		objectIds = append(objectIds, oid)
-		categories = append(categories, category)
+	// 	objectIds = append(objectIds, oid)
+	// 	categories = append(categories, category)
 
-	}
+	// }
 
 	return categories, objectIds, nil
 
-}
-
-// validate requested string of a single categoryId
-// and return valid objectId, otherwise error
-func ValidateId(cid string) (Category, errors.CustomError) {
-	var c Category
-	objectId, err := utils.IsValidObjectId(cid)
-	if err != nil {
-		return c, err
-	}
-
-	if c, err = GetById(objectId); err != nil {
-		return c, err
-	}
-
-	return c, nil
 }
 
 // TODO: this function is written in O(n^3), should find a better way to handle this later.

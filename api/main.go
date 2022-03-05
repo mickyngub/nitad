@@ -17,21 +17,19 @@ const API_PREFIX = "/api/v1"
 
 func CreateAPI(app *fiber.App, gcpService gcp.Uploader) {
 	client := database.GetClient()
+
 	subcategoryRepository := subcategory.NewRepository(client)
+	categoryRepository := category.NewRepository(client)
+
 	subcategoryService := subcategory.NewService(subcategoryRepository, gcpService)
+	categoryService := category.NewService(categoryRepository, subcategoryService)
 
 	v1 := app.Group(API_PREFIX)
-
 	search.NewController(v1.Group("/search"))
-
 	connection.NewController(v1.Group("/connection"))
-
 	subcategory.NewController(subcategoryService, v1.Group("/subcategory"))
-	category.NewController(v1.Group("/category"))
+	category.NewController(categoryService, v1.Group("/category"))
 	project.NewController(gcpService, v1.Group("/project"))
-
 	spatial.NewController(v1.Group("/spatial"))
-
 	admin.NewController(v1.Group("/admin"))
-
 }

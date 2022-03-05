@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"time"
 
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -13,8 +14,8 @@ import (
 type Repository interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
-	AddCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
-	EditCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError)
+	AddCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError)
+	EditCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
@@ -65,21 +66,34 @@ func (c *categoryRepository) GetCategoryById(ctx context.Context, oid primitive.
 	return &cates[0], nil
 }
 
-func (c *categoryRepository) AddCategory(ctx context.Context, sids []primitive.ObjectID, cate *Category) (*Category, errors.CustomError) {
-	insertRes, insertErr := c.collection.InsertOne(ctx, cate)
+func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError) {
+	now := time.Now()
+	insertRes, insertErr := c.collection.InsertOne(ctx, bson.D{
+		{Key: "title", Value: cate.Title},
+		{Key: "subcategory", Value: osids},
+		{Key: "createdAt", Value: now},
+		{Key: "updatedAt", Value: now},
+	})
 	if insertErr != nil {
 		return cate, errors.NewBadRequestError(insertErr.Error())
 	}
+
 	cate.ID = insertRes.InsertedID.(primitive.ObjectID)
 	return cate, nil
 }
 
-func (c *categoryRepository) EditCategory(ctx context.Context, cate *Category) (*Category, errors.CustomError) {
+func (c *categoryRepository) EditCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError) {
 	_, updateErr := c.collection.UpdateByID(
 		ctx,
 		cate.ID,
-		cate,
-	)
+		bson.D{{
+			Key: "$set", Value: bson.D{
+				{Key: "title", Value: cate.Title},
+				{Key: "subcategory", Value: osids},
+				{Key: "updatedAt", Value: time.Now()},
+			},
+		},
+		})
 
 	if updateErr != nil {
 		return cate, errors.NewBadRequestError(updateErr.Error())

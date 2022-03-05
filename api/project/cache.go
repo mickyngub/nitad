@@ -2,7 +2,6 @@ package project
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/birdglove2/nitad-backend/redis"
@@ -36,10 +35,10 @@ func HandleCacheGetProjectById(c *fiber.Ctx, projectId string) *Project {
 		if err != nil {
 			zap.S().Warn("Unmarshal fail", err.Error())
 		}
-		log.Println("not nexting")
+		// log.Println("not nexting")
 
 		return &p
 	}
-	log.Println("nexting")
+	// log.Println("nexting")
 	return nil
 }

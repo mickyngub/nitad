@@ -13,17 +13,17 @@ var collectionName = database.COLLECTIONS["CATEGORY"]
 type Category struct {
 	ID          primitive.ObjectID        `bson:"_id,omitempty" json:"id,omitempty"`
 	Title       string                    `bson:"title" json:"title"`
-	Subcategory []subcategory.Subcategory `bson:"subcategory,omitempty" json:"subcategory,omitempty"`
+	Subcategory []subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
 	CreatedAt   time.Time                 `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
 	UpdatedAt   time.Time                 `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
 
 type CategoryDTO struct {
-	ID          primitive.ObjectID
-	Title       string   `form:"title" validate:"required"`
-	Subcategory []string `form:"subcategory" validate:"required"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          primitive.ObjectID `form:"-"`
+	Title       string             `form:"title" validate:"required"`
+	Subcategory []string           `form:"subcategory" validate:"required"`
+	CreatedAt   time.Time          `form:"-"`
+	UpdatedAt   time.Time          `form:"-"`
 }
 
 type CategorySearch struct {

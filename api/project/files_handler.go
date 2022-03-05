@@ -2,7 +2,6 @@ package project
 
 import (
 	"context"
-	"log"
 
 	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -20,8 +19,6 @@ func (contc *Controller) HandleUpdateReportAndImages(c *fiber.Ctx, updateProject
 	// assign attrs from DB to the updateOne in case there is no update
 	updateProject.Report = oldProject.Report
 	updateProject.Images = oldProject.Images
-
-	log.Println("Report", updateProject.Report)
 
 	updateProject, err = contc.HandleUpdateImages(c, updateProject)
 	if err != nil {

@@ -75,11 +75,11 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 		return errors.Throw(ctx, err)
 	}
 
-	cateDTO := CategoryDTO{}
+	cateDTO := new(CategoryDTO)
 	ctx.BodyParser(cateDTO)
 	cateDTO.ID = objectId
 
-	editedCate, err := c.service.EditCategory(ctx.Context(), &cateDTO)
+	editedCate, err := c.service.EditCategory(ctx.Context(), cateDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
