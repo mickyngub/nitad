@@ -5,18 +5,17 @@ import (
 
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(
-	gcpService gcp.Uploader,
+	service Service,
 	projectRoute fiber.Router,
 ) {
 
-	controller := &Controller{gcpService}
+	controller := &Controller{service}
 
 	projectRoute.Get("/", controller.ListProject)
 	projectRoute.Get("/:projectId", controller.GetProject)
@@ -29,22 +28,21 @@ func NewController(
 }
 
 type Controller struct {
-	gcpService gcp.Uploader
+	service Service
 }
 
 // list all projects
-func (contc *Controller) ListProject(c *fiber.Ctx) error {
+func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 	pq := new(ProjectQuery)
-
-	if err := c.QueryParser(pq); err != nil {
+	if err := ctx.QueryParser(pq); err != nil {
 		return err
 	}
 
-	projects, paginate, err := FindAll(pq)
+	projects, paginate, err := c.service.ListProject(ctx.Context(), pq)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 }
 
 // get project by id
