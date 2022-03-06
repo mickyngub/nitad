@@ -1,8 +1,6 @@
 package project
 
 import (
-	"context"
-
 	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -10,87 +8,84 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (contc *Controller) HandleUpdateReportAndImages(c *fiber.Ctx, updateProject *Project) (*Project, errors.CustomError) {
-	oldProject, err := GetById(updateProject.ID)
+func (p *projectService) HandleUpdateReportAndImages(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError) {
+	oldProj, err := p.GetProjectById(ctx, proj.ID)
 	if err != nil {
-		return updateProject, err
+		return proj, err
 	}
 
-	// assign attrs from DB to the updateOne in case there is no update
-	updateProject.Report = oldProject.Report
-	updateProject.Images = oldProject.Images
+	proj.Report = oldProj.Report
+	proj.Images = oldProj.Images
+	proj.CreatedAt = oldProj.CreatedAt
 
-	updateProject, err = contc.HandleUpdateImages(c, updateProject)
+	proj, err = p.HandleUpdateImages(ctx, proj)
 	if err != nil {
-		return updateProject, err
+		return proj, err
 	}
 
-	updateProject, err = contc.HandleUpdateReport(c, updateProject)
+	proj, err = p.HandleUpdateReport(ctx, proj)
 	if err != nil {
-		return updateProject, err
+		return proj, err
 	}
 
-	updateProject.CreatedAt = oldProject.CreatedAt
-	return updateProject, nil
+	return proj, nil
 }
 
-func (contc *Controller) HandleUpdateReport(c *fiber.Ctx, p *Project) (*Project, errors.CustomError) {
-	files, err := utils.ExtractUpdatedFiles(c, "report")
+func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError) {
+	// DELETE FILES
+	if len(proj.DeleteImages) > 0 {
+		// remove deleteImages from Images attrs
+		proj.Images = utils.RemoveSliceFromSlice(proj.Images, proj.DeleteImages)
+		p.gcpService.DeleteFiles(ctx.Context(), proj.DeleteImages, collectionName)
+	}
+
+	// UPLOAD NEW FILES
+	files, err := utils.ExtractUpdatedFiles(ctx, "images")
 	if err != nil {
-		return p, err
+		return proj, err
+	}
+	if len(files) > 0 {
+		// if file pass, upload file
+		imageURLs, err := p.gcpService.UploadFiles(ctx.Context(), files, collectionName)
+
+		if err != nil {
+			// if upload error, delete uploaded file if it was uploaed
+			p.gcpService.DeleteFiles(ctx.Context(), imageURLs, collectionName)
+			return proj, err
+		}
+
+		// concat uploaded file to the existing ones
+		proj.Images = append(proj.Images, imageURLs...)
+	}
+
+	return proj, nil
+}
+
+func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError) {
+	files, err := utils.ExtractUpdatedFiles(ctx, "report")
+	if err != nil {
+		return proj, err
 	}
 
 	// if there is file passed, delete the old one and upload a new one
 	if len(files) > 0 {
-		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(contc.gcpService, c.Context(), files[0], p.Report, collectionName)
+		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(p.gcpService, ctx.Context(), files[0], proj.Report, collectionName)
 		if err != nil {
-			return p, err
+			return proj, err
 		}
 		// if upload success, pass the url to the project struct
-		p.Report = newUploadFilename
+		proj.Report = newUploadFilename
 	}
 
-	return p, nil
+	return proj, nil
 }
 
-func (contc *Controller) HandleUpdateImages(c *fiber.Ctx, up *Project) (*Project, errors.CustomError) {
-	// DELETE FILES
-	if len(up.DeleteImages) > 0 {
-		// remove deleteImages from Images attrs
-		up.Images = utils.RemoveSliceFromSlice(up.Images, up.DeleteImages)
-		contc.gcpService.DeleteFiles(c.Context(), up.DeleteImages, collectionName)
-
-	}
-
-	// UPLOAD NEW FILES
-	files, err := utils.ExtractUpdatedFiles(c, "images")
-	if err != nil {
-		return up, err
-	}
-	if len(files) > 0 {
-		// if file pass, upload file
-		imageURLs, err := contc.gcpService.UploadFiles(c.Context(), files, collectionName)
-
-		if err != nil {
-			// if upload error, delete uploaded file if it was uploaed
-			contc.gcpService.DeleteFiles(c.Context(), imageURLs, collectionName)
-			return up, err
-		}
-
-		// concat uploaded file to the existing ones
-		up.Images = append(up.Images, imageURLs...)
-	}
-
-	return up, nil
-}
-
-func (contc *Controller) HandleDeleteImages(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
-	project, err := GetById(oid)
+func (p *projectService) HandleDeleteImages(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError {
+	project, err := p.GetProjectById(ctx, oid)
 	if err != nil {
 		return err
 	}
 
-	contc.gcpService.DeleteFiles(ctx, project.Images, collectionName)
-
+	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
 	return nil
 }
