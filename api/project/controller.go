@@ -1,11 +1,8 @@
 package project
 
 import (
-	"os"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,7 +15,7 @@ func NewController(
 	controller := &Controller{service}
 
 	projectRoute.Get("/", controller.ListProject)
-	projectRoute.Get("/:projectId", controller.GetProject)
+	projectRoute.Get("/:projectId", controller.GetProjectById)
 
 	projectRoute.Use(admin.IsAuth())
 	projectRoute.Post("/", AddAndEditProjectValidator, controller.AddProject)
@@ -38,7 +35,7 @@ func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	projects, paginate, err := c.service.ListProject(ctx.Context(), pq)
+	projects, paginate, err := c.service.ListProject(ctx, pq)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -46,33 +43,20 @@ func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 }
 
 // get project by id
-func (contc *Controller) GetProject(c *fiber.Ctx) error {
-	projectId := c.Params("projectId")
+func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
+	projectId := ctx.Params("projectId")
 
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	if os.Getenv("APP_ENV") != "test" {
-		cacheProject := HandleCacheGetProjectById(c, projectId)
-
-		if cacheProject != nil {
-			return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
-		}
-	}
-
-	result, err := GetById(objectId)
+	project, err := c.service.GetProjectById(ctx, objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	IncrementView(objectId, 1)
-	if os.Getenv("APP_ENV") != "test" {
-		redis.SetCache(c.Path(), result)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": project})
 }
 
 // add a project
