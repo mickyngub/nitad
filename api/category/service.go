@@ -5,6 +5,7 @@ import (
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -15,6 +16,7 @@ type Service interface {
 	EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
+	SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError)
 	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
 }
 
@@ -55,4 +57,8 @@ func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO
 
 func (c *categoryService) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
 	return c.repository.DeleteCategory(ctx, oid)
+}
+
+func (c *categoryService) SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError) {
+	return c.repository.SearchCategory(ctx.Context())
 }

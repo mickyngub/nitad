@@ -20,6 +20,7 @@ type Service interface {
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	EditProject(c *Controller, ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError
+	SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError)
 }
 
 type projectService struct {
@@ -152,4 +153,8 @@ func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) e
 
 	return p.repository.DeleteProject(ctx.Context(), oid)
 
+}
+
+func (p *projectService) SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError) {
+	return p.repository.SearchProject(ctx.Context())
 }

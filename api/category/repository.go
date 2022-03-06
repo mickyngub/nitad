@@ -113,19 +113,19 @@ func (c *categoryRepository) DeleteCategory(ctx context.Context, oid primitive.O
 }
 
 func (c *categoryRepository) SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError) {
-	var result []CategorySearch
+	var cates []CategorySearch
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendLookupStage(pipe, "subcategory")
 	pipe = database.AppendProjectStage(pipe, []string{"title", "subcategory"})
 
 	cursor, err := c.collection.Aggregate(ctx, pipe)
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return cates, errors.NewBadRequestError(err.Error())
 	}
 
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+	if err = cursor.All(ctx, &cates); err != nil {
+		return cates, errors.NewBadRequestError(err.Error())
 	}
 
-	return result, nil
+	return cates, nil
 }

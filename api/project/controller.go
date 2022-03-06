@@ -103,6 +103,6 @@ func (c *Controller) DeleteProject(ctx *fiber.Ctx) error {
 		return errors.Throw(ctx, err)
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + projectId + " successfully!"})
 
 }

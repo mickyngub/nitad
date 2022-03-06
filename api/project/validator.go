@@ -10,12 +10,12 @@ import (
 func GetProjectValidator(c *fiber.Ctx) error {
 	projectId := c.Params("projectId")
 
-	_, err := utils.IsValidObjectId(projectId)
+	oid, err := utils.IsValidObjectId(projectId)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
-	HandleCacheGetProjectById(c, projectId)
+	HandleCacheGetProjectById(c, oid)
 
 	return c.Next()
 }

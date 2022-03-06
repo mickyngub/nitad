@@ -36,10 +36,7 @@ func HandleCacheGetProjectById(c *fiber.Ctx, oid primitive.ObjectID) *Project {
 		if err != nil {
 			zap.S().Warn("Unmarshal fail", err.Error())
 		}
-		// log.Println("not nexting")
-
 		return &p
 	}
-	// log.Println("nexting")
 	return nil
 }

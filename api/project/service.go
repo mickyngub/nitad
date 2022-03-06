@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/api/paginate"
@@ -38,23 +39,20 @@ type Count struct {
 	ID int64
 }
 
-func SearchAll() ([]ProjectSearch, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
-
-	var result []ProjectSearch
+func (p *projectRepository) SearchAll(ctx context.Context) ([]ProjectSearch, errors.CustomError) {
+	var projs []ProjectSearch
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendProjectStage(pipe, []string{"title"})
 
-	cursor, err := collection.Aggregate(ctx, pipe)
+	cursor, err := p.collection.Aggregate(ctx, pipe)
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return projs, errors.NewBadRequestError(err.Error())
+	}
+	if err = cursor.All(ctx, &projs); err != nil {
+		return projs, errors.NewBadRequestError(err.Error())
 	}
 
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-	}
-
-	return result, nil
+	return projs, nil
 }
 
 func FindAll(pq *ProjectQuery) ([]Project, paginate.Paginate, errors.CustomError) {

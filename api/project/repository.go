@@ -20,6 +20,7 @@ type Repository interface {
 	EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 	DeleteProject(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
+	SearchProject(ctx context.Context) ([]ProjectSearch, errors.CustomError)
 	IncrementView(ctx context.Context, oid primitive.ObjectID, val int)
 	CountDocuments(ctx context.Context, pipe mongo.Pipeline) (int64, errors.CustomError)
 }
@@ -144,4 +145,20 @@ func (p *projectRepository) IncrementView(ctx context.Context, oid primitive.Obj
 	if err != nil {
 		zap.S().Warn("Incrementing view error: ", err.Error())
 	}
+}
+
+func (p *projectRepository) SearchProject(ctx context.Context) ([]ProjectSearch, errors.CustomError) {
+	var projs []ProjectSearch
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendProjectStage(pipe, []string{"title"})
+
+	cursor, err := p.collection.Aggregate(ctx, pipe)
+	if err != nil {
+		return projs, errors.NewBadRequestError(err.Error())
+	}
+	if err = cursor.All(ctx, &projs); err != nil {
+		return projs, errors.NewBadRequestError(err.Error())
+	}
+
+	return projs, nil
 }
