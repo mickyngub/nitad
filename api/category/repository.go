@@ -17,6 +17,8 @@ type Repository interface {
 	AddCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError)
 	EditCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+
+	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
 }
 
 type categoryRepository struct {
@@ -108,4 +110,22 @@ func (c *categoryRepository) DeleteCategory(ctx context.Context, oid primitive.O
 		return errors.NewBadRequestError("Delete category failed!" + err.Error())
 	}
 	return nil
+}
+
+func (c *categoryRepository) SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError) {
+	var result []CategorySearch
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendLookupStage(pipe, "subcategory")
+	pipe = database.AppendProjectStage(pipe, []string{"title", "subcategory"})
+
+	cursor, err := c.collection.Aggregate(ctx, pipe)
+	if err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return result, errors.NewBadRequestError(err.Error())
+	}
+
+	return result, nil
 }

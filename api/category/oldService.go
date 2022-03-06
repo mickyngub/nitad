@@ -10,26 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SearchAll() ([]CategorySearch, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
-
-	var result []CategorySearch
-	pipe := mongo.Pipeline{}
-	pipe = database.AppendLookupStage(pipe, "subcategory")
-	pipe = database.AppendProjectStage(pipe, []string{"title", "subcategory"})
-
-	cursor, err := collection.Aggregate(ctx, pipe)
-	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-	}
-
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-	}
-
-	return result, nil
-}
-
 func FindAll() ([]Category, errors.CustomError) {
 	categoryCollection, ctx := database.GetCollection(collectionName)
 

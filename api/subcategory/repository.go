@@ -11,6 +11,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Repository interface {
+	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
+	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
+	AddSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	EditSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+}
+
 type subcategoryRepository struct {
 	collection *mongo.Collection
 }

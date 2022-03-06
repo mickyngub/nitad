@@ -14,14 +14,13 @@ func NewController(
 
 	controller := &Controller{}
 
-	adminRoute.Post("/signup", SignupValidator, controller.Signup)
+	// adminRoute.Post("/signup", SignupValidator, controller.Signup)
 	adminRoute.Post("/login", LoginValidator, controller.Login)
 
 	adminRoute.Use(IsAuth())
 	adminRoute.Get("/profile", controller.Profile)
 
 	//adminRoute.Post("/logout", controller.Logout)
-
 }
 
 type Controller struct{}
