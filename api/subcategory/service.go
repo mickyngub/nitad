@@ -19,7 +19,7 @@ func GetById(oid primitive.ObjectID) (Subcategory, errors.CustomError) {
 func FindAll() ([]Subcategory, errors.CustomError) {
 	collection, ctx := database.GetCollection(collectionName)
 
-	var result []Subcategory
+	result := []Subcategory{}
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
 		return result, errors.NewBadRequestError(err.Error())
