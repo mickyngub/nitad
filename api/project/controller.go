@@ -92,26 +92,17 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 }
 
 // delete the project
-func (contc *Controller) DeleteProject(c *fiber.Ctx) error {
-	projectId := c.Params("projectId")
+func (c *Controller) DeleteProject(ctx *fiber.Ctx) error {
+	projectId := ctx.Params("projectId")
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	project, err := GetById(objectId)
-	if err != nil {
-		return err
+	if err = c.service.DeleteProject(ctx, objectId); err != nil {
+		return errors.Throw(ctx, err)
 	}
 
-	contc.gcpService.DeleteFile(c.Context(), project.Report, collectionName)
-	contc.gcpService.DeleteFiles(c.Context(), project.Images, collectionName)
-
-	err = Delete(objectId)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
 
 }

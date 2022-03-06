@@ -18,6 +18,7 @@ type Repository interface {
 	GetProjectById(ctx context.Context, oid primitive.ObjectID) (*Project, errors.CustomError)
 	AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 	EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
+	DeleteProject(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
 	IncrementView(ctx context.Context, oid primitive.ObjectID, val int)
 	CountDocuments(ctx context.Context, pipe mongo.Pipeline) (int64, errors.CustomError)
@@ -102,6 +103,15 @@ func (p *projectRepository) EditProject(ctx context.Context, proj *Project) (*Pr
 		return proj, errors.NewBadRequestError("edit project error: " + updateErr.Error())
 	}
 	return proj, nil
+}
+
+func (p *projectRepository) DeleteProject(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+	_, err := p.collection.DeleteOne(ctx, bson.M{"_id": oid})
+	if err != nil {
+		return errors.NewBadRequestError("Delete project failed!" + err.Error())
+	}
+
+	return nil
 }
 
 func (p *projectRepository) CountDocuments(ctx context.Context, pipe mongo.Pipeline) (int64, errors.CustomError) {

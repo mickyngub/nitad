@@ -19,6 +19,7 @@ type Service interface {
 	GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) (*Project, errors.CustomError)
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	EditProject(c *Controller, ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
+	DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError
 }
 
 type projectService struct {
@@ -138,4 +139,17 @@ func (p *projectService) EditProject(c *Controller, ctx *fiber.Ctx, oid primitiv
 	}
 
 	return p.repository.EditProject(ctx.Context(), project)
+}
+
+func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError {
+	project, err := p.GetProjectById(ctx, oid)
+	if err != nil {
+		return err
+	}
+
+	p.gcpService.DeleteFile(ctx.Context(), project.Report, collectionName)
+	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
+
+	return p.repository.DeleteProject(ctx.Context(), oid)
+
 }
