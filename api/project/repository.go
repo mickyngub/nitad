@@ -27,11 +27,17 @@ type Repository interface {
 
 type projectRepository struct {
 	collection *mongo.Collection
+	helper     *repositoryHelper
+}
+
+type Count struct {
+	ID int64
 }
 
 func NewRepository(client *mongo.Client) Repository {
 	return &projectRepository{
 		collection: client.Database(database.DatabaseName).Collection(database.COLLECTIONS["PROJECT"]),
+		helper:     &repositoryHelper{},
 	}
 }
 
@@ -48,7 +54,7 @@ func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, s
 		return projects, nil, err
 	}
 
-	queryPipe := AppendQueryStage(pipe, pq)
+	queryPipe := p.helper.AppendQueryStage(pipe, pq)
 	cursor, aggregateErr := p.collection.Aggregate(ctx, queryPipe)
 	if aggregateErr != nil {
 		return projects, nil, errors.NewBadRequestError(aggregateErr.Error())
