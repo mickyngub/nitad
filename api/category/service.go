@@ -14,6 +14,8 @@ type Service interface {
 	AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+
+	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
 }
 
 type categoryService struct {

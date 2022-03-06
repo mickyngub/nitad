@@ -9,6 +9,7 @@ import (
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,6 +17,7 @@ import (
 type Service interface {
 	ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) (*Project, errors.CustomError)
+	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 }
 
 type projectService struct {
@@ -63,4 +65,61 @@ func (p *projectService) GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) 
 	}
 
 	return project, nil
+}
+
+func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
+	project := new(Project)
+
+	_, sids, err := p.subcategoryService.FindByIds2(ctx.Context(), projectDTO.Subcategory)
+	if err != nil {
+		return project, err
+	}
+
+	categories, _, err := p.categoryService.FindByIds2(ctx.Context(), projectDTO.Category)
+	if err != nil {
+		return project, err
+	}
+
+	finalCategories, err := category.FilterCatesWithSids(categories, sids)
+	if err != nil {
+		return project, err
+	}
+
+	files, err := utils.ExtractFiles(ctx, "report")
+	if err != nil {
+		return project, err
+	}
+
+	reportURL, err := p.gcpService.UploadFile(ctx.Context(), files[0], collectionName)
+	if err != nil {
+		return project, err
+	}
+
+	files, err = utils.ExtractFiles(ctx, "images")
+	if err != nil {
+		return project, err
+	}
+	imageURLs, err := p.gcpService.UploadFiles(ctx.Context(), files, collectionName)
+	if err != nil {
+		return project, err
+	}
+
+	err = utils.CopyStruct(projectDTO, project)
+	if err != nil {
+		return project, err
+	}
+
+	project.Category = finalCategories
+	project.Images = imageURLs
+	project.Report = reportURL
+
+	addedProject, err := p.repository.AddProject(ctx.Context(), project)
+	if err != nil {
+		// if there is any error, remove the uploaded files from gcp
+		URLs := append(imageURLs, reportURL)
+		p.gcpService.DeleteFiles(ctx.Context(), URLs, collectionName)
+		return project, err
+	}
+
+	return addedProject, nil
 }

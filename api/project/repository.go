@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"time"
 
 	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/database"
@@ -15,6 +16,7 @@ import (
 type Repository interface {
 	ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx context.Context, oid primitive.ObjectID) (*Project, errors.CustomError)
+	AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 
 	IncrementView(ctx context.Context, oid primitive.ObjectID, val int)
 	CountDocuments(ctx context.Context, pipe mongo.Pipeline) (int64, errors.CustomError)
@@ -72,6 +74,22 @@ func (p *projectRepository) GetProjectById(ctx context.Context, oid primitive.Ob
 		return &Project{}, errors.NewNotFoundError("projectId")
 	}
 	return &projects[0], nil
+}
+
+func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
+	now := time.Now()
+	proj.CreatedAt = now
+	proj.UpdatedAt = now
+	proj.Views = 0
+
+	insertRes, insertErr := p.collection.InsertOne(ctx, proj)
+	if insertErr != nil {
+		return proj, errors.NewBadRequestError(insertErr.Error())
+	}
+
+	proj.ID = insertRes.InsertedID.(primitive.ObjectID)
+
+	return proj, nil
 }
 
 func (p *projectRepository) CountDocuments(ctx context.Context, pipe mongo.Pipeline) (int64, errors.CustomError) {

@@ -60,43 +60,16 @@ func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
 }
 
 // add a project
-func (contc *Controller) AddProject(c *fiber.Ctx) error {
-	projectBody, ok := c.Locals("projectBody").(*Project)
-	if !ok {
-		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
-	}
+func (c *Controller) AddProject(ctx *fiber.Ctx) error {
+	projectDTO := new(ProjectDTO)
+	ctx.BodyParser(projectDTO)
 
-	files, err := utils.ExtractFiles(c, "report")
+	addedProject, err := c.service.AddProject(ctx, projectDTO)
 	if err != nil {
-		return errors.Throw(c, err)
-	}
-	reportURL, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
-	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	files, err = utils.ExtractFiles(c, "images")
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-	imageURLs, err := contc.gcpService.UploadFiles(c.Context(), files, collectionName)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	projectBody.Report = reportURL
-	projectBody.Images = imageURLs
-
-	result, err := Add(projectBody)
-	if err != nil {
-		// if there is any error, remove the uploaded files from gcp
-		imageURLs = append(imageURLs, reportURL)
-		contc.gcpService.DeleteFiles(c.Context(), imageURLs, collectionName)
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
-
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedProject})
 }
 
 func (contc *Controller) EditProject(c *fiber.Ctx) error {

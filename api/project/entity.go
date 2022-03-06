@@ -32,7 +32,7 @@ type Project struct {
 	DeleteImages []string            `bson:"deleteImages,omitempty" json:"deleteImages,omitempty"`
 }
 
-type ProjectRequest struct {
+type ProjectDTO struct {
 	Title        string                 `form:"title" validate:"required"`
 	Description  string                 `form:"description" validate:"required"`
 	Authors      []string               `form:"authors" validate:"required"`

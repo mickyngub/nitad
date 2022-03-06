@@ -1,10 +1,43 @@
 package category
 
 import (
+	"context"
+
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+// use for checking ids from ProjectRequest
+// receive array of categoryIds, then
+// find and return non-duplicated categories, and their ids
+// return []Category
+func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var categories []Category
+
+	cids = utils.RemoveDuplicateIds(cids)
+
+	for _, cid := range cids {
+		oid, err := utils.IsValidObjectId(cid)
+		if err != nil {
+			return categories, objectIds, err
+		}
+
+		category, err := GetById(oid)
+		if err != nil {
+			return categories, objectIds, err
+		}
+
+		objectIds = append(objectIds, oid)
+		categories = append(categories, category)
+
+	}
+
+	return categories, objectIds, nil
+
+}
 
 // use for checking ids from ProjectRequest
 // receive array of categoryIds, then
