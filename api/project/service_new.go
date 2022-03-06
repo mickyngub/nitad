@@ -18,6 +18,7 @@ type Service interface {
 	ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) (*Project, errors.CustomError)
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
+	EditProject(c *Controller, ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 }
 
 type projectService struct {
@@ -122,4 +123,19 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	}
 
 	return addedProject, nil
+}
+
+func (p *projectService) EditProject(c *Controller, ctx *fiber.Ctx, oid primitive.ObjectID, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
+	project := new(Project)
+	err := utils.CopyStruct(projectDTO, project)
+	if err != nil {
+		return project, err
+	}
+
+	project, err = c.HandleUpdateReportAndImages(ctx, project)
+	if err != nil {
+		return project, err
+	}
+
+	return p.repository.EditProject(ctx.Context(), project)
 }

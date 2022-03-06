@@ -33,6 +33,7 @@ type Project struct {
 }
 
 type ProjectDTO struct {
+	ID           primitive.ObjectID     `form:"-"`
 	Title        string                 `form:"title" validate:"required"`
 	Description  string                 `form:"description" validate:"required"`
 	Authors      []string               `form:"authors" validate:"required"`

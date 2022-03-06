@@ -72,30 +72,23 @@ func (c *Controller) AddProject(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedProject})
 }
 
-func (contc *Controller) EditProject(c *fiber.Ctx) error {
-	projectId := c.Params("projectId")
+func (c *Controller) EditProject(ctx *fiber.Ctx) error {
+	projectId := ctx.Params("projectId")
 	oid, err := utils.IsValidObjectId(projectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	updateProject, ok := c.Locals("projectBody").(*Project)
-	if !ok {
-		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
-	}
+	projectDTO := new(ProjectDTO)
+	projectDTO.ID = oid
+	ctx.BodyParser(projectDTO)
 
-	updateProject.ID = oid
-	updateProject, err = contc.HandleUpdateReportAndImages(c, updateProject)
+	editedProject, err := c.service.EditProject(c, ctx, projectDTO)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	result, err := Edit(updateProject)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedProject})
 }
 
 // delete the project

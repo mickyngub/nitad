@@ -17,6 +17,7 @@ type Repository interface {
 	ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx context.Context, oid primitive.ObjectID) (*Project, errors.CustomError)
 	AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
+	EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 
 	IncrementView(ctx context.Context, oid primitive.ObjectID, val int)
 	CountDocuments(ctx context.Context, pipe mongo.Pipeline) (int64, errors.CustomError)
@@ -89,6 +90,17 @@ func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Pro
 
 	proj.ID = insertRes.InsertedID.(primitive.ObjectID)
 
+	return proj, nil
+}
+
+func (p *projectRepository) EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
+	now := time.Now()
+	proj.UpdatedAt = now
+	_, updateErr := p.collection.UpdateByID(ctx, proj.ID, bson.D{{Key: "$set", Value: &p}})
+
+	if updateErr != nil {
+		return proj, errors.NewBadRequestError("edit project error: " + updateErr.Error())
+	}
 	return proj, nil
 }
 
