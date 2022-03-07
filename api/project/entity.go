@@ -33,22 +33,22 @@ type Project struct {
 }
 
 type ProjectDTO struct {
-	ID           primitive.ObjectID     `form:"-"`
-	Title        string                 `form:"title" validate:"required"`
-	Description  string                 `form:"description" validate:"required"`
-	Authors      []string               `form:"authors" validate:"required"`
-	Emails       []string               `form:"emails" validate:"required"`
-	Inspiration  string                 `form:"inspiration" validate:"required"`
-	Abstract     string                 `form:"abstract" validate:"required"`
-	Images       []multipart.FileHeader `form:"-"`
-	Videos       []string               `form:"videos" validate:"required"`
-	Keywords     []string               `form:"keywords"`
-	Report       multipart.FileHeader   `form:"-"`
-	VirtualLink  string                 `form:"virtualLink"`
-	Status       string                 `form:"status" validate:"required"`
-	Category     []string               `form:"category" validate:"required"`
-	Subcategory  []string               `form:"subcategory" validate:"required"`
-	DeleteImages []string               `form:"deleteImages"`
+	ID           primitive.ObjectID      `form:"-"`
+	Title        string                  `form:"title" validate:"required"`
+	Description  string                  `form:"description" validate:"required"`
+	Authors      []string                `form:"authors" validate:"required"`
+	Emails       []string                `form:"emails" validate:"required"`
+	Inspiration  string                  `form:"inspiration" validate:"required"`
+	Abstract     string                  `form:"abstract" validate:"required"`
+	Images       []*multipart.FileHeader `form:"-"`
+	Videos       []string                `form:"videos" validate:"required"`
+	Keywords     []string                `form:"keywords"`
+	Report       *multipart.FileHeader   `form:"-"`
+	VirtualLink  string                  `form:"virtualLink"`
+	Status       string                  `form:"status" validate:"required"`
+	Category     []string                `form:"category" validate:"required"`
+	Subcategory  []string                `form:"subcategory" validate:"required"`
+	DeleteImages []string                `form:"deleteImages"`
 }
 
 type ProjectSearch struct {

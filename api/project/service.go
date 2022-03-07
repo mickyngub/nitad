@@ -93,21 +93,12 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 		return project, err
 	}
 
-	files, err := utils.ExtractFiles(ctx, "report")
+	reportURL, err := p.gcpService.UploadFile(ctx.Context(), projectDTO.Report, collectionName)
 	if err != nil {
 		return project, err
 	}
 
-	reportURL, err := p.gcpService.UploadFile(ctx.Context(), files[0], collectionName)
-	if err != nil {
-		return project, err
-	}
-
-	files, err = utils.ExtractFiles(ctx, "images")
-	if err != nil {
-		return project, err
-	}
-	imageURLs, err := p.gcpService.UploadFiles(ctx.Context(), files, collectionName)
+	imageURLs, err := p.gcpService.UploadFiles(ctx.Context(), projectDTO.Images, collectionName)
 	if err != nil {
 		return project, err
 	}
