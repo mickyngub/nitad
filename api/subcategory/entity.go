@@ -11,16 +11,20 @@ import (
 var collectionName = database.COLLECTIONS["SUBCATEGORY"]
 
 type Subcategory struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Title     string             `bson:"title" json:"title"`
-	Image     string             `bson:"image" json:"image"`
-	CreatedAt time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
-	UpdatedAt time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Title      string             `bson:"title" json:"title"`
+	Image      string             `bson:"image" json:"image"`
+	CategoryId primitive.ObjectID `bson:"categoryId" json:"categoryId"`
+	CreatedAt  time.Time          `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
+	UpdatedAt  time.Time          `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
 
-type SubcategoryRequest struct {
-	Title string `form:"title" validate:"required"`
-	Image multipart.FileHeader
+type SubcategoryDTO struct {
+	Title      string                `form:"title" validate:"required"`
+	Image      *multipart.FileHeader `form:"-"`
+	CategoryId primitive.ObjectID    `form:"categoryId"`
+	CreatedAt  time.Time             `form:"-"`
+	UpdatedAt  time.Time             `form:"-"`
 }
 
 type SubcategorySearch struct {
