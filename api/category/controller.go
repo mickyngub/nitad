@@ -1,7 +1,6 @@
 package category
 
 import (
-	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -17,7 +16,7 @@ func NewController(
 	categoryRoute.Get("/", controller.ListCategory)
 	categoryRoute.Get("/:categoryId", controller.GetCategory)
 
-	categoryRoute.Use(admin.IsAuth())
+	// categoryRoute.Use(admin.IsAuth())
 	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
 	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)

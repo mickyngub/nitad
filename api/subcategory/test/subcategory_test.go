@@ -1,45 +1,14 @@
-package subcategory_test
+package subcategory
 
 import (
-	"image"
 	"net/http"
-	"os"
 	"testing"
 
-	"github.com/birdglove2/nitad-backend/api"
-	"github.com/birdglove2/nitad-backend/config"
-	"github.com/birdglove2/nitad-backend/database"
-	"github.com/gofiber/fiber/v2"
+	"github.com/birdglove2/nitad-backend/api/setup"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
-
-func newTestApp(t *testing.T) *fiber.App {
-	config.Loadenv()
-	database.ConnectDb(os.Getenv("MONGO_URI"))
-
-	app := fiber.New()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	gcpService := NewMockUploader(ctrl)
-
-	api.CreateAPI(app, gcpService)
-
-	return app
-}
-
-func getImageFromFilePath(filePath string) (image.Image, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	image, _, err := image.Decode(f)
-	return image, err
-}
 
 func TestGetSubcategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -71,7 +40,7 @@ func TestGetSubcategory(t *testing.T) {
 
 			// api.CreateAPI(app, gcpService)
 
-			server := newTestApp(t)
+			server := setup.NewTestApp(t)
 			url := "/api/v1/subcategory"
 
 			request, err := http.NewRequest(http.MethodGet, url, nil)
@@ -114,25 +83,25 @@ func TestGetSubcategory(t *testing.T) {
 // 	// if err != nil {
 // 	// 	fmt.Println("get image error", err)
 // 	// }
-// 	image, err := os.Open("bear_test.jpg")
-// 	if err != nil {
-// 		zap.S().Fatal("error", err.Error())
-// 	}
+// 	// image, err := os.Open("bear_test.jpg")
+// 	// if err != nil {
+// 	// 	zap.S().Fatal("error", err.Error())
+// 	// }
 // 	// fmt.Println("image", image)
 // 	testCases := []struct {
 // 		name           string
-// 		body           map[string]interface{}
+// 		body           fiber.Map
 // 		collectionName string
 // 		buildMock      func(gcpService *MockUploader, collectionName string)
 // 		checkResponse  func(*testing.T, *http.Response)
 // 	}{
 // 		{
 // 			name: "OK",
-// 			body: map[string]interface{}{
-// 				"title": "test dummy subcategory title",
-// 				"image": image,
+// 			body: fiber.Map{
+// 				"title":       "user.Username",
+// 				"subcategory": []string{"62251e85d5f281183909394a"},
 // 			},
-// 			collectionName: "subcategory",
+// 			collectionName: "category",
 // 			buildMock: func(gcpService *MockUploader, collectionName string) {
 // 				// gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy image url", nil)
 // 			},
@@ -157,25 +126,34 @@ func TestGetSubcategory(t *testing.T) {
 // 			defer ctrl.Finish()
 
 // 			gcpService := NewMockUploader(ctrl)
-// 			server := newTestServer(t, gcpService)
-// 			url := "/api/v1/subcategory"
+// 			server := newTestApp(t)
+// 			URL := "/api/v1/category"
 
 // 			tc.buildMock(gcpService, tc.collectionName)
 
-// 			data, _ := json.Marshal(tc.body)
-// 			fmt.Println("This is data ", tc.body)
+// 			data, err := json.Marshal(tc.body)
+// 			if err != nil {
+// 				fmt.Println("This is data  err", err.Error())
+// 			}
+// 			request, err := http.NewRequest("POST", URL, bytes.NewReader(data))
+// 			resp, err := server.Test(request)
 
-// 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+// 			// form := url.Values{}
+// 			// form.Add("title", "this is tile")
+// 			// form.Add("subcategory", "62251e85d5f281183909394a")
+// 			// form.Add("image", asString)
+// 			// request, err := http.NewRequest("POST", URL, strings.NewReader(form.Encode()))
+// 			// request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 // 			if err != nil {
 // 				zap.S().Fatal("error", err.Error())
 // 			}
-// 			request.Header.Add("Content-Type", "multipart/form-data")
+// 			// var b bytes.Buffer
+// 			// w := multipart.NewWriter(&b)
+// 			// request.Header.Add("Content-Type", w.FormDataContentType())
+// 			// request.Header.Add("Content-Length", strconv.Itoa(len(data)))
 
 // 			// Buffer the body
 
-// 			fmt.Println("This is Request ", request)
-
-// 			resp, err := server.Test(request)
 // 			if err != nil {
 // 				zap.S().Fatal("error", err.Error())
 // 			}
