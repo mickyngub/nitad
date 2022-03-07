@@ -1,6 +1,8 @@
-package project_test
+package setup
 
 import (
+	"image"
+	multipart "mime/multipart"
 	"os"
 	"testing"
 
@@ -10,13 +12,14 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func newTestApp(t *testing.T) *fiber.App {
+func NewTestApp(t *testing.T) *fiber.App {
 	config.Loadenv()
 	database.ConnectDb(os.Getenv("MONGO_URI"))
 
@@ -32,7 +35,7 @@ func newTestApp(t *testing.T) *fiber.App {
 	return app
 }
 
-func addMockSubcategory(t *testing.T) *subcategory.Subcategory {
+func AddMockSubcategory(t *testing.T) *subcategory.Subcategory {
 	dummySubcate := subcategory.Subcategory{
 		Title: "dummy subcate title",
 		Image: "dummy subcate image url",
@@ -47,7 +50,7 @@ func addMockSubcategory(t *testing.T) *subcategory.Subcategory {
 	return adddedSubcategory
 }
 
-func addMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.Category {
+func AddMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.Category {
 	dummyCate := category.Category{
 		Title: "dummy cate title",
 	}
@@ -61,7 +64,7 @@ func addMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.C
 	return addedCategory
 }
 
-func addMockProject(t *testing.T, cate *category.Category) *project.Project {
+func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 	dummyProj := project.Project{
 		Title:       "dummy proj title",
 		Description: "dumym proj description",
@@ -85,7 +88,7 @@ func addMockProject(t *testing.T, cate *category.Category) *project.Project {
 	return addedProject
 }
 
-func deleteMock(t *testing.T, proj *project.Project, cate *category.Category, subcate *subcategory.Subcategory) {
+func DeleteMock(t *testing.T, proj *project.Project, cate *category.Category, subcate *subcategory.Subcategory) {
 	err := subcategory.Delete(subcate.ID)
 	require.Nil(t, err, "Delete subcate failed")
 
@@ -95,4 +98,24 @@ func deleteMock(t *testing.T, proj *project.Project, cate *category.Category, su
 	err = project.Delete(proj.ID)
 	require.Nil(t, err, "Delete proj failed")
 
+}
+
+func RandomImages(n int) []*multipart.FileHeader {
+	results := make([]*multipart.FileHeader, n)
+	for i := 0; i < n; i++ {
+		results[i] = &multipart.FileHeader{
+			Filename: utils.RandomString(5) + ".jpg",
+		}
+	}
+	return results
+}
+
+func GetImageFromFilePath(filePath string) (image.Image, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	image, _, err := image.Decode(f)
+	return image, err
 }

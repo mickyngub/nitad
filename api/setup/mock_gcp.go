@@ -2,7 +2,7 @@
 // Source: github.com/birdglove2/nitad-backend/gcp (interfaces: Uploader)
 
 // Package subcategory_test is a generated GoMock package.
-package project_test
+package setup
 
 import (
 	context "context"
