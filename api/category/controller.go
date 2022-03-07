@@ -1,6 +1,7 @@
 package category
 
 import (
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +17,7 @@ func NewController(
 	categoryRoute.Get("/", controller.ListCategory)
 	categoryRoute.Get("/:categoryId", controller.GetCategory)
 
-	// categoryRoute.Use(admin.IsAuth())
+	categoryRoute.Use(admin.IsAuth())
 	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
 	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
@@ -62,7 +63,7 @@ func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 		return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
 	}
 
-	addedCate, err := c.service.AddCategory(ctx.Context(), cateDTO)
+	addedCate, err := c.service.AddCategory(ctx, cateDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -78,11 +79,13 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 		return errors.Throw(ctx, err)
 	}
 
-	cateDTO := new(CategoryDTO)
-	ctx.BodyParser(cateDTO)
+	cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
+	if !ok {
+		return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
+	}
 	cateDTO.ID = objectId
 
-	editedCate, err := c.service.EditCategory(ctx.Context(), cateDTO)
+	editedCate, err := c.service.EditCategory(ctx, cateDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

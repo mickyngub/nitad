@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"log"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -13,8 +14,8 @@ import (
 type Service interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
-	AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
-	EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
+	AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
+	EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
 	SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError)
@@ -40,24 +41,53 @@ func (c *categoryService) GetCategoryById(ctx context.Context, oid primitive.Obj
 	return c.repository.GetCategoryById(ctx, oid)
 }
 
-func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
+func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
 	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
-	_, err := c.subcategoryService.FindByIds3(ctx, cateDTO.Subcategory)
+	subcategories, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
 	if err != nil {
 		return cateDTO, err
 	}
 
-	return c.repository.AddCategory(ctx, cateDTO)
+	cateDTO, err = c.repository.AddCategory(ctx.Context(), cateDTO)
+	if err != nil {
+		return cateDTO, err
+	}
+
+	//TODO: tx this
+	for _, subcate := range subcategories {
+		subcate.CategoryId = cateDTO.ID
+		_, err = c.subcategoryService.EditSubcategory(ctx, &subcate)
+		if err != nil {
+			return cateDTO, err
+		}
+	}
+	return cateDTO, err
 }
 
-func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
+func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
 	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
-	_, err := c.subcategoryService.FindByIds3(ctx, cateDTO.Subcategory)
+	subcategories, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
+	if err != nil {
+		return cateDTO, err
+	}
+	log.Println("hello 3", subcategories)
+
+	cateDTO, err = c.repository.EditCategory(ctx.Context(), cateDTO)
 	if err != nil {
 		return cateDTO, err
 	}
 
-	return c.repository.EditCategory(ctx, cateDTO)
+	//TODO: tx this
+	for _, subcate := range subcategories {
+		subcate.CategoryId = cateDTO.ID
+		_, err = c.subcategoryService.EditSubcategory(ctx, &subcate)
+		if err != nil {
+			return cateDTO, err
+		}
+	}
+
+	return cateDTO, nil
+
 }
 
 func (c *categoryService) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {

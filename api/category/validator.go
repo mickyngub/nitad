@@ -6,7 +6,6 @@ import (
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.uber.org/zap"
 )
 
 func AddAndEditCategoryValidator(ctx *fiber.Ctx) error {
@@ -24,7 +23,6 @@ func AddAndEditCategoryValidator(ctx *fiber.Ctx) error {
 	osids := []primitive.ObjectID{}
 	for _, sid := range cateRequest.Subcategory {
 		osid, err := utils.IsValidObjectId(sid)
-		zap.S().Info("hello", osid)
 		if err != nil {
 			return errors.Throw(ctx, err)
 		}
