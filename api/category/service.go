@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"log"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -55,8 +54,7 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 
 	//TODO: tx this
 	for _, subcate := range subcategories {
-		subcate.CategoryId = cateDTO.ID
-		_, err = c.subcategoryService.EditSubcategory(ctx, &subcate)
+		_, err = c.subcategoryService.InsertToCategory(ctx, &subcate, cateDTO.ID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -64,23 +62,54 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 	return cateDTO, err
 }
 
+func contains(s []primitive.ObjectID, e primitive.ObjectID) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
+	oldCate, err := c.GetCategoryById(ctx.Context(), cateDTO.ID)
+	if err != nil {
+		return cateDTO, err
+	}
+
 	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
+	// check if parse subcategoryIds exist
 	subcategories, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
 	if err != nil {
 		return cateDTO, err
 	}
-	log.Println("hello 3", subcategories)
+
+	// find the remove subcategories by checking
+	// the non-intersecting of oldSubcategories and updatedSubcategories
+	removeSubcategories := []subcategory.Subcategory{}
+	for _, oldSubcategory := range oldCate.Subcategory {
+		if !contains(cateDTO.Subcategory, oldSubcategory.ID) {
+			removeSubcategories = append(removeSubcategories, oldSubcategory)
+		}
+	}
 
 	cateDTO, err = c.repository.EditCategory(ctx.Context(), cateDTO)
 	if err != nil {
 		return cateDTO, err
 	}
 
+	// set categoryId to the updated ones
 	//TODO: tx this
 	for _, subcate := range subcategories {
-		subcate.CategoryId = cateDTO.ID
-		_, err = c.subcategoryService.EditSubcategory(ctx, &subcate)
+		_, err = c.subcategoryService.InsertToCategory(ctx, &subcate, cateDTO.ID)
+		if err != nil {
+			return cateDTO, err
+		}
+	}
+
+	// unset the remove ones
+	for _, removeSubcate := range removeSubcategories {
+		_, err = c.subcategoryService.InsertToCategory(ctx, &removeSubcate, primitive.NilObjectID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -104,8 +133,26 @@ func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, oid primitive.ObjectID,
 		return cateDTO, err
 	}
 
+	// find new added sid
+	addedSubcate, err := c.subcategoryService.GetSubcategoryById(ctx.Context(), sid)
+	if err != nil {
+		return cateDTO, err
+	}
+
+	// append new one to the existing one
 	cateDTO.Subcategory = append(cateDTO.Subcategory, sid)
 	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
-	return c.repository.EditCategory(ctx.Context(), cateDTO)
+	cateDTO, err = c.repository.EditCategory(ctx.Context(), cateDTO)
+	if err != nil {
+		return cateDTO, err
+	}
+
+	// update subcate bounded to cate
+	_, err = c.subcategoryService.InsertToCategory(ctx, addedSubcate, cateDTO.ID)
+	if err != nil {
+		return cateDTO, err
+	}
+
+	return cateDTO, err
 
 }
