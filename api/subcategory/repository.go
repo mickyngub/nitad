@@ -13,6 +13,7 @@ import (
 
 type Repository interface {
 	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
+	ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
 	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
 	AddSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
@@ -40,6 +41,22 @@ func (s *subcategoryRepository) ListSubcategory(ctx context.Context) ([]Subcateg
 		return subcates, errors.NewBadRequestError(err.Error())
 	}
 
+	return subcates, nil
+}
+
+func (s *subcategoryRepository) ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
+	subcates := []Subcategory{}
+	pipe := mongo.Pipeline{}
+
+	pipe = database.AppendMatchStage(pipe, "categoryId", primitive.NilObjectID)
+
+	cursor, aggregateErr := s.collection.Aggregate(ctx, pipe)
+	if aggregateErr != nil {
+		return subcates, errors.NewBadRequestError(aggregateErr.Error())
+	}
+	if curErr := cursor.All(ctx, &subcates); curErr != nil {
+		return subcates, errors.NewBadRequestError(curErr.Error())
+	}
 	return subcates, nil
 }
 

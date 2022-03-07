@@ -15,6 +15,7 @@ func NewController(
 	controller := &Controller{service}
 
 	subcategoryRoute.Get("/", controller.ListSubcategory)
+	subcategoryRoute.Get("/unset", controller.ListUnsetSubcategory)
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategoryById)
 
 	subcategoryRoute.Use(admin.IsAuth())
@@ -37,6 +38,16 @@ func (c *Controller) ListSubcategory(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": subcategories})
+}
+
+// list all unset subcategories
+func (c *Controller) ListUnsetSubcategory(ctx *fiber.Ctx) error {
+	unsetSubcategories, err := c.service.ListUnsetSubcategory(ctx.Context())
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": unsetSubcategories})
 }
 
 // get subcategory by id

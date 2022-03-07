@@ -13,6 +13,7 @@ import (
 
 type Service interface {
 	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
+	ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
 	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
 	AddSubcategory(ctx context.Context, subcategoryDTO *SubcategoryDTO) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError)
@@ -35,6 +36,10 @@ func NewService(repository Repository, gcpService gcp.Uploader) Service {
 
 func (s *subcategoryService) ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
 	return s.repository.ListSubcategory(ctx)
+}
+
+func (s *subcategoryService) ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
+	return s.repository.ListUnsetSubcategory(ctx)
 }
 
 func (s *subcategoryService) GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
@@ -82,6 +87,10 @@ func (s *subcategoryService) DeleteSubcategory(ctx context.Context, oid primitiv
 	subcate, err := s.repository.GetSubcategoryById(ctx, oid)
 	if err != nil {
 		return err
+	}
+
+	if subcate.CategoryId != primitive.NilObjectID {
+		return errors.NewBadRequestError("Unable to delete subcategory that is still in categeoryId " + subcate.CategoryId.Hex())
 	}
 
 	s.gcpService.DeleteFile(ctx, subcate.Image, collectionName)
