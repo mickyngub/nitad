@@ -2,7 +2,6 @@ package subcategory
 
 import (
 	"context"
-	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -15,7 +14,7 @@ import (
 type Service interface {
 	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
 	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
-	AddSubcategory(ctx context.Context, files []*multipart.FileHeader, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	AddSubcategory(ctx context.Context, subcategoryDTO *SubcategoryDTO) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
@@ -41,20 +40,27 @@ func (s *subcategoryService) GetSubcategoryById(ctx context.Context, oid primiti
 	return s.repository.GetSubcategoryById(ctx, oid)
 }
 
-func (s *subcategoryService) AddSubcategory(ctx context.Context, files []*multipart.FileHeader, subcate *Subcategory) (*Subcategory, errors.CustomError) {
-	imageFilename, err := s.gcpService.UploadFile(ctx, files[0], collectionName)
+func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO *SubcategoryDTO) (*Subcategory, errors.CustomError) {
+	addedSubcategory := new(Subcategory)
+	imageFilename, err := s.gcpService.UploadFile(ctx, subcategoryDTO.Image, collectionName)
 	if err != nil {
-		return subcate, err
+		return addedSubcategory, err
 	}
-	subcate.Image = imageFilename
+	addedSubcategory.Image = imageFilename
 
-	addedSubcate, err := s.repository.AddSubcategory(ctx, subcate)
-
+	// if subcategoryDTO.CategoryId
+	err = utils.CopyStruct(subcategoryDTO, addedSubcategory)
 	if err != nil {
-		return subcate, err
+		return addedSubcategory, err
 	}
+
+	addedSubcate, err := s.repository.AddSubcategory(ctx, addedSubcategory)
+	if err != nil {
+		s.gcpService.DeleteFile(ctx, imageFilename, collectionName)
+		return addedSubcategory, err
+	}
+
 	return addedSubcate, nil
-
 }
 
 func (s *subcategoryService) EditSubcategory(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError) {

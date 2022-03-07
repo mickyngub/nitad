@@ -10,25 +10,22 @@ import (
 )
 
 func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
-	sr := new(SubcategoryRequest)
-
-	if err := c.BodyParser(sr); err != nil {
+	subcategoryDTO := new(SubcategoryDTO)
+	if err := c.BodyParser(subcategoryDTO); err != nil {
 		fmt.Println("error", err.Error())
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
 
-	err := validators.ValidateStruct(*sr)
+	err := validators.ValidateStruct(*subcategoryDTO)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
 
 	subcategory := new(Subcategory)
-	err = utils.CopyStruct(sr, subcategory)
+	err = utils.CopyStruct(subcategoryDTO, subcategory)
 	if err != nil {
 		return errors.Throw(c, err)
 	}
-
-	c.Locals("subcategoryBody", subcategory)
 
 	return c.Next()
 }

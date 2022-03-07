@@ -58,17 +58,16 @@ func (c *Controller) GetSubcategoryById(ctx *fiber.Ctx) error {
 
 // add a subcategory
 func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
-	subcategory, ok := ctx.Locals("subcategoryBody").(*Subcategory)
-	if !ok {
-		return errors.Throw(ctx, errors.NewInternalServerError("Edit subcategory went wrong!"))
-	}
+	subcategoryDTO := new(SubcategoryDTO)
+	ctx.BodyParser(subcategoryDTO)
 
 	files, err := utils.ExtractFiles(ctx, "image")
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
+	subcategoryDTO.Image = files[0]
 
-	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), files, subcategory)
+	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), subcategoryDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
