@@ -94,13 +94,22 @@ func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
 		return errors.Throw(ctx, err)
 	}
 
-	subcate, ok := ctx.Locals("subcategoryBody").(*Subcategory)
-	if !ok {
-		return errors.Throw(ctx, errors.NewInternalServerError("Edit subcategory went wrong!"))
-	}
-	subcate.ID = objectId
+	subcategoryDTO := new(SubcategoryDTO)
+	ctx.BodyParser(subcategoryDTO)
+	subcategoryDTO.ID = objectId
 
-	editedSubcate, err := c.service.EditSubcategory(ctx, subcate)
+	images, err := utils.ExtractUpdatedFiles(ctx, "images")
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	if images == nil {
+		subcategoryDTO.Image = nil
+	} else {
+		subcategoryDTO.Image = images[0]
+	}
+
+	editedSubcate, err := c.service.EditSubcategory(ctx, subcategoryDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

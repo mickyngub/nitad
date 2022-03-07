@@ -20,11 +20,10 @@ type Subcategory struct {
 }
 
 type SubcategoryDTO struct {
-	Title      string                `form:"title" validate:"required"`
-	Image      *multipart.FileHeader `form:"-"`
-	CategoryId primitive.ObjectID    `form:"categoryId"`
-	CreatedAt  time.Time             `form:"createdAt"`
-	UpdatedAt  time.Time             `form:"updatedAt"`
+	ID    primitive.ObjectID
+	Title string                `form:"title" validate:"required"`
+	Image *multipart.FileHeader `form:"-"`
+	// CategoryId primitive.ObjectID
 }
 
 type SubcategorySearch struct {

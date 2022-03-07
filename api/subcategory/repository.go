@@ -18,6 +18,8 @@ type Repository interface {
 	AddSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+
+	InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError)
 }
 
 type subcategoryRepository struct {
@@ -111,4 +113,18 @@ func (s *subcategoryRepository) DeleteSubcategory(ctx context.Context, oid primi
 	}
 
 	return nil
+}
+
+func (s *subcategoryRepository) InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError) {
+
+	_, updateErr := s.collection.UpdateByID(
+		ctx,
+		subcate.ID,
+		bson.D{{
+			Key: "$set", Value: bson.D{{Key: "categoryId", Value: categoryId}}}})
+
+	if updateErr != nil {
+		return subcate, errors.NewBadRequestError(updateErr.Error())
+	}
+	return subcate, nil
 }
