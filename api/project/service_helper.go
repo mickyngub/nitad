@@ -1,91 +1,62 @@
 package project
 
 import (
-	"github.com/birdglove2/nitad-backend/api/collections_helper"
+	"mime/multipart"
+
+	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (p *projectService) HandleUpdateReportAndImages(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError) {
-	oldProj, err := p.GetProjectById(ctx, proj.ID)
+func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
+	_, sids, err := p.subcategoryService.FindByIds2(ctx.Context(), projectDTO.Subcategory)
 	if err != nil {
-		return proj, err
+		return []category.Category{}, err
 	}
 
-	proj.Report = oldProj.Report
-	proj.Images = oldProj.Images
-	proj.CreatedAt = oldProj.CreatedAt
-
-	proj, err = p.HandleUpdateImages(ctx, proj)
+	categories, _, err := p.categoryService.FindByIds2(ctx.Context(), projectDTO.Category)
 	if err != nil {
-		return proj, err
+		return []category.Category{}, err
 	}
 
-	proj, err = p.HandleUpdateReport(ctx, proj)
+	finalCategories, err := category.FilterCatesWithSids(categories, sids)
 	if err != nil {
-		return proj, err
+		return []category.Category{}, err
 	}
-
-	return proj, nil
+	return finalCategories, nil
 }
 
-func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError) {
-	// DELETE FILES
-	if len(proj.DeleteImages) > 0 {
-		// remove deleteImages from Images attrs
-		proj.Images = utils.RemoveSliceFromSlice(proj.Images, proj.DeleteImages)
-		p.gcpService.DeleteFiles(ctx.Context(), proj.DeleteImages, collectionName)
+func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageURLs []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
+	imageURLs := oldImageURLs
+	// DELETE IMAGES
+	if len(deleteImages) > 0 {
+		imageURLs = utils.RemoveSliceFromSlice(imageURLs, deleteImages)
+		p.gcpService.DeleteFiles(ctx.Context(), deleteImages, collectionName)
 	}
 
-	// UPLOAD NEW FILES
-	files, err := utils.ExtractUpdatedFiles(ctx, "images")
-	if err != nil {
-		return proj, err
-	}
-	if len(files) > 0 {
-		// if file pass, upload file
-		imageURLs, err := p.gcpService.UploadFiles(ctx.Context(), files, collectionName)
-
+	// UPLOAD NEW IMAGE FILES
+	if len(newUploadImages) > 0 {
+		newImageURLs, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
 		if err != nil {
-			// if upload error, delete uploaded file if it was uploaed
-			p.gcpService.DeleteFiles(ctx.Context(), imageURLs, collectionName)
-			return proj, err
+			p.gcpService.DeleteFiles(ctx.Context(), newImageURLs, collectionName)
+			return imageURLs, err
 		}
-
-		// concat uploaded file to the existing ones
-		proj.Images = append(proj.Images, imageURLs...)
+		imageURLs = append(imageURLs, newImageURLs...)
 	}
-
-	return proj, nil
+	return imageURLs, nil
 }
 
-func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError) {
-	files, err := utils.ExtractUpdatedFiles(ctx, "report")
+func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string, newReportFile *multipart.FileHeader) (string, errors.CustomError) {
+	if newReportFile == nil {
+		return oldReportURL, nil
+	}
+
+	p.gcpService.DeleteFile(ctx.Context(), oldReportURL, collectionName)
+	newUploadReportURL, err := p.gcpService.UploadFile(ctx.Context(), newReportFile, collectionName)
 	if err != nil {
-		return proj, err
+		p.gcpService.DeleteFile(ctx.Context(), newUploadReportURL, collectionName)
+		return oldReportURL, err
 	}
-
-	// if there is file passed, delete the old one and upload a new one
-	if len(files) > 0 {
-		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(p.gcpService, ctx.Context(), files[0], proj.Report, collectionName)
-		if err != nil {
-			return proj, err
-		}
-		// if upload success, pass the url to the project struct
-		proj.Report = newUploadFilename
-	}
-
-	return proj, nil
-}
-
-func (p *projectService) HandleDeleteImages(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError {
-	project, err := p.GetProjectById(ctx, oid)
-	if err != nil {
-		return err
-	}
-
-	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
-	return nil
+	return newUploadReportURL, nil
 }

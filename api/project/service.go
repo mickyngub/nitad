@@ -78,17 +78,7 @@ func (p *projectService) GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) 
 func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
 	project := new(Project)
 
-	_, sids, err := p.subcategoryService.FindByIds2(ctx.Context(), projectDTO.Subcategory)
-	if err != nil {
-		return project, err
-	}
-
-	categories, _, err := p.categoryService.FindByIds2(ctx.Context(), projectDTO.Category)
-	if err != nil {
-		return project, err
-	}
-
-	finalCategories, err := category.FilterCatesWithSids(categories, sids)
+	finalCategories, err := p.HandleSubcateAndCateConnection(ctx, projectDTO)
 	if err != nil {
 		return project, err
 	}
@@ -107,10 +97,9 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	if err != nil {
 		return project, err
 	}
-
-	project.Category = finalCategories
 	project.Images = imageURLs
 	project.Report = reportURL
+	project.Category = finalCategories
 
 	addedProject, err := p.repository.AddProject(ctx.Context(), project)
 	if err != nil {
@@ -124,18 +113,44 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 }
 
 func (p *projectService) EditProject(c *Controller, ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
-	project := new(Project)
-	err := utils.CopyStruct(projectDTO, project)
+	editedProject := new(Project)
+
+	finalCategories, err := p.HandleSubcateAndCateConnection(ctx, projectDTO)
 	if err != nil {
-		return project, err
+		return editedProject, err
 	}
 
-	project, err = p.HandleUpdateReportAndImages(ctx, project)
+	oldProj, err := p.GetProjectById(ctx, projectDTO.ID)
 	if err != nil {
-		return project, err
+		return editedProject, err
 	}
 
-	return p.repository.EditProject(ctx.Context(), project)
+	imageURLs, err := p.HandleUpdateImages(ctx, oldProj.Images, projectDTO.Images, projectDTO.DeleteImages)
+	if err != nil {
+		return editedProject, err
+	}
+
+	reportURL, err := p.HandleUpdateReport(ctx, oldProj.Report, projectDTO.Report)
+	if err != nil {
+		return editedProject, err
+	}
+
+	err = utils.CopyStruct(projectDTO, editedProject)
+	if err != nil {
+		return editedProject, err
+	}
+	editedProject.Images = imageURLs
+	editedProject.Report = reportURL
+	editedProject.Category = finalCategories
+
+	editedProject, err = p.repository.EditProject(ctx.Context(), editedProject)
+	if err != nil {
+		// if there is any error, remove the uploaded files from gcp
+		URLs := append(imageURLs, reportURL)
+		p.gcpService.DeleteFiles(ctx.Context(), URLs, collectionName)
+		return editedProject, err
+	}
+	return editedProject, nil
 }
 
 func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError {
@@ -148,7 +163,6 @@ func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) e
 	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
 
 	return p.repository.DeleteProject(ctx.Context(), oid)
-
 }
 
 func (p *projectService) SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError) {

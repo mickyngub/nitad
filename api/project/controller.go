@@ -76,6 +76,7 @@ func (c *Controller) AddProject(ctx *fiber.Ctx) error {
 
 	projectDTO.Images = images
 	projectDTO.Report = reports[0]
+
 	addedProject, err := c.service.AddProject(ctx, projectDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
@@ -92,8 +93,21 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 	}
 
 	projectDTO := new(ProjectDTO)
-	projectDTO.ID = oid
 	ctx.BodyParser(projectDTO)
+	projectDTO.ID = oid
+
+	reports, err := utils.ExtractFiles(ctx, "report")
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	images, err := utils.ExtractFiles(ctx, "images")
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	projectDTO.Images = images
+	projectDTO.Report = reports[0]
 
 	editedProject, err := c.service.EditProject(c, ctx, projectDTO)
 	if err != nil {
