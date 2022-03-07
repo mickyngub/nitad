@@ -96,20 +96,24 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 	ctx.BodyParser(projectDTO)
 	projectDTO.ID = oid
 
-	reports, err := utils.ExtractFiles(ctx, "report")
+	reports, err := utils.ExtractUpdatedFiles(ctx, "report")
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
 
-	images, err := utils.ExtractFiles(ctx, "images")
+	images, err := utils.ExtractUpdatedFiles(ctx, "images")
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
 
 	projectDTO.Images = images
-	projectDTO.Report = reports[0]
+	if reports == nil {
+		projectDTO.Report = nil
+	} else {
+		projectDTO.Report = reports[0]
+	}
 
-	editedProject, err := c.service.EditProject(c, ctx, projectDTO)
+	editedProject, err := c.service.EditProject(ctx, projectDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

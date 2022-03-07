@@ -104,7 +104,7 @@ func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Pro
 func (p *projectRepository) EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
 	now := time.Now()
 	proj.UpdatedAt = now
-	_, updateErr := p.collection.UpdateByID(ctx, proj.ID, bson.D{{Key: "$set", Value: &p}})
+	_, updateErr := p.collection.UpdateByID(ctx, proj.ID, bson.D{{Key: "$set", Value: &proj}})
 
 	if updateErr != nil {
 		return proj, errors.NewBadRequestError("edit project error: " + updateErr.Error())

@@ -15,17 +15,12 @@ import (
 )
 
 type Service interface {
+	SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError)
 	ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) (*Project, errors.CustomError)
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
-	EditProject(c *Controller, ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
+	EditProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError
-	SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError)
-
-	// HandleUpdateReportAndImages(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError)
-	// HandleUpdateImages(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError)
-	// HandleUpdateReport(ctx *fiber.Ctx, proj *Project) (*Project, errors.CustomError)
-	// HandleDeleteImages(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError
 }
 
 type projectService struct {
@@ -42,6 +37,10 @@ func NewService(repository Repository, subcategoryService subcategory.Service, c
 		categoryService,
 		gcpService,
 	}
+}
+
+func (p *projectService) SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError) {
+	return p.repository.SearchProject(ctx.Context())
 }
 
 func (p *projectService) ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError) {
@@ -112,7 +111,7 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	return addedProject, nil
 }
 
-func (p *projectService) EditProject(c *Controller, ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
+func (p *projectService) EditProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
 	editedProject := new(Project)
 
 	finalCategories, err := p.HandleSubcateAndCateConnection(ctx, projectDTO)
@@ -163,8 +162,4 @@ func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) e
 	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
 
 	return p.repository.DeleteProject(ctx.Context(), oid)
-}
-
-func (p *projectService) SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError) {
-	return p.repository.SearchProject(ctx.Context())
 }
