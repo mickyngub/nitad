@@ -2,12 +2,12 @@ package project
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -27,19 +27,16 @@ func IsGetProjectPath(c *fiber.Ctx) bool {
 	return false
 }
 
-func HandleCacheGetProjectById(c *fiber.Ctx, projectId string) *Project {
+func HandleCacheGetProjectById(c *fiber.Ctx, oid primitive.ObjectID) *Project {
 	var p Project
 	b, _ := redis.GetStore().Get(c.Path())
 	if len(b) > 0 {
-		IncrementViewCache(projectId, p.Views)
+		IncrementViewCache(oid.Hex(), p.Views)
 		err := json.Unmarshal(b, &p)
 		if err != nil {
 			zap.S().Warn("Unmarshal fail", err.Error())
 		}
-		log.Println("not nexting")
-
 		return &p
 	}
-	log.Println("nexting")
 	return nil
 }

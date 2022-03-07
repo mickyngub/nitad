@@ -6,22 +6,23 @@ import (
 )
 
 func NewController(
+	service Service,
 	searchRoute fiber.Router,
 ) {
-
 	controller := &Controller{}
-
 	searchRoute.Get("/", controller.SearchAll)
 }
 
-type Controller struct{}
+type Controller struct {
+	service Service
+}
 
 // list all neccessary components: project/ category/ subcategory
-func (contc *Controller) SearchAll(c *fiber.Ctx) error {
-	result, err := SearchAll()
+func (c *Controller) SearchAll(ctx *fiber.Ctx) error {
+	searchResult, err := c.service.SearchAll(ctx)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": searchResult})
 }

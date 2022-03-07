@@ -1,26 +1,23 @@
 package subcategory
 
 import (
-	"fmt"
-	"log"
-
+	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(
-	gcpService gcp.Uploader,
+	service Service,
 	subcategoryRoute fiber.Router,
 ) *Controller {
 
-	controller := &Controller{gcpService}
+	controller := &Controller{service}
 
 	subcategoryRoute.Get("/", controller.ListSubcategory)
-	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategory)
+	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategoryById)
 
-	// subcategoryRoute.Use(admin.IsAuth())
+	subcategoryRoute.Use(admin.IsAuth())
 	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
@@ -29,112 +26,90 @@ func NewController(
 }
 
 type Controller struct {
-	gcpService gcp.Uploader
+	service Service
 }
 
 // list all subcategories
-func (contc *Controller) ListSubcategory(c *fiber.Ctx) error {
-	subcategories, err := FindAll()
+func (c *Controller) ListSubcategory(ctx *fiber.Ctx) error {
+	subcategories, err := c.service.ListSubcategory(ctx.Context())
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": subcategories})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": subcategories})
 }
 
 // get subcategory by id
-func (contc *Controller) GetSubcategory(c *fiber.Ctx) error {
-	subcategoryId := c.Params("subcategoryId")
+func (c *Controller) GetSubcategoryById(ctx *fiber.Ctx) error {
+	subcategoryId := ctx.Params("subcategoryId")
 
 	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	var result Subcategory
-	if result, err = GetById(objectId); err != nil {
-		return errors.Throw(c, err)
+	subcate, err := c.service.GetSubcategoryById(ctx.Context(), objectId)
+	if err != nil {
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": subcate})
 }
 
 // add a subcategory
-func (contc *Controller) AddSubcategory(c *fiber.Ctx) error {
-	files, err := utils.ExtractFiles(c, "image")
-	if err != nil {
-		return errors.Throw(c, err)
+func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
+	subcategory, ok := ctx.Locals("subcategoryBody").(*Subcategory)
+	if !ok {
+		return errors.Throw(ctx, errors.NewInternalServerError("Edit subcategory went wrong!"))
 	}
 
-	fmt.Println("This is controller calling 1")
-
-	imageFilename, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
+	files, err := utils.ExtractFiles(ctx, "image")
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	fmt.Println("This is controller calling 2")
-
-	sr := new(SubcategoryRequest)
-	c.BodyParser(sr)
-	var subcategory Subcategory
-	subcategory.Title = sr.Title
-	subcategory.Image = imageFilename
-
-	result, err := Add(&subcategory)
+	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), files, subcategory)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedSubcate})
 }
 
 // // edit the subcategory
-func (contc *Controller) EditSubcategory(c *fiber.Ctx) error {
-	subcategoryId := c.Params("subcategoryId")
+func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
+	subcategoryId := ctx.Params("subcategoryId")
 	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	updateSubcategory, ok := c.Locals("subcategoryBody").(*Subcategory)
+	subcate, ok := ctx.Locals("subcategoryBody").(*Subcategory)
 	if !ok {
-		return errors.Throw(c, errors.NewInternalServerError("Edit subcategory went wrong!"))
+		return errors.Throw(ctx, errors.NewInternalServerError("Edit subcategory went wrong!"))
 	}
+	subcate.ID = objectId
 
-	updateSubcategory.ID = objectId
-	updateSubcategory, err = HandleUpdateImage(contc.gcpService, c, updateSubcategory)
-	log.Println(updateSubcategory)
+	editedSubcate, err := c.service.EditSubcategory(ctx, subcate)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	result, err := Edit(updateSubcategory)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedSubcate})
 }
 
 // delete the subcategory
-func (contc *Controller) DeleteSubcategory(c *fiber.Ctx) error {
-	subcategoryId := c.Params("subcategoryId")
+func (c *Controller) DeleteSubcategory(ctx *fiber.Ctx) error {
+	subcategoryId := ctx.Params("subcategoryId")
 	objectId, err := utils.IsValidObjectId(subcategoryId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	oldSubcategory, err := GetById(objectId)
+	err = c.service.DeleteSubcategory(ctx.Context(), objectId)
 	if err != nil {
-		return err
+		return errors.Throw(ctx, err)
 	}
 
-	contc.gcpService.DeleteFile(c.Context(), oldSubcategory.Image, collectionName)
-
-	err = Delete(objectId)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete subcategory " + subcategoryId + " successfully!"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete subcategory " + subcategoryId + " successfully!"})
 }

@@ -1,8 +1,6 @@
 package spatial
 
 import (
-	"log"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/gofiber/fiber/v2"
@@ -49,7 +47,6 @@ func (contc *Controller) AddSpatial(c *fiber.Ctx) error {
 		return errors.Throw(c, errors.NewInternalServerError("Add Spatial went wrong!"))
 	}
 
-	log.Println(parseSpatial)
 	newSpatial, err := Add(parseSpatial)
 	if err != nil {
 		return errors.Throw(c, err)

@@ -1,129 +1,64 @@
 package category
 
 import (
-	"time"
+	"context"
 
-	"github.com/birdglove2/nitad-backend/database"
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SearchAll() ([]CategorySearch, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
+type Service interface {
+	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
+	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
+	AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
+	EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
+	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
-	var result []CategorySearch
-	pipe := mongo.Pipeline{}
-	pipe = database.AppendLookupStage(pipe, "subcategory")
-	pipe = database.AppendProjectStage(pipe, []string{"title", "subcategory"})
+	SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError)
+	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
+}
 
-	cursor, err := collection.Aggregate(ctx, pipe)
+type categoryService struct {
+	repository         Repository
+	subcategoryService subcategory.Service
+}
+
+func NewService(repository Repository, subcategoryService subcategory.Service) Service {
+	return &categoryService{repository, subcategoryService}
+}
+
+func (c *categoryService) ListCategory(ctx context.Context) ([]Category, errors.CustomError) {
+	return c.repository.ListCategory(ctx)
+}
+
+func (c *categoryService) GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError) {
+	return c.repository.GetCategoryById(ctx, oid)
+}
+
+func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
+	_, osids, err := c.subcategoryService.FindByIds2(ctx, cateDTO.Subcategory)
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return cateDTO, err
 	}
 
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-	}
-
-	return result, nil
+	return c.repository.AddCategory(ctx, cateDTO, osids)
 }
 
-func FindAll() ([]Category, errors.CustomError) {
-	categoryCollection, ctx := database.GetCollection(collectionName)
-
-	pipe := mongo.Pipeline{}
-	pipe = database.AppendLookupStage(pipe, "subcategory")
-
-	cursor, err := categoryCollection.Aggregate(ctx, pipe)
-	result := []Category{}
+func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
+	_, osids, err := c.subcategoryService.FindByIds2(ctx, cateDTO.Subcategory)
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-
-	}
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return cateDTO, err
 	}
 
-	return result, nil
+	return c.repository.EditCategory(ctx, cateDTO, osids)
 }
 
-func GetById(oid primitive.ObjectID) (Category, errors.CustomError) {
-	categoryCollection, ctx := database.GetCollection(collectionName)
-
-	pipe := mongo.Pipeline{}
-	pipe = database.AppendMatchStage(pipe, "_id", oid)
-	pipe = database.AppendLookupStage(pipe, "subcategory")
-
-	cursor, err := categoryCollection.Aggregate(ctx, pipe)
-	var result []Category
-	if err != nil {
-		return Category{}, errors.NewBadRequestError(err.Error())
-	}
-	if err = cursor.All(ctx, &result); err != nil {
-		return Category{}, errors.NewBadRequestError(err.Error())
-	}
-
-	if len(result) == 0 {
-		return Category{}, errors.NewNotFoundError("categoryId")
-
-	}
-
-	return result[0], nil
+func (c *categoryService) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+	return c.repository.DeleteCategory(ctx, oid)
 }
 
-func Add(c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
-	now := time.Now()
-	insertRes, insertErr := collection.InsertOne(ctx, bson.D{
-		{Key: "title", Value: c.Title},
-		{Key: "subcategory", Value: sids},
-		{Key: "createdAt", Value: now},
-		{Key: "updatedAt", Value: now},
-	})
-	if insertErr != nil {
-		return c, errors.NewBadRequestError(insertErr.Error())
-	}
-
-	c.ID = insertRes.InsertedID.(primitive.ObjectID)
-	c.CreatedAt = now
-	c.UpdatedAt = now
-
-	return c, nil
-}
-
-func Edit(c *Category, sids []primitive.ObjectID) (*Category, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
-	now := time.Now()
-	_, updateErr := collection.UpdateByID(
-		ctx,
-		c.ID,
-		bson.D{{
-			Key: "$set", Value: bson.D{
-				{Key: "title", Value: c.Title},
-				{Key: "subcategory", Value: sids},
-				{Key: "updatedAt", Value: now},
-			},
-		},
-		})
-
-	if updateErr != nil {
-		return c, errors.NewBadRequestError(updateErr.Error())
-	}
-
-	c.UpdatedAt = now
-
-	return c, nil
-}
-
-func Delete(oid primitive.ObjectID) errors.CustomError {
-	collection, ctx := database.GetCollection(collectionName)
-
-	_, err := collection.DeleteOne(ctx, bson.M{"_id": oid})
-	if err != nil {
-		return errors.NewBadRequestError("Delete category failed!" + err.Error())
-	}
-
-	return nil
+func (c *categoryService) SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError) {
+	return c.repository.SearchCategory(ctx.Context())
 }

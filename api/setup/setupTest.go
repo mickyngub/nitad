@@ -1,6 +1,9 @@
-package project_test
+package setup
 
 import (
+	context "context"
+	"image"
+	multipart "mime/multipart"
 	"os"
 	"testing"
 
@@ -10,35 +13,59 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
+	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func newTestApp(t *testing.T) *fiber.App {
-	config.Loadenv()
-	database.ConnectDb(os.Getenv("MONGO_URI"))
+var subcateRepo subcategory.Repository
+var cateRepo category.Repository
+var projectRepo project.Repository
+var app *fiber.App
 
-	app := fiber.New()
+// func TestMain(m *testing.M) {
+// 	config.Loadenv()
+
+// 	client := database.ConnectDb(os.Getenv("MONGO_URI"))
+
+// 	fmt.Println("first", client)
+
+// 	subcateRepo = subcategory.NewRepository(client)
+// 	cateRepo = category.NewRepository(client)
+// 	projectRepo = project.NewRepository(client)
+
+// 	os.Exit(m.Run())
+// }
+
+func NewTestApp(t *testing.T) *fiber.App {
+	config.Loadenv()
+
+	client := database.ConnectDb(os.Getenv("MONGO_URI"))
+	subcateRepo = subcategory.NewRepository(client)
+	cateRepo = category.NewRepository(client)
+	projectRepo = project.NewRepository(client)
 
 	ctrl := gomock.NewController(t)
-	// defer ctrl.Finish()
+	defer ctrl.Finish()
 
 	gcpService := NewMockUploader(ctrl)
+
+	app = fiber.New()
 
 	api.CreateAPI(app, gcpService)
 
 	return app
 }
 
-func addMockSubcategory(t *testing.T) *subcategory.Subcategory {
+func AddMockSubcategory(t *testing.T) *subcategory.Subcategory {
 	dummySubcate := subcategory.Subcategory{
 		Title: "dummy subcate title",
 		Image: "dummy subcate image url",
 	}
 
-	adddedSubcategory, err := subcategory.Add(&dummySubcate)
+	adddedSubcategory, err := subcateRepo.AddSubcategory(context.Background(), &dummySubcate)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummySubcate.Title, adddedSubcategory.Title)
 	require.Equal(t, dummySubcate.Image, adddedSubcategory.Image)
@@ -47,7 +74,7 @@ func addMockSubcategory(t *testing.T) *subcategory.Subcategory {
 	return adddedSubcategory
 }
 
-func addMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.Category {
+func AddMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.Category {
 	dummyCate := category.Category{
 		Title: "dummy cate title",
 	}
@@ -61,7 +88,7 @@ func addMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.C
 	return addedCategory
 }
 
-func addMockProject(t *testing.T, cate *category.Category) *project.Project {
+func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 	dummyProj := project.Project{
 		Title:       "dummy proj title",
 		Description: "dumym proj description",
@@ -77,7 +104,7 @@ func addMockProject(t *testing.T, cate *category.Category) *project.Project {
 		Status:      "dumym proj Status",
 		Category:    []category.Category{*cate},
 	}
-	addedProject, err := project.Add(&dummyProj)
+	addedProject, err := projectRepo.AddProject(context.Background(), &dummyProj)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummyProj.Title, addedProject.Title)
 	require.Equal(t, dummyProj.Category, addedProject.Category)
@@ -85,14 +112,34 @@ func addMockProject(t *testing.T, cate *category.Category) *project.Project {
 	return addedProject
 }
 
-func deleteMock(t *testing.T, proj *project.Project, cate *category.Category, subcate *subcategory.Subcategory) {
-	err := subcategory.Delete(subcate.ID)
+func DeleteMock(t *testing.T, proj *project.Project, cate *category.Category, subcate *subcategory.Subcategory) {
+	err := subcateRepo.DeleteSubcategory(context.Background(), subcate.ID)
 	require.Nil(t, err, "Delete subcate failed")
 
-	err = category.Delete(cate.ID)
+	err = cateRepo.DeleteCategory(context.Background(), subcate.ID)
 	require.Nil(t, err, "Delete cate failed")
 
-	err = project.Delete(proj.ID)
+	err = projectRepo.DeleteProject(context.Background(), subcate.ID)
 	require.Nil(t, err, "Delete proj failed")
 
+}
+
+func RandomImages(n int) []*multipart.FileHeader {
+	results := make([]*multipart.FileHeader, n)
+	for i := 0; i < n; i++ {
+		results[i] = &multipart.FileHeader{
+			Filename: utils.RandomString(5) + ".jpg",
+		}
+	}
+	return results
+}
+
+func GetImageFromFilePath(filePath string) (image.Image, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	image, _, err := image.Decode(f)
+	return image, err
 }

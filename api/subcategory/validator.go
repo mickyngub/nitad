@@ -1,6 +1,8 @@
 package subcategory
 
 import (
+	"fmt"
+
 	"github.com/birdglove2/nitad-backend/api/validators"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -11,6 +13,7 @@ func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
 	sr := new(SubcategoryRequest)
 
 	if err := c.BodyParser(sr); err != nil {
+		fmt.Println("error", err.Error())
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
 

@@ -14,7 +14,6 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jinzhu/copier v0.3.5
 	github.com/joho/godotenv v1.4.0
-	github.com/mongo-go/testdb v0.0.0-20201209140737-c4845cc6fe67
 	github.com/robfig/cron v1.2.0
 	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.8.3

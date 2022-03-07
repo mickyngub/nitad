@@ -1,78 +1,133 @@
 package subcategory
 
 import (
-	"time"
+	"context"
+	"mime/multipart"
 
-	"github.com/birdglove2/nitad-backend/database"
+	"github.com/birdglove2/nitad-backend/api/collections_helper"
 	"github.com/birdglove2/nitad-backend/errors"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/utils"
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// get the SUBCATEGORY from requested id
-// ** different from FindById
-func GetById(oid primitive.ObjectID) (Subcategory, errors.CustomError) {
-	m, err := database.GetElementById(oid, collectionName)
-	return BsonToSubcategory(m), err
+type Service interface {
+	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
+	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
+	AddSubcategory(ctx context.Context, files []*multipart.FileHeader, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	EditSubcategory(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+
+	HandleUpdateImage(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError)
+	FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
 }
 
-func FindAll() ([]Subcategory, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
+type subcategoryService struct {
+	repository Repository
+	gcpService gcp.Uploader
+}
 
-	result := []Subcategory{}
-	cursor, err := collection.Find(ctx, bson.M{})
+func NewService(repository Repository, gcpService gcp.Uploader) Service {
+	return &subcategoryService{repository, gcpService}
+
+}
+
+func (s *subcategoryService) ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
+	return s.repository.ListSubcategory(ctx)
+}
+
+func (s *subcategoryService) GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
+	return s.repository.GetSubcategoryById(ctx, oid)
+}
+
+func (s *subcategoryService) AddSubcategory(ctx context.Context, files []*multipart.FileHeader, subcate *Subcategory) (*Subcategory, errors.CustomError) {
+	imageFilename, err := s.gcpService.UploadFile(ctx, files[0], collectionName)
 	if err != nil {
-		return result, errors.NewBadRequestError(err.Error())
+		return subcate, err
 	}
+	subcate.Image = imageFilename
 
-	if err = cursor.All(ctx, &result); err != nil {
-		return result, errors.NewBadRequestError(err.Error())
-	}
+	addedSubcate, err := s.repository.AddSubcategory(ctx, subcate)
 
-	return result, nil
-}
-
-func Add(s *Subcategory) (*Subcategory, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
-
-	now := time.Now()
-	s.CreatedAt = now
-	s.UpdatedAt = now
-	insertRes, insertErr := collection.InsertOne(ctx, &s)
-	if insertErr != nil {
-		return s, errors.NewBadRequestError(insertErr.Error())
-	}
-
-	s.ID = insertRes.InsertedID.(primitive.ObjectID)
-
-	return s, nil
-}
-
-func Edit(s *Subcategory) (*Subcategory, errors.CustomError) {
-	collection, ctx := database.GetCollection(collectionName)
-
-	now := time.Now()
-	s.UpdatedAt = now
-	_, updateErr := collection.UpdateByID(
-		ctx,
-		s.ID,
-		bson.D{{
-			Key: "$set", Value: &s}})
-
-	if updateErr != nil {
-		return s, errors.NewBadRequestError(updateErr.Error())
-	}
-
-	return s, nil
-}
-
-func Delete(oid primitive.ObjectID) errors.CustomError {
-	collection, ctx := database.GetCollection(collectionName)
-
-	_, err := collection.DeleteOne(ctx, bson.M{"_id": oid})
 	if err != nil {
-		return errors.NewBadRequestError("Delete subcategory failed!" + err.Error())
+		return subcate, err
+	}
+	return addedSubcate, nil
+
+}
+
+func (s *subcategoryService) EditSubcategory(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError) {
+	subcate, err := s.HandleUpdateImage(ctx, subcate)
+	if err != nil {
+		return subcate, err
 	}
 
-	return nil
+	editedSubcate, err := s.repository.EditSubcategory(ctx.Context(), subcate)
+	if err != nil {
+		return subcate, err
+	}
+	return editedSubcate, err
+
+}
+
+func (s *subcategoryService) DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+	subcate, err := s.repository.GetSubcategoryById(ctx, oid)
+	if err != nil {
+		return err
+	}
+
+	s.gcpService.DeleteFile(ctx, subcate.Image, collectionName)
+
+	return s.repository.DeleteSubcategory(ctx, oid)
+
+}
+
+func (s *subcategoryService) HandleUpdateImage(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError) {
+	oldSubcategory, err := s.repository.GetSubcategoryById(ctx.Context(), subcate.ID)
+	if err != nil {
+		return subcate, err
+	}
+
+	files, err := utils.ExtractUpdatedFiles(ctx, "image")
+	if err != nil {
+		return subcate, err
+	}
+
+	subcate.Image = oldSubcategory.Image
+	// if there is file passed, delete the old one and upload a new one
+	if len(files) > 0 {
+		newUploadFilename, err := collections_helper.HandleUpdateSingleFile(s.gcpService, ctx.Context(), files[0], subcate.Image, collectionName)
+		if err != nil {
+			return subcate, err
+		}
+		// if upload success, pass the url to the subcategory struct
+		subcate.Image = newUploadFilename
+	}
+
+	subcate.CreatedAt = oldSubcategory.CreatedAt
+	return subcate, nil
+}
+
+func (s *subcategoryService) FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var subcategories []Subcategory
+
+	sids = utils.RemoveDuplicateIds(sids)
+
+	for _, sid := range sids {
+		oid, err := utils.IsValidObjectId(sid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+
+		subcate, err := s.repository.GetSubcategoryById(ctx, oid)
+		if err != nil {
+			return subcategories, objectIds, err
+		}
+		objectIds = append(objectIds, oid)
+		subcategories = append(subcategories, *subcate)
+	}
+
+	return subcategories, objectIds, nil
 }

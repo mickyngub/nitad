@@ -1,10 +1,11 @@
 package category
 
 import (
+	"context"
+
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -12,7 +13,7 @@ import (
 // receive array of categoryIds, then
 // find and return non-duplicated categories, and their ids
 // return []Category
-func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomError) {
+func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError) {
 	var objectIds []primitive.ObjectID
 	var categories []Category
 
@@ -38,28 +39,34 @@ func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomEr
 
 }
 
-// validate requested string of a single categoryId
-// and return valid objectId, otherwise error
-func ValidateId(cid string) (Category, errors.CustomError) {
-	var c Category
-	objectId, err := utils.IsValidObjectId(cid)
-	if err != nil {
-		return c, err
-	}
+// use for checking ids from ProjectRequest
+// receive array of categoryIds, then
+// find and return non-duplicated categories, and their ids
+// return []Category
+func FindByIds(cids []string) ([]Category, []primitive.ObjectID, errors.CustomError) {
+	var objectIds []primitive.ObjectID
+	var categories []Category
 
-	if c, err = GetById(objectId); err != nil {
-		return c, err
-	}
+	// cids = utils.RemoveDuplicateIds(cids)
 
-	return c, nil
-}
+	// for _, cid := range cids {
+	// 	oid, err := utils.IsValidObjectId(cid)
+	// 	if err != nil {
+	// 		return categories, objectIds, err
+	// 	}
 
-// convert bson to category
-func BsonToCategory(b bson.M) Category {
-	var s Category
-	bsonBytes, _ := bson.Marshal(b)
-	bson.Unmarshal(bsonBytes, &s)
-	return s
+	// 	category, err := GetById(oid)
+	// 	if err != nil {
+	// 		return categories, objectIds, err
+	// 	}
+
+	// 	objectIds = append(objectIds, oid)
+	// 	categories = append(categories, category)
+
+	// }
+
+	return categories, objectIds, nil
+
 }
 
 // TODO: this function is written in O(n^3), should find a better way to handle this later.

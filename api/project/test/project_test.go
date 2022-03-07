@@ -1,4 +1,4 @@
-package project_test
+package project
 
 import (
 	"encoding/json"
@@ -7,31 +7,33 @@ import (
 	"testing"
 
 	"github.com/birdglove2/nitad-backend/api/project"
+	"github.com/birdglove2/nitad-backend/api/setup"
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddProjectService(t *testing.T) {
-	newTestApp(t)
+// func TestAddProjectService(t *testing.T) {
+// 	setup.NewTestApp(t)
 
-	subcate := addMockSubcategory(t)
-	cate := addMockCategory(t, subcate)
+// 	// subcate := setup.AddMockSubcategory(t)
+// 	// cate := setup.AddMockCategory(t, subcate)
 
-	addMockProject(t, cate)
-	//TODO: add from http request
+// 	// setup.AddMockProject(t, cate)
+// 	//TODO: add from http request
 
-}
+// }
 
 type Response struct {
 	Result project.Project
 }
 
 func TestGetProjectById(t *testing.T) {
-	app := newTestApp(t)
 
-	subcate := addMockSubcategory(t)
+	app := setup.NewTestApp(t)
 
-	cate := addMockCategory(t, subcate)
-	proj := addMockProject(t, cate)
+	subcate := setup.AddMockSubcategory(t)
+
+	cate := setup.AddMockCategory(t, subcate)
+	proj := setup.AddMockProject(t, cate)
 
 	url := "/api/v1/project/" + proj.ID.Hex()
 
@@ -50,5 +52,5 @@ func TestGetProjectById(t *testing.T) {
 	json.Unmarshal(bodyBytes, response)
 
 	require.Equal(t, proj.ID, response.Result.ID, "The project Id should be equal")
-	deleteMock(t, proj, cate, subcate)
+	setup.DeleteMock(t, proj, cate, subcate)
 }

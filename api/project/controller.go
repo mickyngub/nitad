@@ -1,25 +1,21 @@
 package project
 
 import (
-	"os"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/gcp"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(
-	gcpService gcp.Uploader,
+	service Service,
 	projectRoute fiber.Router,
 ) {
 
-	controller := &Controller{gcpService}
+	controller := &Controller{service}
 
 	projectRoute.Get("/", controller.ListProject)
-	projectRoute.Get("/:projectId", controller.GetProject)
+	projectRoute.Get("/:projectId", controller.GetProjectById)
 
 	projectRoute.Use(admin.IsAuth())
 	projectRoute.Post("/", AddAndEditProjectValidator, controller.AddProject)
@@ -29,141 +25,114 @@ func NewController(
 }
 
 type Controller struct {
-	gcpService gcp.Uploader
+	service Service
 }
 
 // list all projects
-func (contc *Controller) ListProject(c *fiber.Ctx) error {
+func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 	pq := new(ProjectQuery)
-
-	if err := c.QueryParser(pq); err != nil {
+	if err := ctx.QueryParser(pq); err != nil {
 		return err
 	}
 
-	projects, paginate, err := FindAll(pq)
+	projects, paginate, err := c.service.ListProject(ctx, pq)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": projects, "paginate": paginate})
 }
 
 // get project by id
-func (contc *Controller) GetProject(c *fiber.Ctx) error {
-	projectId := c.Params("projectId")
+func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
+	projectId := ctx.Params("projectId")
 
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	if os.Getenv("APP_ENV") != "test" {
-		cacheProject := HandleCacheGetProjectById(c, projectId)
-
-		if cacheProject != nil {
-			return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
-		}
-	}
-
-	result, err := GetById(objectId)
+	project, err := c.service.GetProjectById(ctx, objectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	IncrementView(objectId, 1)
-	if os.Getenv("APP_ENV") != "test" {
-		redis.SetCache(c.Path(), result)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": project})
 }
 
 // add a project
-func (contc *Controller) AddProject(c *fiber.Ctx) error {
-	projectBody, ok := c.Locals("projectBody").(*Project)
-	if !ok {
-		return errors.Throw(c, errors.NewInternalServerError("Add project went wrong!"))
-	}
+func (c *Controller) AddProject(ctx *fiber.Ctx) error {
+	projectDTO := new(ProjectDTO)
+	ctx.BodyParser(projectDTO)
 
-	files, err := utils.ExtractFiles(c, "report")
+	reports, err := utils.ExtractFiles(ctx, "report")
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
-	reportURL, err := contc.gcpService.UploadFile(c.Context(), files[0], collectionName)
+
+	images, err := utils.ExtractFiles(ctx, "images")
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	files, err = utils.ExtractFiles(c, "images")
+	projectDTO.Images = images
+	projectDTO.Report = reports[0]
+
+	addedProject, err := c.service.AddProject(ctx, projectDTO)
 	if err != nil {
-		return errors.Throw(c, err)
-	}
-	imageURLs, err := contc.gcpService.UploadFiles(c.Context(), files, collectionName)
-	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	projectBody.Report = reportURL
-	projectBody.Images = imageURLs
-
-	result, err := Add(projectBody)
-	if err != nil {
-		// if there is any error, remove the uploaded files from gcp
-		imageURLs = append(imageURLs, reportURL)
-		contc.gcpService.DeleteFiles(c.Context(), imageURLs, collectionName)
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
-
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedProject})
 }
 
-func (contc *Controller) EditProject(c *fiber.Ctx) error {
-	projectId := c.Params("projectId")
+func (c *Controller) EditProject(ctx *fiber.Ctx) error {
+	projectId := ctx.Params("projectId")
 	oid, err := utils.IsValidObjectId(projectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	updateProject, ok := c.Locals("projectBody").(*Project)
-	if !ok {
-		return errors.Throw(c, errors.NewInternalServerError("Edit project went wrong!"))
-	}
+	projectDTO := new(ProjectDTO)
+	ctx.BodyParser(projectDTO)
+	projectDTO.ID = oid
 
-	updateProject.ID = oid
-	updateProject, err = contc.HandleUpdateReportAndImages(c, updateProject)
+	reports, err := utils.ExtractUpdatedFiles(ctx, "report")
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	result, err := Edit(updateProject)
+	images, err := utils.ExtractUpdatedFiles(ctx, "images")
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": result})
+	projectDTO.Images = images
+	if reports == nil {
+		projectDTO.Report = nil
+	} else {
+		projectDTO.Report = reports[0]
+	}
+
+	editedProject, err := c.service.EditProject(ctx, projectDTO)
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedProject})
 }
 
 // delete the project
-func (contc *Controller) DeleteProject(c *fiber.Ctx) error {
-	projectId := c.Params("projectId")
+func (c *Controller) DeleteProject(ctx *fiber.Ctx) error {
+	projectId := ctx.Params("projectId")
 	objectId, err := utils.IsValidObjectId(projectId)
 	if err != nil {
-		return errors.Throw(c, err)
+		return errors.Throw(ctx, err)
 	}
 
-	project, err := GetById(objectId)
-	if err != nil {
-		return err
+	if err = c.service.DeleteProject(ctx, objectId); err != nil {
+		return errors.Throw(ctx, err)
 	}
 
-	contc.gcpService.DeleteFile(c.Context(), project.Report, collectionName)
-	contc.gcpService.DeleteFiles(c.Context(), project.Images, collectionName)
-
-	err = Delete(objectId)
-	if err != nil {
-		return errors.Throw(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + project.Title + " successfully!"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete project " + projectId + " successfully!"})
 
 }

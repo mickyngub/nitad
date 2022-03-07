@@ -12,28 +12,30 @@ var SORTING = map[string]string{
 	"createdAt": "createdAt",
 }
 
-func AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
-	pq = SetDefaultQuery(pq)
+type repositoryHelper struct{}
 
-	pipe = AppendSortStage(pipe, pq)
-	pipe = AppendPaginationStage(pipe, pq)
+func (rh *repositoryHelper) AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+	pq = rh.SetDefaultQuery(pq)
+
+	pipe = rh.AppendSortStage(pipe, pq)
+	pipe = rh.AppendPaginationStage(pipe, pq)
 	return pipe
 }
 
-func AppendSortStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+func (rh *repositoryHelper) AppendSortStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 	return append(pipe, bson.D{
 		{Key: "$sort", Value: bson.D{{
 			Key: SORTING[pq.Sort], Value: pq.By,
 		}}}})
 }
 
-func AppendPaginationStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
+func (rh *repositoryHelper) AppendPaginationStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 	return append(pipe,
 		bson.D{{Key: "$skip", Value: (pq.Page - 1) * pq.Limit}},
 		bson.D{{Key: "$limit", Value: pq.Limit}})
 }
 
-func SetDefaultQuery(pq *ProjectQuery) *ProjectQuery {
+func (rh *repositoryHelper) SetDefaultQuery(pq *ProjectQuery) *ProjectQuery {
 	if pq.Sort == "" {
 		pq.Sort = "views"
 	}
