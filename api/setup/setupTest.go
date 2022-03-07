@@ -25,26 +25,37 @@ var cateRepo category.Repository
 var projectRepo project.Repository
 var app *fiber.App
 
-func TestMain(m *testing.M) {
+// func TestMain(m *testing.M) {
+// 	config.Loadenv()
+
+// 	client := database.ConnectDb(os.Getenv("MONGO_URI"))
+
+// 	fmt.Println("first", client)
+
+// 	subcateRepo = subcategory.NewRepository(client)
+// 	cateRepo = category.NewRepository(client)
+// 	projectRepo = project.NewRepository(client)
+
+// 	os.Exit(m.Run())
+// }
+
+func NewTestApp(t *testing.T) *fiber.App {
 	config.Loadenv()
 
 	client := database.ConnectDb(os.Getenv("MONGO_URI"))
-
 	subcateRepo = subcategory.NewRepository(client)
 	cateRepo = category.NewRepository(client)
 	projectRepo = project.NewRepository(client)
 
-	os.Exit(m.Run())
-}
-
-func NewTestApp(t *testing.T) *fiber.App {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	gcpService := NewMockUploader(ctrl)
 
 	app = fiber.New()
+
 	api.CreateAPI(app, gcpService)
+
 	return app
 }
 
@@ -93,7 +104,7 @@ func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 		Status:      "dumym proj Status",
 		Category:    []category.Category{*cate},
 	}
-	addedProject, err := project.Add(&dummyProj)
+	addedProject, err := projectRepo.AddProject(context.Background(), &dummyProj)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummyProj.Title, addedProject.Title)
 	require.Equal(t, dummyProj.Category, addedProject.Category)

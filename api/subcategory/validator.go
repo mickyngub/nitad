@@ -12,13 +12,10 @@ import (
 func AddAndEditSubcategoryValidator(c *fiber.Ctx) error {
 	sr := new(SubcategoryRequest)
 
-	fmt.Println("here 1")
 	if err := c.BodyParser(sr); err != nil {
 		fmt.Println("error", err.Error())
 		return errors.Throw(c, errors.NewBadRequestError(err.Error()))
 	}
-
-	fmt.Println("here 2")
 
 	err := validators.ValidateStruct(*sr)
 	if err != nil {
