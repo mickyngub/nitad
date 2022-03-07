@@ -41,18 +41,21 @@ func (c *categoryService) GetCategoryById(ctx context.Context, oid primitive.Obj
 }
 
 func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
-	// _, osids, err := c.subcategoryService.FindByIds2(ctx, cateDTO.Subcategory)
-	// if err != nil {
-	// 	return cateDTO, err
-	// }
+	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
+	_, err := c.subcategoryService.FindByIds3(ctx, cateDTO.Subcategory)
+	if err != nil {
+		return cateDTO, err
+	}
+
 	return c.repository.AddCategory(ctx, cateDTO)
 }
 
 func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
-	// _, osids, err := c.subcategoryService.FindByIds2(ctx, cateDTO.Subcategory)
-	// if err != nil {
-	// 	return cateDTO, err
-	// }
+	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
+	_, err := c.subcategoryService.FindByIds3(ctx, cateDTO.Subcategory)
+	if err != nil {
+		return cateDTO, err
+	}
 
 	return c.repository.EditCategory(ctx, cateDTO)
 }

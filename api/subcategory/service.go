@@ -20,6 +20,7 @@ type Service interface {
 
 	HandleUpdateImage(ctx *fiber.Ctx, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
+	FindByIds3(ctx context.Context, osids []primitive.ObjectID) ([]Subcategory, errors.CustomError)
 }
 
 type subcategoryService struct {
@@ -113,6 +114,20 @@ func (s *subcategoryService) HandleUpdateImage(ctx *fiber.Ctx, subcate *Subcateg
 
 	subcate.CreatedAt = oldSubcategory.CreatedAt
 	return subcate, nil
+}
+
+func (s *subcategoryService) FindByIds3(ctx context.Context, osids []primitive.ObjectID) ([]Subcategory, errors.CustomError) {
+	var subcategories []Subcategory
+
+	for _, osid := range osids {
+		subcate, err := s.repository.GetSubcategoryById(ctx, osid)
+		if err != nil {
+			return subcategories, err
+		}
+		subcategories = append(subcategories, *subcate)
+	}
+
+	return subcategories, nil
 }
 
 func (s *subcategoryService) FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
