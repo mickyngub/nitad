@@ -9,13 +9,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 type Repository interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
-	AddCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError)
-	EditCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError)
+	GetCategoryByIdNoLookup(ctx context.Context, oid primitive.ObjectID) (*CategoryDTO, errors.CustomError)
+
+	AddCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError)
+	EditCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
 	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
@@ -68,11 +71,30 @@ func (c *categoryRepository) GetCategoryById(ctx context.Context, oid primitive.
 	return &cates[0], nil
 }
 
-func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError) {
+func (c *categoryRepository) GetCategoryByIdNoLookup(ctx context.Context, oid primitive.ObjectID) (*CategoryDTO, errors.CustomError) {
+	pipe := mongo.Pipeline{}
+	pipe = database.AppendMatchStage(pipe, "_id", oid)
+
+	cursor, err := c.collection.Aggregate(ctx, pipe)
+	var cates []CategoryDTO
+	if err != nil {
+		return &CategoryDTO{}, errors.NewBadRequestError(err.Error())
+	}
+	if err = cursor.All(ctx, &cates); err != nil {
+		return &CategoryDTO{}, errors.NewBadRequestError(err.Error())
+	}
+
+	if len(cates) == 0 {
+		return &CategoryDTO{}, errors.NewNotFoundError("categoryId")
+	}
+	return &cates[0], nil
+}
+
+func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError) {
 	now := time.Now()
 	insertRes, insertErr := c.collection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: cate.Title},
-		{Key: "subcategory", Value: osids},
+		{Key: "subcategory", Value: cate.Subcategory},
 		{Key: "createdAt", Value: now},
 		{Key: "updatedAt", Value: now},
 	})
@@ -84,14 +106,15 @@ func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO,
 	return cate, nil
 }
 
-func (c *categoryRepository) EditCategory(ctx context.Context, cate *CategoryDTO, osids []primitive.ObjectID) (*CategoryDTO, errors.CustomError) {
+func (c *categoryRepository) EditCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError) {
+	zap.S().Info(cate.Subcategory)
 	_, updateErr := c.collection.UpdateByID(
 		ctx,
 		cate.ID,
 		bson.D{{
 			Key: "$set", Value: bson.D{
 				{Key: "title", Value: cate.Title},
-				{Key: "subcategory", Value: osids},
+				{Key: "subcategory", Value: cate.Subcategory},
 				{Key: "updatedAt", Value: time.Now()},
 			},
 		},

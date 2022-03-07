@@ -20,6 +20,8 @@ func NewController(
 	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
 	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
+
+	categoryRoute.Post("/:categoryId/add/:subcategoryId", controller.AddSubcategory)
 }
 
 type Controller struct {
@@ -55,8 +57,10 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 
 // add a category
 func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
-	cateDTO := new(CategoryDTO)
-	ctx.BodyParser(cateDTO)
+	cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
+	if !ok {
+		return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
+	}
 
 	addedCate, err := c.service.AddCategory(ctx.Context(), cateDTO)
 	if err != nil {
@@ -100,4 +104,26 @@ func (c *Controller) DeleteCategory(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Delete category " + categoryId + " successfully!"})
+}
+
+func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
+	categoryId := ctx.Params("categoryId")
+	coid, err := utils.IsValidObjectId(categoryId)
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	subcategoryId := ctx.Params("subcategoryId")
+	soid, err := utils.IsValidObjectId(subcategoryId)
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	editedCate, err := c.service.AddSubcategory(ctx, coid, soid)
+	if err != nil {
+		return errors.Throw(ctx, err)
+	}
+
+	// return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Add subcategory " + *subcategoryId + " to " + categoryId + " successfully!"})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedCate})
 }

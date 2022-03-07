@@ -19,9 +19,17 @@ type Category struct {
 }
 
 type CategoryDTO struct {
+	ID          primitive.ObjectID   `bson:"_id,omitempty" json:"id,omitempty"`
+	Title       string               `bson:"title" json:"title"`
+	Subcategory []primitive.ObjectID `bson:"subcategory" json:"subcategory"`
+	CreatedAt   time.Time            `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
+	UpdatedAt   time.Time            `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
+}
+
+type CategoryRequest struct {
 	ID          primitive.ObjectID `form:"-"`
 	Title       string             `form:"title" validate:"required"`
-	Subcategory []string           `form:"subcategory" validate:"required"`
+	Subcategory []string           `form:"subcategory"`
 	CreatedAt   time.Time          `form:"-"`
 	UpdatedAt   time.Time          `form:"-"`
 }
