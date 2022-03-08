@@ -39,7 +39,7 @@ func main() {
 	cronjob.Init()
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v2.3  !"})
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": "Hello, this is NITAD Backend Server v2.4  !"})
 	})
 
 	app.All("*", func(c *fiber.Ctx) error {
