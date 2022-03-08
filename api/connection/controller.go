@@ -15,8 +15,6 @@ func NewController(
 
 	controller := &Controller{service}
 
-	connectionRoute.Put("/subcategory", controller.EditSubcategory)
-
 	connectionRoute.Use(admin.IsAuth())
 	connectionRoute.Post("/subcategory", AddAndEditSubcategoryValidator, controller.AddSubcategory)
 	connectionRoute.Put("/subcategory/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
