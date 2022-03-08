@@ -6,6 +6,7 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,7 +14,7 @@ import (
 )
 
 type Service interface {
-	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
+	ListCategory(ctx context.Context) ([]*Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, id string) (*Category, errors.CustomError)
 	AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
@@ -36,8 +37,17 @@ func NewService(repository Repository, subcategoryService subcategory.Service) S
 	return &categoryService{repository, subcategoryService}
 }
 
-func (c *categoryService) ListCategory(ctx context.Context) ([]Category, errors.CustomError) {
-	return c.repository.ListCategory(ctx)
+func (c *categoryService) ListCategory(ctx context.Context) ([]*Category, errors.CustomError) {
+	cates, err := c.repository.ListCategory(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, cate := range cates {
+		for _, subcate := range cate.Subcategory {
+			subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
+		}
+	}
+	return cates, nil
 }
 
 func (c *categoryService) GetCategoryById(ctx context.Context, id string) (*Category, errors.CustomError) {
@@ -45,7 +55,17 @@ func (c *categoryService) GetCategoryById(ctx context.Context, id string) (*Cate
 	if err != nil {
 		return nil, err
 	}
-	return c.repository.GetCategoryById(ctx, oid)
+
+	cate, err := c.repository.GetCategoryById(ctx, oid)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, subcate := range cate.Subcategory {
+		subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
+	}
+
+	return cate, nil
 }
 
 func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
@@ -94,7 +114,7 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 
 	// find the remove subcategories by checking
 	// the non-intersecting of oldSubcategories and updatedSubcategories
-	removeSubcategories := []subcategory.Subcategory{}
+	removeSubcategories := []*subcategory.Subcategory{}
 	for _, oldSubcategory := range oldCate.Subcategory {
 		if !contains(cateDTO.Subcategory, oldSubcategory.ID.Hex()) {
 			removeSubcategories = append(removeSubcategories, oldSubcategory)
@@ -117,7 +137,7 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 
 	// unset the remove ones
 	for _, removeSubcate := range removeSubcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), &removeSubcate, primitive.NilObjectID)
+		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), removeSubcate, primitive.NilObjectID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -128,7 +148,6 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 }
 
 func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.CustomError {
-	zap.S().Info("check 1")
 	cate, err := c.GetCategoryById(ctx, id)
 	if err != nil {
 		return err
@@ -138,7 +157,7 @@ func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.
 
 	for _, subcate := range cate.Subcategory {
 		// unset subcate
-		c.subcategoryService.InsertToCategory(ctx, &subcate, primitive.NilObjectID)
+		c.subcategoryService.InsertToCategory(ctx, subcate, primitive.NilObjectID)
 	}
 
 	zap.S().Info("check 3")

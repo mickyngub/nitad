@@ -12,7 +12,7 @@ import (
 )
 
 type Repository interface {
-	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
+	ListCategory(ctx context.Context) ([]*Category, errors.CustomError)
 	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
 	GetCategoryByIdNoLookup(ctx context.Context, oid primitive.ObjectID) (*CategoryDTO, errors.CustomError)
 
@@ -35,18 +35,18 @@ func NewRepository(client *mongo.Client) Repository {
 	}
 }
 
-func (c *categoryRepository) ListCategory(ctx context.Context) ([]Category, errors.CustomError) {
+func (c *categoryRepository) ListCategory(ctx context.Context) ([]*Category, errors.CustomError) {
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendLookupStage(pipe, "subcategory")
 
 	cursor, err := c.collection.Aggregate(ctx, pipe)
-	var cates []Category
+	var cates []*Category
 	if err != nil {
-		return cates, errors.NewBadRequestError(err.Error())
+		return nil, errors.NewBadRequestError(err.Error())
 
 	}
 	if err = cursor.All(ctx, &cates); err != nil {
-		return cates, errors.NewBadRequestError(err.Error())
+		return nil, errors.NewBadRequestError(err.Error())
 	}
 
 	return cates, nil
