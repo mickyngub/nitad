@@ -43,7 +43,7 @@ func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Cate
 func FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
 	finalCate := []Category{}
 	for _, cate := range categories {
-		subcateThatIsInCate := []subcategory.Subcategory{}
+		subcateThatIsInCate := []*subcategory.Subcategory{}
 		for _, subcate := range cate.Subcategory {
 			for index, id := range sids {
 				if subcate.ID == id {

@@ -4,7 +4,9 @@ import (
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/category"
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -36,7 +38,7 @@ func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageURLs []strin
 	if len(deleteImages) > 0 {
 		imageURLs = utils.RemoveSliceFromSlice(imageURLs, deleteImages)
 		zap.S().Info("Deleted", imageURLs)
-		p.gcpService.DeleteFiles(ctx.Context(), deleteImages, collectionName)
+		p.gcpService.DeleteFiles(ctx.Context(), deleteImages)
 	}
 
 	// UPLOAD NEW IMAGE FILES
@@ -45,7 +47,7 @@ func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageURLs []strin
 		newImageURLs, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
 		zap.S().Info("pass 6", newImageURLs)
 		if err != nil {
-			p.gcpService.DeleteFiles(ctx.Context(), newImageURLs, collectionName)
+			p.gcpService.DeleteFiles(ctx.Context(), newImageURLs)
 			return imageURLs, err
 		}
 		imageURLs = append(imageURLs, newImageURLs...)
@@ -59,11 +61,27 @@ func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string,
 		return oldReportURL, nil
 	}
 
-	p.gcpService.DeleteFile(ctx.Context(), oldReportURL, collectionName)
+	p.gcpService.DeleteFile(ctx.Context(), oldReportURL)
 	newUploadReportURL, err := p.gcpService.UploadFile(ctx.Context(), newReportFile, collectionName)
 	if err != nil {
-		p.gcpService.DeleteFile(ctx.Context(), newUploadReportURL, collectionName)
+		p.gcpService.DeleteFile(ctx.Context(), newUploadReportURL)
 		return oldReportURL, err
 	}
 	return newUploadReportURL, nil
+}
+
+func (p *projectService) GetAllURLs(project *Project) {
+	images := []string{}
+	for _, image := range project.Images {
+		images = append(images, gcp.GetURL(image, collectionName))
+	}
+	project.Images = images
+	project.Report = gcp.GetURL(project.Report, collectionName)
+
+	for _, cate := range project.Category {
+		for _, subcate := range cate.Subcategory {
+			subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
+		}
+
+	}
 }

@@ -12,8 +12,8 @@ import (
 )
 
 type Repository interface {
-	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
-	ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
+	ListSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError)
+	ListUnsetSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError)
 	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
 	AddSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
@@ -32,32 +32,32 @@ func NewRepository(client *mongo.Client) Repository {
 	}
 }
 
-func (s *subcategoryRepository) ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
-	var subcates []Subcategory
+func (s *subcategoryRepository) ListSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError) {
+	var subcates []*Subcategory
 	cursor, err := s.collection.Find(ctx, bson.M{})
 	if err != nil {
-		return subcates, errors.NewBadRequestError(err.Error())
+		return nil, errors.NewBadRequestError(err.Error())
 	}
 
 	if err = cursor.All(ctx, &subcates); err != nil {
-		return subcates, errors.NewBadRequestError(err.Error())
+		return nil, errors.NewBadRequestError(err.Error())
 	}
 
 	return subcates, nil
 }
 
-func (s *subcategoryRepository) ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
-	subcates := []Subcategory{}
+func (s *subcategoryRepository) ListUnsetSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError) {
+	subcates := []*Subcategory{}
 	pipe := mongo.Pipeline{}
 
 	pipe = database.AppendMatchStage(pipe, "categoryId", primitive.NilObjectID)
 
 	cursor, aggregateErr := s.collection.Aggregate(ctx, pipe)
 	if aggregateErr != nil {
-		return subcates, errors.NewBadRequestError(aggregateErr.Error())
+		return nil, errors.NewBadRequestError(aggregateErr.Error())
 	}
 	if curErr := cursor.All(ctx, &subcates); curErr != nil {
-		return subcates, errors.NewBadRequestError(curErr.Error())
+		return nil, errors.NewBadRequestError(curErr.Error())
 	}
 	return subcates, nil
 }
