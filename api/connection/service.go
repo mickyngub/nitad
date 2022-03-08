@@ -26,22 +26,24 @@ func NewService(subcategoryService subcategory.Service, categoryService category
 }
 
 func (c *connectionService) AddSubcategory(ctx *fiber.Ctx, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+
+	addedSubcate, err := c.subcategoryService.AddSubcategory(ctx.Context(), subcateDTO)
+	if err != nil {
+		return nil, err
+	}
+
 	if subcateDTO.CategoryId != primitive.NilObjectID {
 		// if there is parse categoryId, check if the cate exists
 		cate, err := c.categoryService.GetCategoryById(ctx.Context(), subcateDTO.CategoryId.Hex())
 		if err != nil {
 			return nil, err
 		}
-		err = c.categoryService.BindSubcategory(ctx.Context(), cate.ID, subcateDTO.ID)
+		err = c.categoryService.BindSubcategory(ctx.Context(), cate.ID, addedSubcate.ID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	addedSubcate, err := c.subcategoryService.AddSubcategory(ctx.Context(), subcateDTO)
-	if err != nil {
-		return nil, err
-	}
 	return addedSubcate, nil
 
 }

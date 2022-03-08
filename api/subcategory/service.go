@@ -2,6 +2,7 @@ package subcategory
 
 import (
 	"context"
+	"log"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -65,6 +66,8 @@ func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO 
 		return addedSubcategory, err
 	}
 
+	log.Println("add subcate1", subcategoryDTO.CategoryId)
+	log.Println("add subcate2", addedSubcategory.CategoryId)
 	addedSubcate, err := s.repository.AddSubcategory(ctx, addedSubcategory)
 	if err != nil {
 		s.gcpService.DeleteFile(ctx, imageFilename, collectionName)
