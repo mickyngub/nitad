@@ -16,7 +16,7 @@ import (
 
 type Service interface {
 	SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError)
-	ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError)
+	ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]*Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx *fiber.Ctx, id string) (*Project, errors.CustomError)
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	EditProject(ctx *fiber.Ctx, id string, projectDTO *ProjectDTO) (*Project, errors.CustomError)
@@ -45,13 +45,22 @@ func (p *projectService) SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.
 
 //TODO: just ignore findbyIds subcate
 // if not found then nothing happen
-func (p *projectService) ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError) {
+func (p *projectService) ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]*Project, *paginate.Paginate, errors.CustomError) {
 	_, sids, err := p.subcategoryService.FindByIds3(ctx.Context(), pq.SubcategoryId)
 	if err != nil {
-		return []Project{}, nil, err
+		return nil, nil, err
 	}
 
-	return p.repository.ListProject(ctx.Context(), pq, sids)
+	projects, pagin, err := p.repository.ListProject(ctx.Context(), pq, sids)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, project := range projects {
+		p.GetAllURLs(project)
+	}
+
+	return projects, pagin, nil
 }
 
 func (p *projectService) GetProjectById(ctx *fiber.Ctx, id string) (*Project, errors.CustomError) {
@@ -72,6 +81,8 @@ func (p *projectService) GetProjectById(ctx *fiber.Ctx, id string) (*Project, er
 	}
 
 	p.repository.IncrementView(ctx.Context(), project.ID, 1)
+
+	p.GetAllURLs(project)
 
 	if os.Getenv("APP_ENV") != "test" {
 		redis.SetCache(ctx.Path(), project)
@@ -110,7 +121,7 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	if err != nil {
 		// if there is any error, remove the uploaded files from gcp
 		URLs := append(imageURLs, reportURL)
-		p.gcpService.DeleteFiles(ctx.Context(), URLs, collectionName)
+		p.gcpService.DeleteFiles(ctx.Context(), URLs)
 		return project, err
 	}
 
@@ -152,7 +163,7 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 	if err != nil {
 		// if there is any error, remove the uploaded files from gcp
 		URLs := append(imageURLs, reportURL)
-		p.gcpService.DeleteFiles(ctx.Context(), URLs, collectionName)
+		p.gcpService.DeleteFiles(ctx.Context(), URLs)
 		return editedProject, err
 	}
 	return editedProject, nil
@@ -164,8 +175,8 @@ func (p *projectService) DeleteProject(ctx *fiber.Ctx, id string) errors.CustomE
 		return err
 	}
 
-	p.gcpService.DeleteFile(ctx.Context(), project.Report, collectionName)
-	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
+	p.gcpService.DeleteFile(ctx.Context(), project.Report)
+	p.gcpService.DeleteFiles(ctx.Context(), project.Images)
 
 	return p.repository.DeleteProject(ctx.Context(), project.ID)
 }

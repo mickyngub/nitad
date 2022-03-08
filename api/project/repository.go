@@ -14,7 +14,7 @@ import (
 )
 
 type Repository interface {
-	ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]Project, *paginate.Paginate, errors.CustomError)
+	ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]*Project, *paginate.Paginate, errors.CustomError)
 	GetProjectById(ctx context.Context, oid primitive.ObjectID) (*Project, errors.CustomError)
 	AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 	EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
@@ -41,9 +41,9 @@ func NewRepository(client *mongo.Client) Repository {
 	}
 }
 
-func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]Project, *paginate.Paginate, errors.CustomError) {
+func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]*Project, *paginate.Paginate, errors.CustomError) {
 	pipe := mongo.Pipeline{}
-	projects := []Project{}
+	projects := []*Project{}
 
 	for _, sid := range sids {
 		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
