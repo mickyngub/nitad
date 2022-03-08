@@ -21,7 +21,7 @@ type Service interface {
 	EditSubcategory(ctx *fiber.Ctx, subcate *SubcategoryDTO) (*Subcategory, errors.CustomError)
 	DeleteSubcategory(ctx context.Context, id string) errors.CustomError
 
-	InsertToCategory(ctx *fiber.Ctx, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError)
+	InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError)
 	HandleUpdateImage(ctx *fiber.Ctx, oldImageURL string, newImageFile *multipart.FileHeader) (string, errors.CustomError)
 	// FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
 	FindByIds3(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
@@ -204,6 +204,6 @@ func (s *subcategoryService) FindByIds3(ctx context.Context, sids []string) ([]S
 // 	return subcategories, objectIds, nil
 // }
 
-func (s *subcategoryService) InsertToCategory(ctx *fiber.Ctx, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	return s.repository.InsertToCategory(ctx.Context(), subcate, categoryId)
+func (s *subcategoryService) InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError) {
+	return s.repository.InsertToCategory(ctx, subcate, categoryId)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -61,7 +62,7 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 
 	//TODO: tx this
 	for _, subcate := range subcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx, &subcate, cateDTO.ID)
+		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), &subcate, cateDTO.ID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -108,7 +109,7 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 	// set categoryId to the updated ones
 	//TODO: tx this
 	for _, subcate := range subcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx, &subcate, cateDTO.ID)
+		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), &subcate, cateDTO.ID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -116,7 +117,7 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 
 	// unset the remove ones
 	for _, removeSubcate := range removeSubcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx, &removeSubcate, primitive.NilObjectID)
+		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), &removeSubcate, primitive.NilObjectID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -127,19 +128,20 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 }
 
 func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.CustomError {
-	// oid, err := database.ExtractOID(id)
-	// if err != nil {
-	// 	return err
-	// }
-
+	zap.S().Info("check 1")
 	cate, err := c.GetCategoryById(ctx, id)
 	if err != nil {
 		return err
 	}
+
+	zap.S().Info("check 2", cate)
+
 	for _, subcate := range cate.Subcategory {
 		// unset subcate
-		c.subcategoryService.InsertToCategory(&fiber.Ctx{}, &subcate, primitive.NilObjectID)
+		c.subcategoryService.InsertToCategory(ctx, &subcate, primitive.NilObjectID)
 	}
+
+	zap.S().Info("check 3")
 
 	return c.repository.DeleteCategory(ctx, cate.ID)
 }
@@ -177,7 +179,7 @@ func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, cid string, sid string)
 	}
 
 	// update subcate bounded to cate
-	_, err = c.subcategoryService.InsertToCategory(ctx, addedSubcate, cateDTO.ID)
+	_, err = c.subcategoryService.InsertToCategory(ctx.Context(), addedSubcate, cateDTO.ID)
 	if err != nil {
 		return cateDTO, err
 	}
