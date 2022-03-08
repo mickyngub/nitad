@@ -20,6 +20,8 @@ type Repository interface {
 	EditCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 
+	BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
+	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
 }
 
@@ -159,4 +161,38 @@ func (c *categoryRepository) SearchCategory(ctx context.Context) ([]CategorySear
 	}
 
 	return cates, nil
+}
+
+func (c *categoryRepository) UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
+	_, updateErr := c.collection.UpdateByID(
+		ctx,
+		coid,
+		bson.D{{
+			Key: "$pull", Value: bson.D{
+				{Key: "subcategory", Value: soid},
+			},
+		},
+		})
+
+	if updateErr != nil {
+		return errors.NewBadRequestError(updateErr.Error())
+	}
+	return nil
+}
+
+func (c *categoryRepository) BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
+	_, updateErr := c.collection.UpdateByID(
+		ctx,
+		coid,
+		bson.D{{
+			Key: "$addToSet", Value: bson.D{
+				{Key: "subcategory", Value: soid},
+			},
+		},
+		})
+
+	if updateErr != nil {
+		return errors.NewBadRequestError(updateErr.Error())
+	}
+	return nil
 }

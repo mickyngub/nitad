@@ -21,6 +21,8 @@ type Service interface {
 	SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError)
 	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
 
+	BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
+	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	AddSubcategory(ctx *fiber.Ctx, cid string, sid string) (*CategoryDTO, errors.CustomError)
 }
 
@@ -181,4 +183,13 @@ func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, cid string, sid string)
 	}
 
 	return cateDTO, err
+
+}
+
+func (c *categoryService) BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
+	return c.repository.BindSubcategory(ctx, coid, soid)
+}
+
+func (c *categoryService) UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
+	return c.repository.UnbindSubcategory(ctx, coid, soid)
 }
