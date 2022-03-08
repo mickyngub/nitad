@@ -9,7 +9,7 @@ func NewController(
 	service Service,
 	searchRoute fiber.Router,
 ) {
-	controller := &Controller{}
+	controller := &Controller{service}
 	searchRoute.Get("/", controller.SearchAll)
 }
 
@@ -19,6 +19,7 @@ type Controller struct {
 
 // list all neccessary components: project/ category/ subcategory
 func (c *Controller) SearchAll(ctx *fiber.Ctx) error {
+
 	searchResult, err := c.service.SearchAll(ctx)
 	if err != nil {
 		return errors.Throw(ctx, err)
