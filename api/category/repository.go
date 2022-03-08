@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.uber.org/zap"
 )
 
 type Repository interface {
@@ -87,6 +86,7 @@ func (c *categoryRepository) GetCategoryByIdNoLookup(ctx context.Context, oid pr
 	if len(cates) == 0 {
 		return &CategoryDTO{}, errors.NewNotFoundError("categoryId")
 	}
+
 	return &cates[0], nil
 }
 
@@ -107,14 +107,22 @@ func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO)
 }
 
 func (c *categoryRepository) EditCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError) {
-	zap.S().Info(cate.Subcategory)
+	soids := []primitive.ObjectID{}
+	for _, sid := range cate.Subcategory {
+		oid, err := database.ExtractOID(sid)
+		if err != nil {
+			return nil, err
+		}
+		soids = append(soids, oid)
+	}
+
 	_, updateErr := c.collection.UpdateByID(
 		ctx,
 		cate.ID,
 		bson.D{{
 			Key: "$set", Value: bson.D{
 				{Key: "title", Value: cate.Title},
-				{Key: "subcategory", Value: cate.Subcategory},
+				{Key: "subcategory", Value: soids},
 				{Key: "updatedAt", Value: time.Now()},
 			},
 		},

@@ -27,17 +27,18 @@ type Response struct {
 }
 
 func TestGetProjectById(t *testing.T) {
-
 	app := setup.NewTestApp(t)
 
 	subcate := setup.AddMockSubcategory(t)
 
 	cate := setup.AddMockCategory(t, subcate)
+
 	proj := setup.AddMockProject(t, cate)
 
 	url := "/api/v1/project/" + proj.ID.Hex()
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
+
 	require.Nil(t, err)
 
 	resp, err := app.Test(request)
@@ -49,8 +50,10 @@ func TestGetProjectById(t *testing.T) {
 	require.Nil(t, err)
 
 	response := new(Response)
+
 	json.Unmarshal(bodyBytes, response)
 
 	require.Equal(t, proj.ID, response.Result.ID, "The project Id should be equal")
+
 	setup.DeleteMock(t, proj, cate, subcate)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"mime/multipart"
 
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -14,15 +15,15 @@ import (
 type Service interface {
 	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
 	ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
-	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
+	GetSubcategoryById(ctx context.Context, id string) (*Subcategory, errors.CustomError)
 	AddSubcategory(ctx context.Context, subcategoryDTO *SubcategoryDTO) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx *fiber.Ctx, subcate *SubcategoryDTO) (*Subcategory, errors.CustomError)
-	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+	DeleteSubcategory(ctx context.Context, id string) errors.CustomError
 
 	InsertToCategory(ctx *fiber.Ctx, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError)
 	HandleUpdateImage(ctx *fiber.Ctx, oldImageURL string, newImageFile *multipart.FileHeader) (string, errors.CustomError)
-	FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
-	FindByIds3(ctx context.Context, osids []primitive.ObjectID) ([]Subcategory, errors.CustomError)
+	// FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
+	FindByIds3(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
 }
 
 type subcategoryService struct {
@@ -43,7 +44,11 @@ func (s *subcategoryService) ListUnsetSubcategory(ctx context.Context) ([]Subcat
 	return s.repository.ListUnsetSubcategory(ctx)
 }
 
-func (s *subcategoryService) GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
+func (s *subcategoryService) GetSubcategoryById(ctx context.Context, id string) (*Subcategory, errors.CustomError) {
+	oid, err := database.ExtractOID(id)
+	if err != nil {
+		return nil, err
+	}
 	return s.repository.GetSubcategoryById(ctx, oid)
 }
 
@@ -71,7 +76,7 @@ func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO 
 
 func (s *subcategoryService) EditSubcategory(ctx *fiber.Ctx, subcateDTO *SubcategoryDTO) (*Subcategory, errors.CustomError) {
 	editedSubcate := new(Subcategory)
-	oldSubcate, err := s.GetSubcategoryById(ctx.Context(), subcateDTO.ID)
+	oldSubcate, err := s.GetSubcategoryById(ctx.Context(), subcateDTO.ID.Hex())
 	if err != nil {
 		return editedSubcate, err
 	}
@@ -97,8 +102,8 @@ func (s *subcategoryService) EditSubcategory(ctx *fiber.Ctx, subcateDTO *Subcate
 
 }
 
-func (s *subcategoryService) DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
-	subcate, err := s.repository.GetSubcategoryById(ctx, oid)
+func (s *subcategoryService) DeleteSubcategory(ctx context.Context, id string) errors.CustomError {
+	subcate, err := s.GetSubcategoryById(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -109,7 +114,7 @@ func (s *subcategoryService) DeleteSubcategory(ctx context.Context, oid primitiv
 
 	s.gcpService.DeleteFile(ctx, subcate.Image, collectionName)
 
-	return s.repository.DeleteSubcategory(ctx, oid)
+	return s.repository.DeleteSubcategory(ctx, subcate.ID)
 
 }
 
@@ -153,42 +158,44 @@ func (p *subcategoryService) HandleUpdateImage(ctx *fiber.Ctx, oldImageURL strin
 // 	return subcate, nil
 // }
 
-func (s *subcategoryService) FindByIds3(ctx context.Context, osids []primitive.ObjectID) ([]Subcategory, errors.CustomError) {
+func (s *subcategoryService) FindByIds3(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
 	var subcategories []Subcategory
-
-	for _, osid := range osids {
-		subcate, err := s.repository.GetSubcategoryById(ctx, osid)
-		if err != nil {
-			return subcategories, err
-		}
-		subcategories = append(subcategories, *subcate)
-	}
-
-	return subcategories, nil
-}
-
-func (s *subcategoryService) FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
-	var objectIds []primitive.ObjectID
-	var subcategories []Subcategory
-
-	sids = utils.RemoveDuplicateIds(sids)
+	var objectIDs []primitive.ObjectID
 
 	for _, sid := range sids {
-		oid, err := utils.IsValidObjectId(sid)
+		subcate, err := s.GetSubcategoryById(ctx, sid)
 		if err != nil {
-			return subcategories, objectIds, err
+			return subcategories, objectIDs, err
 		}
-
-		subcate, err := s.repository.GetSubcategoryById(ctx, oid)
-		if err != nil {
-			return subcategories, objectIds, err
-		}
-		objectIds = append(objectIds, oid)
+		objectIDs = append(objectIDs, subcate.ID)
 		subcategories = append(subcategories, *subcate)
 	}
 
-	return subcategories, objectIds, nil
+	return subcategories, objectIDs, nil
 }
+
+// func (s *subcategoryService) FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
+// 	var objectIds []primitive.ObjectID
+// 	var subcategories []Subcategory
+
+// 	sids = utils.RemoveDuplicateIds(sids)
+
+// 	for _, sid := range sids {
+// 		oid, err := utils.IsValidObjectId(sid)
+// 		if err != nil {
+// 			return subcategories, objectIds, err
+// 		}
+
+// 		subcate, err := s.repository.GetSubcategoryById(ctx, oid)
+// 		if err != nil {
+// 			return subcategories, objectIds, err
+// 		}
+// 		objectIds = append(objectIds, oid)
+// 		subcategories = append(subcategories, *subcate)
+// 	}
+
+// 	return subcategories, objectIds, nil
+// }
 
 func (s *subcategoryService) InsertToCategory(ctx *fiber.Ctx, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError) {
 	return s.repository.InsertToCategory(ctx.Context(), subcate, categoryId)

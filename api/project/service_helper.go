@@ -11,7 +11,7 @@ import (
 )
 
 func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
-	_, sids, err := p.subcategoryService.FindByIds2(ctx.Context(), projectDTO.Subcategory)
+	_, soids, err := p.subcategoryService.FindByIds3(ctx.Context(), projectDTO.Subcategory)
 	if err != nil {
 		return []category.Category{}, err
 	}
@@ -21,7 +21,7 @@ func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectD
 		return []category.Category{}, err
 	}
 
-	finalCategories, err := category.FilterCatesWithSids(categories, sids)
+	finalCategories, err := category.FilterCatesWithSids(categories, soids)
 	if err != nil {
 		return []category.Category{}, err
 	}

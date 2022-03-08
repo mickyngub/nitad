@@ -19,20 +19,20 @@ type Category struct {
 }
 
 type CategoryDTO struct {
-	ID          primitive.ObjectID   `bson:"_id,omitempty" json:"id,omitempty"`
-	Title       string               `bson:"title" json:"title"`
-	Subcategory []primitive.ObjectID `bson:"subcategory" json:"subcategory"`
-	CreatedAt   time.Time            `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
-	UpdatedAt   time.Time            `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
+	ID          primitive.ObjectID `form:"-" bson:"_id,omitempty" json:"id,omitempty"`
+	Title       string             `form:"title" validate:"required" bson:"title" json:"title"`
+	Subcategory []string           `form:"subcategory" bson:"subcategory" json:"subcategory"`
+	CreatedAt   time.Time          `form:"-" bson:"createdAt,omitempty" json:"createdAt,omitempty"`
+	UpdatedAt   time.Time          `form:"-" bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
 
-type CategoryRequest struct {
-	ID          primitive.ObjectID `form:"-"`
-	Title       string             `form:"title" validate:"required"`
-	Subcategory []string           `form:"subcategory"`
-	CreatedAt   time.Time          `form:"-"`
-	UpdatedAt   time.Time          `form:"-"`
-}
+// type CategoryRequest struct {
+// 	ID          primitive.ObjectID `form:"-"`
+// 	Title       string             `form:"title" validate:"required"`
+// 	Subcategory []string           `form:"subcategory"`
+// 	CreatedAt   time.Time          `form:"-"`
+// 	UpdatedAt   time.Time          `form:"-"`
+// }
 
 type CategorySearch struct {
 	ID          primitive.ObjectID              `bson:"_id" json:"id"`

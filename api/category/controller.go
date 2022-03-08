@@ -19,10 +19,10 @@ func NewController(
 
 	categoryRoute.Use(admin.IsAuth())
 	categoryRoute.Post("/", AddAndEditCategoryValidator, controller.AddCategory)
+	categoryRoute.Post("/:categoryId/add/:subcategoryId", controller.AddSubcategory)
 	categoryRoute.Put("/:categoryId", AddAndEditCategoryValidator, controller.EditCategory)
 	categoryRoute.Delete("/:categoryId", controller.DeleteCategory)
 
-	categoryRoute.Post("/:categoryId/add/:subcategoryId", controller.AddSubcategory)
 }
 
 type Controller struct {
@@ -43,12 +43,7 @@ func (c *Controller) ListCategory(ctx *fiber.Ctx) error {
 func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 	categoryId := ctx.Params("categoryId")
 
-	objectId, err := utils.IsValidObjectId(categoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
-
-	cate, err := c.service.GetCategoryById(ctx.Context(), objectId)
+	cate, err := c.service.GetCategoryById(ctx.Context(), categoryId)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -96,12 +91,8 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 // delete the category
 func (c *Controller) DeleteCategory(ctx *fiber.Ctx) error {
 	categoryId := ctx.Params("categoryId")
-	objectId, err := utils.IsValidObjectId(categoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
 
-	err = c.service.DeleteCategory(ctx.Context(), objectId)
+	err := c.service.DeleteCategory(ctx.Context(), categoryId)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -110,19 +101,10 @@ func (c *Controller) DeleteCategory(ctx *fiber.Ctx) error {
 }
 
 func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
-	categoryId := ctx.Params("categoryId")
-	coid, err := utils.IsValidObjectId(categoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
+	cid := ctx.Params("categoryId")
+	sid := ctx.Params("subcategoryId")
 
-	subcategoryId := ctx.Params("subcategoryId")
-	soid, err := utils.IsValidObjectId(subcategoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
-
-	editedCate, err := c.service.AddSubcategory(ctx, coid, soid)
+	editedCate, err := c.service.AddSubcategory(ctx, cid, sid)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

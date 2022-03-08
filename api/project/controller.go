@@ -46,12 +46,7 @@ func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
 
-	objectId, err := utils.IsValidObjectId(projectId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
-
-	project, err := c.service.GetProjectById(ctx, objectId)
+	project, err := c.service.GetProjectById(ctx, projectId)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -87,14 +82,9 @@ func (c *Controller) AddProject(ctx *fiber.Ctx) error {
 
 func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
-	oid, err := utils.IsValidObjectId(projectId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
 
 	projectDTO := new(ProjectDTO)
 	ctx.BodyParser(projectDTO)
-	projectDTO.ID = oid
 
 	reports, err := utils.ExtractUpdatedFiles(ctx, "report")
 	if err != nil {
@@ -113,7 +103,7 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 		projectDTO.Report = reports[0]
 	}
 
-	editedProject, err := c.service.EditProject(ctx, projectDTO)
+	editedProject, err := c.service.EditProject(ctx, projectId, projectDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -124,12 +114,8 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 // delete the project
 func (c *Controller) DeleteProject(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
-	objectId, err := utils.IsValidObjectId(projectId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
 
-	if err = c.service.DeleteProject(ctx, objectId); err != nil {
+	if err := c.service.DeleteProject(ctx, projectId); err != nil {
 		return errors.Throw(ctx, err)
 	}
 

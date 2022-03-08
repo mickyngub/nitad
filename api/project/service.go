@@ -6,21 +6,21 @@ import (
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Service interface {
 	SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.CustomError)
 	ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError)
-	GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) (*Project, errors.CustomError)
+	GetProjectById(ctx *fiber.Ctx, id string) (*Project, errors.CustomError)
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
-	EditProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
-	DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError
+	EditProject(ctx *fiber.Ctx, id string, projectDTO *ProjectDTO) (*Project, errors.CustomError)
+	DeleteProject(ctx *fiber.Ctx, id string) errors.CustomError
 }
 
 type projectService struct {
@@ -43,8 +43,10 @@ func (p *projectService) SearchProject(ctx *fiber.Ctx) ([]ProjectSearch, errors.
 	return p.repository.SearchProject(ctx.Context())
 }
 
+//TODO: just ignore findbyIds subcate
+// if not found then nothing happen
 func (p *projectService) ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Project, *paginate.Paginate, errors.CustomError) {
-	_, sids, err := p.subcategoryService.FindByIds2(ctx.Context(), pq.SubcategoryId)
+	_, sids, err := p.subcategoryService.FindByIds3(ctx.Context(), pq.SubcategoryId)
 	if err != nil {
 		return []Project{}, nil, err
 	}
@@ -52,20 +54,24 @@ func (p *projectService) ListProject(ctx *fiber.Ctx, pq *ProjectQuery) ([]Projec
 	return p.repository.ListProject(ctx.Context(), pq, sids)
 }
 
-func (p *projectService) GetProjectById(ctx *fiber.Ctx, oid primitive.ObjectID) (*Project, errors.CustomError) {
+func (p *projectService) GetProjectById(ctx *fiber.Ctx, id string) (*Project, errors.CustomError) {
 	if os.Getenv("APP_ENV") != "test" {
-		cacheProject := HandleCacheGetProjectById(ctx, oid)
+		cacheProject := HandleCacheGetProjectById(ctx, id)
 		if cacheProject != nil {
 			return cacheProject, nil
 		}
 	}
 
+	oid, err := database.ExtractOID(id)
+	if err != nil {
+		return nil, err
+	}
 	project, err := p.repository.GetProjectById(ctx.Context(), oid)
 	if err != nil {
 		return nil, err
 	}
 
-	p.repository.IncrementView(ctx.Context(), oid, 1)
+	p.repository.IncrementView(ctx.Context(), project.ID, 1)
 
 	if os.Getenv("APP_ENV") != "test" {
 		redis.SetCache(ctx.Path(), project)
@@ -111,7 +117,7 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	return addedProject, nil
 }
 
-func (p *projectService) EditProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
+func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
 	editedProject := new(Project)
 
 	finalCategories, err := p.HandleSubcateAndCateConnection(ctx, projectDTO)
@@ -119,7 +125,7 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*P
 		return editedProject, err
 	}
 
-	oldProj, err := p.GetProjectById(ctx, projectDTO.ID)
+	oldProj, err := p.GetProjectById(ctx, id)
 	if err != nil {
 		return editedProject, err
 	}
@@ -152,8 +158,8 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*P
 	return editedProject, nil
 }
 
-func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) errors.CustomError {
-	project, err := p.GetProjectById(ctx, oid)
+func (p *projectService) DeleteProject(ctx *fiber.Ctx, id string) errors.CustomError {
+	project, err := p.GetProjectById(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -161,5 +167,5 @@ func (p *projectService) DeleteProject(ctx *fiber.Ctx, oid primitive.ObjectID) e
 	p.gcpService.DeleteFile(ctx.Context(), project.Report, collectionName)
 	p.gcpService.DeleteFiles(ctx.Context(), project.Images, collectionName)
 
-	return p.repository.DeleteProject(ctx.Context(), oid)
+	return p.repository.DeleteProject(ctx.Context(), project.ID)
 }

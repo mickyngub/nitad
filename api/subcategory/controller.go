@@ -54,12 +54,7 @@ func (c *Controller) ListUnsetSubcategory(ctx *fiber.Ctx) error {
 func (c *Controller) GetSubcategoryById(ctx *fiber.Ctx) error {
 	subcategoryId := ctx.Params("subcategoryId")
 
-	objectId, err := utils.IsValidObjectId(subcategoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
-
-	subcate, err := c.service.GetSubcategoryById(ctx.Context(), objectId)
+	subcate, err := c.service.GetSubcategoryById(ctx.Context(), subcategoryId)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -120,12 +115,8 @@ func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
 // delete the subcategory
 func (c *Controller) DeleteSubcategory(ctx *fiber.Ctx) error {
 	subcategoryId := ctx.Params("subcategoryId")
-	objectId, err := utils.IsValidObjectId(subcategoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
 
-	err = c.service.DeleteSubcategory(ctx.Context(), objectId)
+	err := c.service.DeleteSubcategory(ctx.Context(), subcategoryId)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

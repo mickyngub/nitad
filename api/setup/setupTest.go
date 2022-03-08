@@ -17,7 +17,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var subcateRepo subcategory.Repository
@@ -75,17 +74,21 @@ func AddMockSubcategory(t *testing.T) *subcategory.Subcategory {
 }
 
 func AddMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.Category {
-	dummyCate := category.Category{
+	dummyCate := category.CategoryDTO{
 		Title: "dummy cate title",
 	}
 
-	addedCategory, err := category.Add(&dummyCate, []primitive.ObjectID{subcate.ID})
+	dummyCate.Subcategory = []string{subcate.ID.Hex()}
+	addedCategory, err := cateRepo.AddCategory(context.Background(), &dummyCate)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummyCate.Title, addedCategory.Title)
 	require.Equal(t, dummyCate.Subcategory, addedCategory.Subcategory)
 	require.NotEqual(t, nil, addedCategory.ID)
 
-	return addedCategory
+	cate, err := cateRepo.GetCategoryById(context.Background(), addedCategory.ID)
+	require.Equal(t, err, nil)
+
+	return cate
 }
 
 func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
@@ -104,6 +107,7 @@ func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 		Status:      "dumym proj Status",
 		Category:    []category.Category{*cate},
 	}
+
 	addedProject, err := projectRepo.AddProject(context.Background(), &dummyProj)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummyProj.Title, addedProject.Title)
@@ -116,10 +120,10 @@ func DeleteMock(t *testing.T, proj *project.Project, cate *category.Category, su
 	err := subcateRepo.DeleteSubcategory(context.Background(), subcate.ID)
 	require.Nil(t, err, "Delete subcate failed")
 
-	err = cateRepo.DeleteCategory(context.Background(), subcate.ID)
+	err = cateRepo.DeleteCategory(context.Background(), cate.ID)
 	require.Nil(t, err, "Delete cate failed")
 
-	err = projectRepo.DeleteProject(context.Background(), subcate.ID)
+	err = projectRepo.DeleteProject(context.Background(), proj.ID)
 	require.Nil(t, err, "Delete proj failed")
 
 }

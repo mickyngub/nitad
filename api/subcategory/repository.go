@@ -64,14 +64,13 @@ func (s *subcategoryRepository) ListUnsetSubcategory(ctx context.Context) ([]Sub
 
 func (s *subcategoryRepository) GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
 	var subcate Subcategory
-
-	err := s.collection.FindOne(ctx, bson.D{{Key: "_id", Value: oid}}).Decode(&subcate)
-	if err != nil {
+	findErr := s.collection.FindOne(ctx, bson.D{{Key: "_id", Value: oid}}).Decode(&subcate)
+	if findErr != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
-		if err == mongo.ErrNoDocuments {
-			return &subcate, errors.NewNotFoundError(collectionName)
+		if findErr == mongo.ErrNoDocuments {
+			return nil, errors.NewNotFoundError(collectionName)
 		} else {
-			return &subcate, errors.NewBadRequestError(err.Error())
+			return nil, errors.NewBadRequestError(findErr.Error())
 		}
 	}
 	return &subcate, nil
@@ -107,16 +106,15 @@ func (s *subcategoryRepository) EditSubcategory(ctx context.Context, subcate *Su
 }
 
 func (s *subcategoryRepository) DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
-	_, err := s.collection.DeleteOne(ctx, bson.M{"_id": oid})
-	if err != nil {
-		return errors.NewBadRequestError("Delete subcategory failed!" + err.Error())
+	_, delErr := s.collection.DeleteOne(ctx, bson.M{"_id": oid})
+	if delErr != nil {
+		return errors.NewBadRequestError("Delete subcategory failed!" + delErr.Error())
 	}
 
 	return nil
 }
 
 func (s *subcategoryRepository) InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError) {
-
 	_, updateErr := s.collection.UpdateByID(
 		ctx,
 		subcate.ID,

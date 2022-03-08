@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -12,15 +13,15 @@ import (
 
 type Service interface {
 	ListCategory(ctx context.Context) ([]Category, errors.CustomError)
-	GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError)
+	GetCategoryById(ctx context.Context, id string) (*Category, errors.CustomError)
 	AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
 	EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError)
-	DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+	DeleteCategory(ctx context.Context, id string) errors.CustomError
 
 	SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError)
 	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
 
-	AddSubcategory(ctx *fiber.Ctx, oid primitive.ObjectID, sid primitive.ObjectID) (*CategoryDTO, errors.CustomError)
+	AddSubcategory(ctx *fiber.Ctx, cid string, sid string) (*CategoryDTO, errors.CustomError)
 }
 
 type categoryService struct {
@@ -36,13 +37,17 @@ func (c *categoryService) ListCategory(ctx context.Context) ([]Category, errors.
 	return c.repository.ListCategory(ctx)
 }
 
-func (c *categoryService) GetCategoryById(ctx context.Context, oid primitive.ObjectID) (*Category, errors.CustomError) {
+func (c *categoryService) GetCategoryById(ctx context.Context, id string) (*Category, errors.CustomError) {
+	oid, err := database.ExtractOID(id)
+	if err != nil {
+		return nil, err
+	}
 	return c.repository.GetCategoryById(ctx, oid)
 }
 
 func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
-	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
-	subcategories, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
+	cateDTO.Subcategory = utils.RemoveDuplicateIds(cateDTO.Subcategory)
+	subcategories, _, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
 	if err != nil {
 		return cateDTO, err
 	}
@@ -62,7 +67,7 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 	return cateDTO, err
 }
 
-func contains(s []primitive.ObjectID, e primitive.ObjectID) bool {
+func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
 			return true
@@ -72,14 +77,14 @@ func contains(s []primitive.ObjectID, e primitive.ObjectID) bool {
 }
 
 func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
-	oldCate, err := c.GetCategoryById(ctx.Context(), cateDTO.ID)
+	oldCate, err := c.GetCategoryById(ctx.Context(), cateDTO.ID.Hex())
 	if err != nil {
 		return cateDTO, err
 	}
 
-	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
+	cateDTO.Subcategory = utils.RemoveDuplicateIds(cateDTO.Subcategory)
 	// check if parse subcategoryIds exist
-	subcategories, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
+	subcategories, _, err := c.subcategoryService.FindByIds3(ctx.Context(), cateDTO.Subcategory)
 	if err != nil {
 		return cateDTO, err
 	}
@@ -88,7 +93,7 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 	// the non-intersecting of oldSubcategories and updatedSubcategories
 	removeSubcategories := []subcategory.Subcategory{}
 	for _, oldSubcategory := range oldCate.Subcategory {
-		if !contains(cateDTO.Subcategory, oldSubcategory.ID) {
+		if !contains(cateDTO.Subcategory, oldSubcategory.ID.Hex()) {
 			removeSubcategories = append(removeSubcategories, oldSubcategory)
 		}
 	}
@@ -119,30 +124,52 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 
 }
 
-func (c *categoryService) DeleteCategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
-	return c.repository.DeleteCategory(ctx, oid)
+func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.CustomError {
+	// oid, err := database.ExtractOID(id)
+	// if err != nil {
+	// 	return err
+	// }
+
+	cate, err := c.GetCategoryById(ctx, id)
+	if err != nil {
+		return err
+	}
+	for _, subcate := range cate.Subcategory {
+		// unset subcate
+		c.subcategoryService.InsertToCategory(&fiber.Ctx{}, &subcate, primitive.NilObjectID)
+	}
+
+	return c.repository.DeleteCategory(ctx, cate.ID)
 }
 
 func (c *categoryService) SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError) {
 	return c.repository.SearchCategory(ctx.Context())
 }
 
-func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, oid primitive.ObjectID, sid primitive.ObjectID) (*CategoryDTO, errors.CustomError) {
-	cateDTO, err := c.repository.GetCategoryByIdNoLookup(ctx.Context(), oid)
+func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, cid string, sid string) (*CategoryDTO, errors.CustomError) {
+	coid, err := database.ExtractOID(cid)
 	if err != nil {
-		return cateDTO, err
+		return nil, err
+	}
+
+	cateDTO, err := c.repository.GetCategoryByIdNoLookup(ctx.Context(), coid)
+	if err != nil {
+		return nil, err
 	}
 
 	// find new added sid
 	addedSubcate, err := c.subcategoryService.GetSubcategoryById(ctx.Context(), sid)
 	if err != nil {
-		return cateDTO, err
+		return nil, err
 	}
 
 	// append new one to the existing one
+	// cate := new(Category)
+	// utils.CopyStruct(cateDTO, cate)
 	cateDTO.Subcategory = append(cateDTO.Subcategory, sid)
-	cateDTO.Subcategory = utils.RemoveDuplicateObjectIds(cateDTO.Subcategory)
+	cateDTO.Subcategory = utils.RemoveDuplicateIds(cateDTO.Subcategory)
 	cateDTO, err = c.repository.EditCategory(ctx.Context(), cateDTO)
+
 	if err != nil {
 		return cateDTO, err
 	}
@@ -154,5 +181,4 @@ func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, oid primitive.ObjectID,
 	}
 
 	return cateDTO, err
-
 }
