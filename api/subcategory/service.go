@@ -2,7 +2,6 @@ package subcategory
 
 import (
 	"context"
-	"log"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -14,8 +13,8 @@ import (
 )
 
 type Service interface {
-	ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
-	ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError)
+	ListSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError)
+	ListUnsetSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError)
 	GetSubcategoryById(ctx context.Context, id string) (*Subcategory, errors.CustomError)
 	AddSubcategory(ctx context.Context, subcategoryDTO *SubcategoryDTO) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx *fiber.Ctx, subcate *SubcategoryDTO) (*Subcategory, errors.CustomError)
@@ -37,12 +36,29 @@ func NewService(repository Repository, gcpService gcp.Uploader) Service {
 
 }
 
-func (s *subcategoryService) ListSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
-	return s.repository.ListSubcategory(ctx)
+func (s *subcategoryService) ListSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError) {
+	subcates, err := s.repository.ListSubcategory(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, subcate := range subcates {
+		subcate.Image = gcp.GetURL(subcate.Image, collectionName)
+	}
+
+	return subcates, nil
 }
 
-func (s *subcategoryService) ListUnsetSubcategory(ctx context.Context) ([]Subcategory, errors.CustomError) {
-	return s.repository.ListUnsetSubcategory(ctx)
+func (s *subcategoryService) ListUnsetSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError) {
+	subcates, err := s.repository.ListUnsetSubcategory(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, subcate := range subcates {
+		subcate.Image = gcp.GetURL(subcate.Image, collectionName)
+	}
+	return subcates, nil
 }
 
 func (s *subcategoryService) GetSubcategoryById(ctx context.Context, id string) (*Subcategory, errors.CustomError) {
@@ -50,7 +66,12 @@ func (s *subcategoryService) GetSubcategoryById(ctx context.Context, id string) 
 	if err != nil {
 		return nil, err
 	}
-	return s.repository.GetSubcategoryById(ctx, oid)
+	subcate, err := s.repository.GetSubcategoryById(ctx, oid)
+	if err != nil {
+		return nil, err
+	}
+	subcate.Image = gcp.GetURL(subcate.Image, collectionName)
+	return subcate, nil
 }
 
 func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO *SubcategoryDTO) (*Subcategory, errors.CustomError) {
@@ -66,11 +87,9 @@ func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO 
 		return addedSubcategory, err
 	}
 
-	log.Println("add subcate1", subcategoryDTO.CategoryId)
-	log.Println("add subcate2", addedSubcategory.CategoryId)
 	addedSubcate, err := s.repository.AddSubcategory(ctx, addedSubcategory)
 	if err != nil {
-		s.gcpService.DeleteFile(ctx, imageFilename, collectionName)
+		s.gcpService.DeleteFile(ctx, imageFilename)
 		return addedSubcategory, err
 	}
 
@@ -119,7 +138,7 @@ func (s *subcategoryService) DeleteSubcategory(ctx context.Context, id string) e
 		return errors.NewBadRequestError("Unable to delete subcategory that is still in categeoryId " + subcate.CategoryId.Hex())
 	}
 
-	s.gcpService.DeleteFile(ctx, subcate.Image, collectionName)
+	s.gcpService.DeleteFile(ctx, subcate.Image)
 
 	return s.repository.DeleteSubcategory(ctx, subcate.ID)
 
@@ -130,10 +149,10 @@ func (p *subcategoryService) HandleUpdateImage(ctx *fiber.Ctx, oldImageURL strin
 		return oldImageURL, nil
 	}
 
-	p.gcpService.DeleteFile(ctx.Context(), oldImageURL, collectionName)
+	p.gcpService.DeleteFile(ctx.Context(), oldImageURL)
 	newUploadImageURL, err := p.gcpService.UploadFile(ctx.Context(), newImageFile, collectionName)
 	if err != nil {
-		p.gcpService.DeleteFile(ctx.Context(), newUploadImageURL, collectionName)
+		p.gcpService.DeleteFile(ctx.Context(), newUploadImageURL)
 		return oldImageURL, err
 	}
 	return newUploadImageURL, nil
