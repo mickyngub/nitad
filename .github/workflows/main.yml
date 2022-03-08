@@ -21,6 +21,7 @@ jobs:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           GCP_PROJECTID: ${{ secrets.GCP_PROJECTID }}
           GCP_BUCKETNAME: ${{ secrets.GCP_BUCKETNAME }}
+          GCP_PREFIX: ${{ secrets.GCP_PREFIX }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_ENDPOINT: ${{ secrets.REDIS_ENDPOINT }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
