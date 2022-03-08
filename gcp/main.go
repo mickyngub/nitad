@@ -5,6 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -16,8 +17,8 @@ import (
 type Uploader interface {
 	UploadFiles(ctx context.Context, files []*multipart.FileHeader, collectionName string) ([]string, errors.CustomError)
 	UploadFile(ctx context.Context, file *multipart.FileHeader, collectionName string) (string, errors.CustomError)
-	DeleteFiles(ctx context.Context, filenames []string, collectionName string)
-	DeleteFile(ctx context.Context, filename string, collectionName string)
+	DeleteFiles(ctx context.Context, URLs []string)
+	DeleteFile(ctx context.Context, URL string)
 }
 
 type uploader struct {
@@ -93,21 +94,30 @@ func (u uploader) UploadFile(ctx context.Context, file *multipart.FileHeader, co
 
 // DeleteFiles delete multiple files by looping through each one
 // and pass through the DeleteFile function
-func (u uploader) DeleteFiles(ctx context.Context, filenames []string, collectionName string) {
+func (u uploader) DeleteFiles(ctx context.Context, filenames []string) {
 	for _, filename := range filenames {
 		//TODO: channel this
-		u.DeleteFile(ctx, filename, collectionName)
+		u.DeleteFile(ctx, filename)
 	}
 }
 
 // DeleteFile removes a specified file.
-func (u uploader) DeleteFile(ctx context.Context, filename string, collectionName string) {
+func (u uploader) DeleteFile(ctx context.Context, URL string) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	filepath := collectionName + "/" + filename
+	filepath := GetFilepath(URL)
 	o := u.cl.Bucket(u.bucketName).Object(filepath)
 	if err := o.Delete(ctx); err != nil {
-		zap.S().Warn("gcp deletion error, file= ", filename, " ", err.Error())
+		zap.S().Warn("gcp deletion error, file= ", filepath, " ", err.Error())
 	}
+}
+
+func GetURL(filename string, collectionName string) string {
+	return os.Getenv("GCP_PREFIX") + "/" + os.Getenv("GCP_BUCKETNAME") + "/" + collectionName + "/" + filename
+}
+
+func GetFilepath(URL string) string {
+	arr := strings.Split(URL, "/")
+	return strings.Join(arr[4:], "/")
 }
