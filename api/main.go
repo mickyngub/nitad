@@ -29,9 +29,11 @@ func CreateAPI(app *fiber.App, gcpService gcp.Uploader) {
 	projectService := project.NewService(projectRepository, subcategoryService, categoryService, gcpService)
 	searchService := search.NewService(categoryService, projectService)
 
+	connectionService := connection.NewService(subcategoryService, categoryService)
+
 	// ROUTE
 	v1 := app.Group(API_PREFIX)
-	connection.NewController(v1.Group("/connection"))
+	connection.NewController(connectionService, v1.Group("/connection"))
 	search.NewController(searchService, v1.Group("/search"))
 	subcategory.NewController(subcategoryService, v1.Group("/subcategory"))
 	category.NewController(categoryService, v1.Group("/category"))

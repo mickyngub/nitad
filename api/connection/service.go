@@ -1,34 +1,77 @@
 package connection
 
 import (
+	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetSubcategoryThatAreNotInAnyCategory() ([]subcategory.Subcategory, errors.CustomError) {
-	returnSubcategory := []subcategory.Subcategory{}
-	// subcategories, err := subcategory.FindAll()
-	// if err != nil {
-	// 	return returnSubcategory, err
-	// }
+type Service interface {
+	AddSubcategory(ctx *fiber.Ctx, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError)
+	EditSubcategory(ctx *fiber.Ctx, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError)
+}
 
-	// categories, err := category.FindAll()
-	// if err != nil {
-	// 	return returnSubcategory, err
-	// }
+type connectionService struct {
+	subcategoryService subcategory.Service
+	categoryService    category.Service
+}
 
-	// sidsThatAreAlreadyIncate := make(map[primitive.ObjectID]bool)
-	// for _, category := range categories {
-	// 	for _, subcate := range category.Subcategory {
-	// 		sidsThatAreAlreadyIncate[subcate.ID] = true
-	// 	}
-	// }
+func NewService(subcategoryService subcategory.Service, categoryService category.Service) Service {
+	return &connectionService{
+		subcategoryService,
+		categoryService,
+	}
+}
 
-	// for _, subcategory := range subcategories {
-	// 	_, isIn := sidsThatAreAlreadyIncate[subcategory.ID]
-	// 	if !isIn {
-	// 		returnSubcategory = append(returnSubcategory, subcategory)
-	// 	}
-	// }
-	return returnSubcategory, nil
+func (c *connectionService) AddSubcategory(ctx *fiber.Ctx, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+	if subcateDTO.CategoryId != primitive.NilObjectID {
+		// if there is parse categoryId, check if the cate exists
+		cate, err := c.categoryService.GetCategoryById(ctx.Context(), subcateDTO.CategoryId.Hex())
+		if err != nil {
+			return nil, err
+		}
+		err = c.categoryService.BindSubcategory(ctx.Context(), cate.ID, subcateDTO.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	addedSubcate, err := c.subcategoryService.AddSubcategory(ctx.Context(), subcateDTO)
+	if err != nil {
+		return nil, err
+	}
+	return addedSubcate, nil
+
+}
+
+func (c *connectionService) EditSubcategory(ctx *fiber.Ctx, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+	oldSubcate, err := c.subcategoryService.GetSubcategoryById(ctx.Context(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	//TODO: tx these two service in case one is broken -> revert all
+	if oldSubcate.CategoryId != primitive.NilObjectID {
+		// meaning that there was category binded to
+		// need to unbind from category
+		err = c.categoryService.UnbindSubcategory(ctx.Context(), oldSubcate.CategoryId, oldSubcate.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	subcateDTO.ID = oldSubcate.ID
+	editedSubcate, err := c.subcategoryService.EditSubcategory(ctx, subcateDTO)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.categoryService.BindSubcategory(ctx.Context(), subcateDTO.CategoryId, editedSubcate.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return editedSubcate, nil
 }
