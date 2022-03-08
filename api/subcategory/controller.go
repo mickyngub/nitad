@@ -3,7 +3,6 @@ package subcategory
 import (
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -19,8 +18,8 @@ func NewController(
 	subcategoryRoute.Get("/:subcategoryId", controller.GetSubcategoryById)
 
 	subcategoryRoute.Use(admin.IsAuth())
-	subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
-	subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
+	// subcategoryRoute.Post("/", AddAndEditSubcategoryValidator, controller.AddSubcategory)
+	// subcategoryRoute.Put("/:subcategoryId", AddAndEditSubcategoryValidator, controller.EditSubcategory)
 	subcategoryRoute.Delete("/:subcategoryId", controller.DeleteSubcategory)
 
 	return controller
@@ -63,54 +62,54 @@ func (c *Controller) GetSubcategoryById(ctx *fiber.Ctx) error {
 }
 
 // add a subcategory
-func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
-	subcategoryDTO := new(SubcategoryDTO)
-	ctx.BodyParser(subcategoryDTO)
+// func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
+// 	subcategoryDTO := new(SubcategoryDTO)
+// 	ctx.BodyParser(subcategoryDTO)
 
-	files, err := utils.ExtractFiles(ctx, "image")
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
-	subcategoryDTO.Image = files[0]
+// 	files, err := utils.ExtractFiles(ctx, "image")
+// 	if err != nil {
+// 		return errors.Throw(ctx, err)
+// 	}
+// 	subcategoryDTO.Image = files[0]
 
-	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), subcategoryDTO)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
+// 	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), subcategoryDTO)
+// 	if err != nil {
+// 		return errors.Throw(ctx, err)
+// 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedSubcate})
-}
+// 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": addedSubcate})
+// }
 
 // // edit the subcategory
-func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
-	subcategoryId := ctx.Params("subcategoryId")
-	objectId, err := utils.IsValidObjectId(subcategoryId)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
+// func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
+// 	subcategoryId := ctx.Params("subcategoryId")
+// 	objectId, err := utils.IsValidObjectId(subcategoryId)
+// 	if err != nil {
+// 		return errors.Throw(ctx, err)
+// 	}
 
-	subcategoryDTO := new(SubcategoryDTO)
-	ctx.BodyParser(subcategoryDTO)
-	subcategoryDTO.ID = objectId
+// 	subcategoryDTO := new(SubcategoryDTO)
+// 	ctx.BodyParser(subcategoryDTO)
+// 	subcategoryDTO.ID = objectId
 
-	images, err := utils.ExtractUpdatedFiles(ctx, "images")
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
+// 	images, err := utils.ExtractUpdatedFiles(ctx, "images")
+// 	if err != nil {
+// 		return errors.Throw(ctx, err)
+// 	}
 
-	if images == nil {
-		subcategoryDTO.Image = nil
-	} else {
-		subcategoryDTO.Image = images[0]
-	}
+// 	if images == nil {
+// 		subcategoryDTO.Image = nil
+// 	} else {
+// 		subcategoryDTO.Image = images[0]
+// 	}
 
-	editedSubcate, err := c.service.EditSubcategory(ctx, subcategoryDTO)
-	if err != nil {
-		return errors.Throw(ctx, err)
-	}
+// 	editedSubcate, err := c.service.EditSubcategory(ctx, subcategoryDTO)
+// 	if err != nil {
+// 		return errors.Throw(ctx, err)
+// 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedSubcate})
-}
+// 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": editedSubcate})
+// }
 
 // delete the subcategory
 func (c *Controller) DeleteSubcategory(ctx *fiber.Ctx) error {

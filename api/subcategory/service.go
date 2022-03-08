@@ -74,6 +74,7 @@ func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO 
 	return addedSubcate, nil
 }
 
+//TODO fix logic oldSubcate and newSubcate
 func (s *subcategoryService) EditSubcategory(ctx *fiber.Ctx, subcateDTO *SubcategoryDTO) (*Subcategory, errors.CustomError) {
 	editedSubcate := new(Subcategory)
 	oldSubcate, err := s.GetSubcategoryById(ctx.Context(), subcateDTO.ID.Hex())
@@ -92,14 +93,17 @@ func (s *subcategoryService) EditSubcategory(ctx *fiber.Ctx, subcateDTO *Subcate
 	}
 
 	editedSubcate.Image = imageURL
-	editedSubcate.CategoryId = oldSubcate.CategoryId
+	// if subcateDTO.CategoryId != primitive.NilObjectID {
+	editedSubcate.CategoryId = subcateDTO.CategoryId
+	// } else {
+	// editedSubcate.CategoryId = oldSubcate.CategoryId
+	// }
 
 	editedSubcate, err = s.repository.EditSubcategory(ctx.Context(), editedSubcate)
 	if err != nil {
 		return editedSubcate, err
 	}
 	return editedSubcate, err
-
 }
 
 func (s *subcategoryService) DeleteSubcategory(ctx context.Context, id string) errors.CustomError {
