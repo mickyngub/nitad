@@ -53,10 +53,12 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 
 // add a category
 func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
-	cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
-	if !ok {
-		return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
-	}
+	// cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
+	// if !ok {
+	// 	return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
+	// }
+	cateDTO := new(CategoryDTO)
+	ctx.BodyParser(cateDTO)
 
 	addedCate, err := c.service.AddCategory(ctx, cateDTO)
 	if err != nil {
@@ -74,10 +76,12 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 		return errors.Throw(ctx, err)
 	}
 
-	cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
-	if !ok {
-		return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
-	}
+	// cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
+	// if !ok {
+	// 	return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
+	// }
+	cateDTO := new(CategoryDTO)
+	ctx.BodyParser(cateDTO)
 	cateDTO.ID = objectId
 
 	editedCate, err := c.service.EditCategory(ctx, cateDTO)
