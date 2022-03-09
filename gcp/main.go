@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -89,35 +90,36 @@ func (u uploader) UploadFile(ctx context.Context, file *multipart.FileHeader, co
 		return filename, errors.NewInternalServerError("GCP Writer.Close: " + err.Error())
 	}
 
-	return filetype + "/" + filename, nil
+	return uploadPath, nil
 }
 
 // DeleteFiles delete multiple files by looping through each one
 // and pass through the DeleteFile function
-func (u uploader) DeleteFiles(ctx context.Context, filenames []string) {
-	for _, filename := range filenames {
+func (u uploader) DeleteFiles(ctx context.Context, filepaths []string) {
+	for _, filepath := range filepaths {
 		//TODO: channel this
-		u.DeleteFile(ctx, filename)
+		u.DeleteFile(ctx, filepath)
 	}
 }
 
 // DeleteFile removes a specified file.
-func (u uploader) DeleteFile(ctx context.Context, URL string) {
+func (u uploader) DeleteFile(ctx context.Context, filepath string) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	filepath := GetFilepath(URL)
 	o := u.cl.Bucket(u.bucketName).Object(filepath)
 	if err := o.Delete(ctx); err != nil {
 		zap.S().Warn("gcp deletion error, file= ", filepath, " ", err.Error())
 	}
+	fmt.Println("Deleting..", filepath)
 }
 
-func GetURL(filename string, collectionName string) string {
-	return os.Getenv("GCP_PREFIX") + "/" + os.Getenv("GCP_BUCKETNAME") + "/" + collectionName + "/" + filename
+func GetURL(filepath string) string {
+	return os.Getenv("GCP_PREFIX") + "/" + os.Getenv("GCP_BUCKETNAME") + "/" + filepath
 }
 
 func GetFilepath(URL string) string {
 	arr := strings.Split(URL, "/")
-	return strings.Join(arr[4:], "/")
+	filename := strings.Join(arr[len(arr)-3:], "/")
+	return filename
 }

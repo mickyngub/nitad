@@ -4,12 +4,10 @@ import (
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/category"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/zap"
 )
 
 func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
@@ -30,30 +28,31 @@ func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectD
 	return finalCategories, nil
 }
 
-func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageURLs []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
-	imageURLs := oldImageURLs
-	zap.S().Info("pass 5", imageURLs)
+func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
+	imageFilenames := oldImageFilenames
 
 	// DELETE IMAGES
 	if len(deleteImages) > 0 {
-		imageURLs = utils.RemoveSliceFromSlice(imageURLs, deleteImages)
-		zap.S().Info("Deleted", imageURLs)
-		p.gcpService.DeleteFiles(ctx.Context(), deleteImages)
+		deleteFilenames := []string{}
+		for _, deleteImage := range deleteImages {
+			deleteFilename := gcp.GetFilepath(deleteImage)
+			deleteFilenames = append(deleteFilenames, deleteFilename)
+		}
+		imageFilenames = utils.RemoveSliceFromSlice(imageFilenames, deleteFilenames)
+		p.gcpService.DeleteFiles(ctx.Context(), deleteFilenames)
 	}
 
 	// UPLOAD NEW IMAGE FILES
 	if len(newUploadImages) > 0 {
-
-		newImageURLs, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
-		zap.S().Info("pass 6", newImageURLs)
+		newImageFilenames, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
 		if err != nil {
-			p.gcpService.DeleteFiles(ctx.Context(), newImageURLs)
-			return imageURLs, err
+			p.gcpService.DeleteFiles(ctx.Context(), newImageFilenames)
+			return imageFilenames, err
 		}
-		imageURLs = append(imageURLs, newImageURLs...)
+		imageFilenames = append(imageFilenames, newImageFilenames...)
 	}
 
-	return imageURLs, nil
+	return imageFilenames, nil
 }
 
 func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string, newReportFile *multipart.FileHeader) (string, errors.CustomError) {
@@ -73,15 +72,14 @@ func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string,
 func (p *projectService) GetAllURLs(project *Project) {
 	images := []string{}
 	for _, image := range project.Images {
-		images = append(images, gcp.GetURL(image, collectionName))
+		images = append(images, gcp.GetURL(image))
 	}
 	project.Images = images
-	project.Report = gcp.GetURL(project.Report, collectionName)
+	project.Report = gcp.GetURL(project.Report)
 
 	for _, cate := range project.Category {
 		for _, subcate := range cate.Subcategory {
-			subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
+			subcate.Image = gcp.GetURL(subcate.Image)
 		}
-
 	}
 }

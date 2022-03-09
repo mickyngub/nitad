@@ -51,7 +51,7 @@ func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
 	subcategoryDTO := new(subcategory.SubcategoryDTO)
 	ctx.BodyParser(subcategoryDTO)
 
-	images, err := utils.ExtractUpdatedFiles(ctx, "images")
+	images, err := utils.ExtractUpdatedFiles(ctx, "image")
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

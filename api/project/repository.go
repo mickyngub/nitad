@@ -15,7 +15,7 @@ import (
 
 type Repository interface {
 	ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]*Project, *paginate.Paginate, errors.CustomError)
-	GetProjectById(ctx context.Context, oid primitive.ObjectID) (*Project, errors.CustomError)
+	GetProjectById(ctx context.Context, id string) (*Project, errors.CustomError)
 	AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 	EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError)
 	DeleteProject(ctx context.Context, oid primitive.ObjectID) errors.CustomError
@@ -66,17 +66,22 @@ func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, s
 	return projects, paginate.New(pq.Limit, pq.Page, count), nil
 }
 
-func (p *projectRepository) GetProjectById(ctx context.Context, oid primitive.ObjectID) (*Project, errors.CustomError) {
+func (p *projectRepository) GetProjectById(ctx context.Context, id string) (*Project, errors.CustomError) {
+	oid, err := database.ExtractOID(id)
+	if err != nil {
+		return nil, err
+	}
+
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
 
-	cursor, err := p.collection.Aggregate(ctx, pipe)
+	cursor, mongoErr := p.collection.Aggregate(ctx, pipe)
 	projects := []Project{}
-	if err != nil {
-		return &Project{}, errors.NewBadRequestError(err.Error())
+	if mongoErr != nil {
+		return &Project{}, errors.NewBadRequestError(mongoErr.Error())
 	}
-	if err = cursor.All(ctx, &projects); err != nil {
-		return &Project{}, errors.NewBadRequestError(err.Error())
+	if mongoErr = cursor.All(ctx, &projects); mongoErr != nil {
+		return &Project{}, errors.NewBadRequestError(mongoErr.Error())
 	}
 
 	if len(projects) == 0 {
@@ -102,9 +107,15 @@ func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Pro
 }
 
 func (p *projectRepository) EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
+	zap.S().Info("pass 8", proj.Images)
+
 	now := time.Now()
 	proj.UpdatedAt = now
-	_, updateErr := p.collection.UpdateByID(ctx, proj.ID, bson.D{{Key: "$set", Value: &proj}})
+	_, updateErr := p.collection.UpdateByID(
+		ctx,
+		proj.ID,
+		bson.D{{
+			Key: "$set", Value: proj}})
 
 	if updateErr != nil {
 		return proj, errors.NewBadRequestError("edit project error: " + updateErr.Error())

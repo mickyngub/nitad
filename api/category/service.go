@@ -44,12 +44,13 @@ func (c *categoryService) ListCategory(ctx context.Context) ([]*Category, errors
 	}
 	for _, cate := range cates {
 		for _, subcate := range cate.Subcategory {
-			subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
+			subcate.Image = gcp.GetURL(subcate.Image)
 		}
 	}
 	return cates, nil
 }
 
+// this function is reused
 func (c *categoryService) GetCategoryById(ctx context.Context, id string) (*Category, errors.CustomError) {
 	oid, err := database.ExtractOID(id)
 	if err != nil {
@@ -59,10 +60,6 @@ func (c *categoryService) GetCategoryById(ctx context.Context, id string) (*Cate
 	cate, err := c.repository.GetCategoryById(ctx, oid)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, subcate := range cate.Subcategory {
-		subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
 	}
 
 	return cate, nil

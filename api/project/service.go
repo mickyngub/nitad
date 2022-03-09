@@ -6,7 +6,6 @@ import (
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/redis"
@@ -21,6 +20,8 @@ type Service interface {
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	EditProject(ctx *fiber.Ctx, id string, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	DeleteProject(ctx *fiber.Ctx, id string) errors.CustomError
+
+	GetAllURLs(project *Project)
 }
 
 type projectService struct {
@@ -71,11 +72,7 @@ func (p *projectService) GetProjectById(ctx *fiber.Ctx, id string) (*Project, er
 		}
 	}
 
-	oid, err := database.ExtractOID(id)
-	if err != nil {
-		return nil, err
-	}
-	project, err := p.repository.GetProjectById(ctx.Context(), oid)
+	project, err := p.repository.GetProjectById(ctx.Context(), id)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +133,7 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 		return editedProject, err
 	}
 
-	oldProj, err := p.GetProjectById(ctx, id)
+	oldProj, err := p.repository.GetProjectById(ctx.Context(), id)
 	if err != nil {
 		return editedProject, err
 	}
@@ -155,6 +152,8 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 	if err != nil {
 		return editedProject, err
 	}
+
+	editedProject.ID = oldProj.ID
 	editedProject.Images = imageURLs
 	editedProject.Report = reportURL
 	editedProject.Category = finalCategories
@@ -170,7 +169,7 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 }
 
 func (p *projectService) DeleteProject(ctx *fiber.Ctx, id string) errors.CustomError {
-	project, err := p.GetProjectById(ctx, id)
+	project, err := p.repository.GetProjectById(ctx.Context(), id)
 	if err != nil {
 		return err
 	}
