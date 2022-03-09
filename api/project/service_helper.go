@@ -1,10 +1,10 @@
 package project
 
 import (
+	"log"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/category"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -32,17 +32,19 @@ func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectD
 
 func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
 	imageFilenames := oldImageFilenames
-	zap.S().Info("pass 5", imageFilenames)
 
 	// DELETE IMAGES
 	if len(deleteImages) > 0 {
 		deleteFilenames := []string{}
 		for _, deleteImage := range deleteImages {
-			deleteFilenames = append(deleteFilenames, gcp.GetFilepath(deleteImage))
+			deleteFilename := gcp.GetFilepath(deleteImage)
+			zap.S().Info("Deleted", deleteFilename)
+
+			deleteFilenames = append(deleteFilenames, deleteFilename)
 		}
 		imageFilenames = utils.RemoveSliceFromSlice(imageFilenames, deleteFilenames)
 		zap.S().Info("Deleted", imageFilenames)
-		p.gcpService.DeleteFiles(ctx.Context(), deleteImages)
+		p.gcpService.DeleteFiles(ctx.Context(), deleteFilenames)
 	}
 
 	// UPLOAD NEW IMAGE FILES
@@ -76,14 +78,15 @@ func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string,
 func (p *projectService) GetAllURLs(project *Project) {
 	images := []string{}
 	for _, image := range project.Images {
-		images = append(images, gcp.GetURL(image, collectionName))
+		log.Println("ss", gcp.GetURL(image))
+		images = append(images, gcp.GetURL(image))
 	}
 	project.Images = images
-	project.Report = gcp.GetURL(project.Report, collectionName)
+	project.Report = gcp.GetURL(project.Report)
 
 	for _, cate := range project.Category {
 		for _, subcate := range cate.Subcategory {
-			subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
+			subcate.Image = gcp.GetURL(subcate.Image)
 		}
 	}
 }

@@ -14,7 +14,7 @@ import (
 type Repository interface {
 	ListSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError)
 	ListUnsetSubcategory(ctx context.Context) ([]*Subcategory, errors.CustomError)
-	GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError)
+	GetSubcategoryById(ctx context.Context, id string) (*Subcategory, errors.CustomError)
 	AddSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	EditSubcategory(ctx context.Context, subcate *Subcategory) (*Subcategory, errors.CustomError)
 	DeleteSubcategory(ctx context.Context, oid primitive.ObjectID) errors.CustomError
@@ -62,7 +62,12 @@ func (s *subcategoryRepository) ListUnsetSubcategory(ctx context.Context) ([]*Su
 	return subcates, nil
 }
 
-func (s *subcategoryRepository) GetSubcategoryById(ctx context.Context, oid primitive.ObjectID) (*Subcategory, errors.CustomError) {
+func (s *subcategoryRepository) GetSubcategoryById(ctx context.Context, id string) (*Subcategory, errors.CustomError) {
+	oid, err := database.ExtractOID(id)
+	if err != nil {
+		return nil, err
+	}
+
 	var subcate Subcategory
 	findErr := s.collection.FindOne(ctx, bson.D{{Key: "_id", Value: oid}}).Decode(&subcate)
 	if findErr != nil {

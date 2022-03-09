@@ -1,14 +1,15 @@
 package project
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
-	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -72,16 +73,18 @@ func (p *projectService) GetProjectById(ctx *fiber.Ctx, id string) (*Project, er
 		}
 	}
 
-	oid, err := database.ExtractOID(id)
-	if err != nil {
-		return nil, err
-	}
-	project, err := p.repository.GetProjectById(ctx.Context(), oid)
+	project, err := p.repository.GetProjectById(ctx.Context(), id)
 	if err != nil {
 		return nil, err
 	}
 
 	p.repository.IncrementView(ctx.Context(), project.ID, 1)
+
+	p.GetAllURLs(project)
+
+	if os.Getenv("APP_ENV") != "test" {
+		redis.SetCache(ctx.Path(), project)
+	}
 
 	return project, nil
 }
@@ -111,6 +114,7 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	project.Images = imageURLs
 	project.Report = reportURL
 	project.Category = finalCategories
+	fmt.Println("add", project.Category[0].Subcategory[0].Image)
 
 	addedProject, err := p.repository.AddProject(ctx.Context(), project)
 	if err != nil {
@@ -131,7 +135,7 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 		return editedProject, err
 	}
 
-	oldProj, err := p.GetProjectById(ctx, id)
+	oldProj, err := p.repository.GetProjectById(ctx.Context(), id)
 	if err != nil {
 		return editedProject, err
 	}
@@ -150,6 +154,8 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 	if err != nil {
 		return editedProject, err
 	}
+
+	editedProject.ID = oldProj.ID
 	editedProject.Images = imageURLs
 	editedProject.Report = reportURL
 	editedProject.Category = finalCategories
@@ -165,7 +171,7 @@ func (p *projectService) EditProject(ctx *fiber.Ctx, id string, projectDTO *Proj
 }
 
 func (p *projectService) DeleteProject(ctx *fiber.Ctx, id string) errors.CustomError {
-	project, err := p.GetProjectById(ctx, id)
+	project, err := p.repository.GetProjectById(ctx.Context(), id)
 	if err != nil {
 		return err
 	}

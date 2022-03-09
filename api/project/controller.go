@@ -1,11 +1,8 @@
 package project
 
 import (
-	"os"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -52,12 +49,6 @@ func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
 	project, err := c.service.GetProjectById(ctx, projectId)
 	if err != nil {
 		return errors.Throw(ctx, err)
-	}
-
-	c.service.GetAllURLs(project)
-
-	if os.Getenv("APP_ENV") != "test" {
-		redis.SetCache(ctx.Path(), project)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": project})

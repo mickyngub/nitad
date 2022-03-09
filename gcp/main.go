@@ -114,8 +114,8 @@ func (u uploader) DeleteFile(ctx context.Context, filepath string) {
 	fmt.Println("Deleting..", filepath)
 }
 
-func GetURL(filename string, collectionName string) string {
-	return os.Getenv("GCP_PREFIX") + "/" + os.Getenv("GCP_BUCKETNAME") + "/" + collectionName + "/" + filename
+func GetURL(filepath string) string {
+	return os.Getenv("GCP_PREFIX") + "/" + os.Getenv("GCP_BUCKETNAME") + "/" + filepath
 }
 
 func GetFilepath(URL string) string {

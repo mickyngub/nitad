@@ -3,6 +3,7 @@ package category
 import (
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -46,6 +47,10 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 	cate, err := c.service.GetCategoryById(ctx.Context(), categoryId)
 	if err != nil {
 		return errors.Throw(ctx, err)
+	}
+
+	for _, subcate := range cate.Subcategory {
+		subcate.Image = gcp.GetURL(subcate.Image)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cate})
