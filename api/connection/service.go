@@ -1,6 +1,8 @@
 package connection
 
 import (
+	"log"
+
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -64,11 +66,13 @@ func (c *connectionService) EditSubcategory(ctx *fiber.Ctx, id string, subcateDT
 		}
 	}
 
+	log.Println("hello 1")
 	subcateDTO.ID = oldSubcate.ID
 	editedSubcate, err := c.subcategoryService.EditSubcategory(ctx, subcateDTO)
 	if err != nil {
 		return nil, err
 	}
+	log.Println("hello 2")
 
 	err = c.categoryService.BindSubcategory(ctx.Context(), subcateDTO.CategoryId, editedSubcate.ID)
 	if err != nil {

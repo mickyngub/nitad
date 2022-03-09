@@ -30,30 +30,33 @@ func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectD
 	return finalCategories, nil
 }
 
-func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageURLs []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
-	imageURLs := oldImageURLs
-	zap.S().Info("pass 5", imageURLs)
+func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
+	imageFilenames := oldImageFilenames
+	zap.S().Info("pass 5", imageFilenames)
 
 	// DELETE IMAGES
 	if len(deleteImages) > 0 {
-		imageURLs = utils.RemoveSliceFromSlice(imageURLs, deleteImages)
-		zap.S().Info("Deleted", imageURLs)
+		deleteFilenames := []string{}
+		for _, deleteImage := range deleteImages {
+			deleteFilenames = append(deleteFilenames, gcp.GetFilepath(deleteImage))
+		}
+		imageFilenames = utils.RemoveSliceFromSlice(imageFilenames, deleteFilenames)
+		zap.S().Info("Deleted", imageFilenames)
 		p.gcpService.DeleteFiles(ctx.Context(), deleteImages)
 	}
 
 	// UPLOAD NEW IMAGE FILES
 	if len(newUploadImages) > 0 {
-
-		newImageURLs, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
-		zap.S().Info("pass 6", newImageURLs)
+		newImageFilenames, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
+		zap.S().Info("pass 6", newImageFilenames)
 		if err != nil {
-			p.gcpService.DeleteFiles(ctx.Context(), newImageURLs)
-			return imageURLs, err
+			p.gcpService.DeleteFiles(ctx.Context(), newImageFilenames)
+			return imageFilenames, err
 		}
-		imageURLs = append(imageURLs, newImageURLs...)
+		imageFilenames = append(imageFilenames, newImageFilenames...)
 	}
 
-	return imageURLs, nil
+	return imageFilenames, nil
 }
 
 func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string, newReportFile *multipart.FileHeader) (string, errors.CustomError) {
@@ -82,6 +85,5 @@ func (p *projectService) GetAllURLs(project *Project) {
 		for _, subcate := range cate.Subcategory {
 			subcate.Image = gcp.GetURL(subcate.Image, database.COLLECTIONS["SUBCATEGORY"])
 		}
-
 	}
 }

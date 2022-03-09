@@ -9,7 +9,6 @@ import (
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
-	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,6 +20,8 @@ type Service interface {
 	AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	EditProject(ctx *fiber.Ctx, id string, projectDTO *ProjectDTO) (*Project, errors.CustomError)
 	DeleteProject(ctx *fiber.Ctx, id string) errors.CustomError
+
+	GetAllURLs(project *Project)
 }
 
 type projectService struct {
@@ -81,12 +82,6 @@ func (p *projectService) GetProjectById(ctx *fiber.Ctx, id string) (*Project, er
 	}
 
 	p.repository.IncrementView(ctx.Context(), project.ID, 1)
-
-	p.GetAllURLs(project)
-
-	if os.Getenv("APP_ENV") != "test" {
-		redis.SetCache(ctx.Path(), project)
-	}
 
 	return project, nil
 }
