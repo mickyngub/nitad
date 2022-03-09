@@ -21,11 +21,6 @@ func main() {
 	utils.InitZap()
 
 	config.Loadenv()
-	envErr := config.Checkenv()
-	if envErr != nil {
-		zap.S().Warn(envErr.Error())
-		os.Exit(1)
-	}
 
 	database.ConnectDb(os.Getenv("MONGO_URI"))
 	defer database.DisconnectDb()
