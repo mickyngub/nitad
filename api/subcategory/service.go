@@ -2,7 +2,6 @@ package subcategory
 
 import (
 	"context"
-	"fmt"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/errors"
@@ -164,7 +163,6 @@ func (s *subcategoryService) FindByIds3(ctx context.Context, sids []string) ([]S
 		}
 		objectIDs = append(objectIDs, subcate.ID)
 		subcategories = append(subcategories, *subcate)
-		fmt.Println("subcate", subcate.Image)
 	}
 
 	return subcategories, objectIDs, nil

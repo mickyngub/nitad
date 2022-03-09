@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/birdglove2/nitad-backend/errors"
@@ -18,7 +17,7 @@ func Loadenv() {
 	}
 
 	if err != nil {
-		fmt.Println("Error loading .env", err.Error())
+		zap.S().Fatal("Error loading .env", err.Error())
 	}
 }
 

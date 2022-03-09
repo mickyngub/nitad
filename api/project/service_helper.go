@@ -1,7 +1,6 @@
 package project
 
 import (
-	"log"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/category"
@@ -9,7 +8,6 @@ import (
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/zap"
 )
 
 func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
@@ -38,19 +36,15 @@ func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []
 		deleteFilenames := []string{}
 		for _, deleteImage := range deleteImages {
 			deleteFilename := gcp.GetFilepath(deleteImage)
-			zap.S().Info("Deleted", deleteFilename)
-
 			deleteFilenames = append(deleteFilenames, deleteFilename)
 		}
 		imageFilenames = utils.RemoveSliceFromSlice(imageFilenames, deleteFilenames)
-		zap.S().Info("Deleted", imageFilenames)
 		p.gcpService.DeleteFiles(ctx.Context(), deleteFilenames)
 	}
 
 	// UPLOAD NEW IMAGE FILES
 	if len(newUploadImages) > 0 {
 		newImageFilenames, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
-		zap.S().Info("pass 6", newImageFilenames)
 		if err != nil {
 			p.gcpService.DeleteFiles(ctx.Context(), newImageFilenames)
 			return imageFilenames, err
@@ -78,7 +72,6 @@ func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string,
 func (p *projectService) GetAllURLs(project *Project) {
 	images := []string{}
 	for _, image := range project.Images {
-		log.Println("ss", gcp.GetURL(image))
 		images = append(images, gcp.GetURL(image))
 	}
 	project.Images = images

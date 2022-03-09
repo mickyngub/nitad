@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/birdglove2/nitad-backend/api/category"
@@ -114,7 +113,6 @@ func (p *projectService) AddProject(ctx *fiber.Ctx, projectDTO *ProjectDTO) (*Pr
 	project.Images = imageURLs
 	project.Report = reportURL
 	project.Category = finalCategories
-	fmt.Println("add", project.Category[0].Subcategory[0].Image)
 
 	addedProject, err := p.repository.AddProject(ctx.Context(), project)
 	if err != nil {

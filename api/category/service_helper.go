@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -42,7 +41,6 @@ func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Cate
 // need to do this because the GetById of category return all subcategories
 // that are in the category, so we need to filter some out
 func FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
-	fmt.Println("check 2", categories)
 	finalCate := []Category{}
 	for _, cate := range categories {
 		subcateThatIsInCate := []*subcategory.Subcategory{}

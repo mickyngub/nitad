@@ -120,9 +120,6 @@ func GetURL(filepath string) string {
 
 func GetFilepath(URL string) string {
 	arr := strings.Split(URL, "/")
-	fmt.Println("arr", arr)
-
 	filename := strings.Join(arr[len(arr)-3:], "/")
-	fmt.Println("filename", filename)
 	return filename
 }
