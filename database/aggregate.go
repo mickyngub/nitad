@@ -27,9 +27,9 @@ func AppendLookupStage(pipe mongo.Pipeline, collectionName string) mongo.Pipelin
 }
 
 // $unwind flatten array
-func AppendUnwindStage(pipe mongo.Pipeline, collectionName string) mongo.Pipeline {
+func AppendUnwindStage(pipe mongo.Pipeline, field string) mongo.Pipeline {
 	return append(pipe, bson.D{{Key: "$unwind", Value: bson.D{
-		{Key: "path", Value: "$" + collectionName},
+		{Key: "path", Value: "$" + field},
 		{Key: "preserveNullAndEmptyArrays", Value: true}}}})
 }
 
