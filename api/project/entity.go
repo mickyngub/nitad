@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/birdglove2/nitad-backend/api/category"
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -49,6 +50,28 @@ type ProjectDTO struct {
 	Category     []string                `form:"category" validate:"required"`
 	Subcategory  []string                `form:"subcategory" validate:"required"`
 	DeleteImages []string                `form:"deleteImages"`
+}
+
+type ProjectLookup struct {
+	ID                primitive.ObjectID        `bson:"_id,omitempty" json:"id,omitempty"`
+	Title             string                    `bson:"title" json:"title"`
+	Description       string                    `bson:"description" json:"description"`
+	Authors           []string                  `bson:"authors" json:"authors"`
+	Emails            []string                  `bson:"emails" json:"emails"`
+	Inspiration       string                    `bson:"inspiration" json:"inspiration"`
+	Abstract          string                    `bson:"abstract" json:"abstract"`
+	Images            []string                  `bson:"images,omitempty" json:"images"`
+	Videos            []string                  `bson:"videos" json:"videos"`
+	Keywords          []string                  `bson:"keywords" json:"keywords"`
+	Report            string                    `bson:"report" json:"report"`
+	VirtualLink       string                    `bson:"virtualLink" json:"virtualLink"`
+	Status            string                    `bson:"status" json:"status"`
+	Views             int                       `bson:"views" json:"views"`
+	CreatedAt         time.Time                 `bson:"createdAt" json:"createdAt"`
+	UpdatedAt         time.Time                 `bson:"updatedAt" json:"updatedAt"`
+	DeleteImages      []string                  `bson:"deleteImages,omitempty" json:"deleteImages,omitempty"`
+	CategoryLookup    []category.CategoryLookup `bson:"categoryLookup,omitempty" json:"categoryLookup,omitempty"`
+	SubcategoryLookup []subcategory.Subcategory `bson:"subcategoryLookup,omitempty" json:"subcategoryLookup,omitempty"`
 }
 
 type ProjectSearch struct {
