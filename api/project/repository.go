@@ -4,9 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/paginate"
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -44,6 +47,7 @@ func NewRepository(client *mongo.Client) Repository {
 func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]*Project, *paginate.Paginate, errors.CustomError) {
 	pipe := mongo.Pipeline{}
 	projects := []*Project{}
+	projectLookups := []*ProjectLookup{}
 
 	for _, sid := range sids {
 		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
@@ -51,16 +55,29 @@ func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, s
 
 	count, err := p.CountDocuments(ctx, pipe)
 	if err != nil {
-		return projects, nil, err
+		return nil, nil, err
 	}
 
+	pipe = p.helper.AppendGetProjectStage(pipe)
 	queryPipe := p.helper.AppendQueryStage(pipe, pq)
 	cursor, aggregateErr := p.collection.Aggregate(ctx, queryPipe)
 	if aggregateErr != nil {
-		return projects, nil, errors.NewBadRequestError(aggregateErr.Error())
+		return nil, nil, errors.NewBadRequestError(aggregateErr.Error())
 	}
-	if curErr := cursor.All(ctx, &projects); curErr != nil {
-		return projects, nil, errors.NewBadRequestError(curErr.Error())
+	if curErr := cursor.All(ctx, &projectLookups); curErr != nil {
+		return nil, nil, errors.NewBadRequestError(curErr.Error())
+	}
+
+	for _, projectLookup := range projectLookups {
+		finalCates, err := category.FilterCatesWithSids2(projectLookup.CategoryLookup, projectLookup.SubcategoryLookup)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		project := new(Project)
+		utils.CopyStruct(projectLookup, project)
+		project.Category = finalCates
+		projects = append(projects, project)
 	}
 
 	return projects, paginate.New(pq.Limit, pq.Page, count), nil
@@ -74,21 +91,38 @@ func (p *projectRepository) GetProjectById(ctx context.Context, id string) (*Pro
 
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
+	pipe = p.helper.AppendGetProjectStage(pipe)
 
+	projectLookups := []ProjectLookup{}
 	cursor, mongoErr := p.collection.Aggregate(ctx, pipe)
-	projects := []Project{}
 	if mongoErr != nil {
-		return &Project{}, errors.NewBadRequestError(mongoErr.Error())
+		return nil, errors.NewBadRequestError(mongoErr.Error())
 	}
-	if mongoErr = cursor.All(ctx, &projects); mongoErr != nil {
-		return &Project{}, errors.NewBadRequestError(mongoErr.Error())
+	if mongoErr = cursor.All(ctx, &projectLookups); mongoErr != nil {
+		return nil, errors.NewBadRequestError(mongoErr.Error())
 	}
 
-	if len(projects) == 0 {
-		return &Project{}, errors.NewNotFoundError("projectId")
+	if len(projectLookups) <= 0 {
+		return nil, errors.NewBadRequestError("Get Project by Id went wrong...")
 	}
-	return &projects[0], nil
+
+	projectLookup := projectLookups[0]
+
+	finalCates, err := category.FilterCatesWithSids2(projectLookup.CategoryLookup, projectLookup.SubcategoryLookup)
+	if err != nil {
+		return nil, err
+	}
+
+	project := new(Project)
+	utils.CopyStruct(projectLookup, project)
+	project.Category = finalCates
+
+	return project, nil
+
 }
+
+// cate 6229a2de46d2549a174d3d5b
+// subcate 6229a32bfce6c3d0848a3835
 
 func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
 	now := time.Now()
@@ -96,6 +130,20 @@ func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Pro
 	proj.UpdatedAt = now
 	proj.Views = 0
 
+	cateDBs := []category.Category{}
+
+	for _, cate := range proj.Category {
+		subcateDBs := []*subcategory.Subcategory{}
+		for _, subcate := range cate.Subcategory {
+			subcateDB := subcategory.Subcategory{ID: subcate.ID}
+			subcateDBs = append(subcateDBs, &subcateDB)
+		}
+		cateDB := category.Category{ID: cate.ID}
+		cateDB.Subcategory = subcateDBs
+		cateDBs = append(cateDBs, cateDB)
+	}
+
+	proj.Category = cateDBs
 	insertRes, insertErr := p.collection.InsertOne(ctx, proj)
 	if insertErr != nil {
 		return proj, errors.NewBadRequestError(insertErr.Error())

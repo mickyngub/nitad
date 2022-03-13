@@ -1,6 +1,7 @@
 package project
 
 import (
+	"github.com/birdglove2/nitad-backend/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -13,6 +14,28 @@ var SORTING = map[string]string{
 }
 
 type repositoryHelper struct{}
+
+func (rh *repositoryHelper) AppendGetProjectStage(pipe mongo.Pipeline) mongo.Pipeline {
+	pipe = database.AppendUnwindStage(pipe, "category")
+	pipe = database.AppendUnwindStage(pipe, "category.subcategory")
+
+	pipe = append(pipe, bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "subcategory"},
+		{Key: "localField", Value: "category.subcategory._id"},
+		{Key: "foreignField", Value: "_id"},
+		{Key: "as", Value: "subcategoryLookup"}}}})
+
+	pipe = append(pipe, bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "category"},
+		{Key: "localField", Value: "category._id"},
+		{Key: "foreignField", Value: "_id"},
+		{Key: "as", Value: "categoryLookup"}}}})
+
+	pipe = append(pipe, bson.D{{Key: "$project", Value: bson.D{
+		{Key: "category", Value: 0},
+	}}})
+	return pipe
+}
 
 func (rh *repositoryHelper) AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 	pq = rh.SetDefaultQuery(pq)
