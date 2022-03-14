@@ -9,6 +9,8 @@ import (
 
 func Loadenv() {
 	var err error
+	zap.S().Info("loading .env...")
+
 	if os.Getenv("APP_ENV") == "test" {
 		err = godotenv.Load("../../../.env")
 	} else {
@@ -19,7 +21,11 @@ func Loadenv() {
 		zap.S().Warn("Error loading .env", err.Error())
 	}
 
+	zap.S().Info("loading .env2...")
+
 	checkenv()
+	zap.S().Info("loading .env3...")
+
 }
 
 func checkenv() {

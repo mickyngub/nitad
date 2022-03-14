@@ -21,7 +21,7 @@ func main() {
 	utils.InitZap()
 
 	config.Loadenv()
-
+	zap.S().Info("===== Running on ", os.Getenv("APP_ENV"), " stage =====")
 	database.ConnectDb(os.Getenv("MONGO_URI"))
 	defer database.DisconnectDb()
 
@@ -45,7 +45,6 @@ func main() {
 		PORT = "3000"
 	}
 
-	zap.S().Info("===== Running on ", os.Getenv("APP_ENV"), " stage =====")
 	zap.S().Info("===== Listening to port ", PORT, " ======")
 
 	err := app.Listen(":" + PORT)
