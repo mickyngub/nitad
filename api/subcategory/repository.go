@@ -2,7 +2,6 @@ package subcategory
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -121,7 +120,6 @@ func (s *subcategoryRepository) DeleteSubcategory(ctx context.Context, oid primi
 }
 
 func (s *subcategoryRepository) InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError) {
-	fmt.Println("Ss", subcate.ID)
 	_, updateErr := s.collection.UpdateByID(
 		ctx,
 		subcate.ID,

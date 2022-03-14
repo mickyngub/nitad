@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/database"
@@ -95,7 +94,6 @@ func (c *categoryRepository) GetCategoryByIdNoLookup(ctx context.Context, oid pr
 
 func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO) (*CategoryDTO, errors.CustomError) {
 	now := time.Now()
-	fmt.Println("catedd", cate.Subcategory)
 	soids := []primitive.ObjectID{}
 	for _, sid := range cate.Subcategory {
 		soid, _ := database.ExtractOID(sid)
