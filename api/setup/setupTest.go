@@ -2,6 +2,7 @@ package setup
 
 import (
 	context "context"
+	"fmt"
 	"image"
 	multipart "mime/multipart"
 	"os"
@@ -38,7 +39,7 @@ var app *fiber.App
 // 	os.Exit(m.Run())
 // }
 
-func NewTestApp(t *testing.T) *fiber.App {
+func NewTestApp(t *testing.T) (*fiber.App, *MockUploader) {
 	config.Loadenv()
 
 	client := database.ConnectDb(os.Getenv("MONGO_URI"))
@@ -55,7 +56,7 @@ func NewTestApp(t *testing.T) *fiber.App {
 
 	api.CreateAPI(app, gcpService)
 
-	return app
+	return app, gcpService
 }
 
 func AddMockSubcategory(t *testing.T) *subcategory.Subcategory {
@@ -117,15 +118,25 @@ func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 }
 
 func DeleteMock(t *testing.T, proj *project.Project, cate *category.Category, subcate *subcategory.Subcategory) {
+	DeleteMockSubcategory(t, subcate)
+	DeleteMockCategory(t, cate)
+	DeleteMockProject(t, proj)
+}
+
+func DeleteMockSubcategory(t *testing.T, subcate *subcategory.Subcategory) {
 	err := subcateRepo.DeleteSubcategory(context.Background(), subcate.ID)
 	require.Nil(t, err, "Delete subcate failed")
+}
 
-	err = cateRepo.DeleteCategory(context.Background(), cate.ID)
+func DeleteMockCategory(t *testing.T, cate *category.Category) {
+	err := cateRepo.DeleteCategory(context.Background(), cate.ID)
+	fmt.Println("delete err", err)
 	require.Nil(t, err, "Delete cate failed")
+}
 
-	err = projectRepo.DeleteProject(context.Background(), proj.ID)
+func DeleteMockProject(t *testing.T, proj *project.Project) {
+	err := projectRepo.DeleteProject(context.Background(), proj.ID)
 	require.Nil(t, err, "Delete proj failed")
-
 }
 
 func RandomImages(n int) []*multipart.FileHeader {

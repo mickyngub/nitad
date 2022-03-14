@@ -3,7 +3,7 @@ dev:
 
 
 test-api:
-	APP_ENV=test go test -v  ./.../.../test/... 
+	APP_ENV=test go test -v ./.../.../test/...
 
 mock-build:
 	mockgen -package subcategory_test \
