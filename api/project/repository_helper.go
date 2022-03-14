@@ -1,6 +1,7 @@
 package project
 
 import (
+	"github.com/birdglove2/nitad-backend/database"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -13,6 +14,74 @@ var SORTING = map[string]string{
 }
 
 type repositoryHelper struct{}
+
+func (rh *repositoryHelper) AppendGetProjectStage(pipe mongo.Pipeline) mongo.Pipeline {
+	pipe = database.AppendUnwindStage(pipe, "category")
+
+	pipe = append(pipe, bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "subcategory"},
+		{Key: "localField", Value: "category.subcategory._id"},
+		{Key: "foreignField", Value: "_id"},
+		{Key: "as", Value: "category.subcategory"}}}})
+
+	pipe = append(pipe, bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "category"},
+		{Key: "localField", Value: "category._id"},
+		{Key: "foreignField", Value: "_id"},
+		{Key: "as", Value: "categoryLookup"}}}})
+
+	pipe = database.AppendUnwindStage(pipe, "categoryLookup")
+
+	pipe = append(pipe, bson.D{{Key: "$set", Value: bson.D{
+		{Key: "category.title", Value: "$categoryLookup.title"},
+		{Key: "category.createdAt", Value: "$categoryLookup.createdAt"},
+		{Key: "category.updatedAt", Value: "$categoryLookup.updatedAt"},
+	}}})
+
+	pipe = append(pipe, bson.D{{Key: "$group", Value: bson.D{
+		{Key: "_id", Value: "$_id"},
+		{Key: "title", Value: bson.D{{Key: "$first", Value: "$title"}}},
+		{Key: "description", Value: bson.D{{Key: "$first", Value: "$description"}}},
+		{Key: "authors", Value: bson.D{{Key: "$first", Value: "$authors"}}},
+		{Key: "emails", Value: bson.D{{Key: "$first", Value: "$emails"}}},
+		{Key: "inspiration", Value: bson.D{{Key: "$first", Value: "$inspiration"}}},
+		{Key: "abstract", Value: bson.D{{Key: "$first", Value: "$abstract"}}},
+		{Key: "images", Value: bson.D{{Key: "$first", Value: "$images"}}},
+		{Key: "videos", Value: bson.D{{Key: "$first", Value: "$videos"}}},
+		{Key: "keywords", Value: bson.D{{Key: "$first", Value: "$keywords"}}},
+		{Key: "report", Value: bson.D{{Key: "$first", Value: "$report"}}},
+		{Key: "virtualLink", Value: bson.D{{Key: "$first", Value: "$virtualLink"}}},
+		{Key: "status", Value: bson.D{{Key: "$first", Value: "$status"}}},
+		{Key: "views", Value: bson.D{{Key: "$first", Value: "$views"}}},
+		{Key: "createdAt", Value: bson.D{{Key: "$first", Value: "$createdAt"}}},
+		{Key: "updatedAt", Value: bson.D{{Key: "$first", Value: "$updatedAt"}}},
+		{Key: "category", Value: bson.D{{Key: "$push", Value: "$category"}}},
+	}}})
+
+	return pipe
+}
+
+func (rh *repositoryHelper) AppendGetProjectStageOld(pipe mongo.Pipeline) mongo.Pipeline {
+	pipe = database.AppendUnwindStage(pipe, "category")
+	pipe = database.AppendUnwindStage(pipe, "category.subcategory")
+
+	pipe = append(pipe, bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "subcategory"},
+		{Key: "localField", Value: "category.subcategory._id"},
+		{Key: "foreignField", Value: "_id"},
+		{Key: "as", Value: "subcategoryLookup"}}}})
+
+	pipe = append(pipe, bson.D{{Key: "$lookup", Value: bson.D{
+		{Key: "from", Value: "category"},
+		{Key: "localField", Value: "category._id"},
+		{Key: "foreignField", Value: "_id"},
+		{Key: "as", Value: "categoryLookup"}}}})
+
+	pipe = append(pipe, bson.D{{Key: "$project", Value: bson.D{
+		{Key: "category", Value: 0},
+	}}})
+	return pipe
+}
 
 func (rh *repositoryHelper) AppendQueryStage(pipe mongo.Pipeline, pq *ProjectQuery) mongo.Pipeline {
 	pq = rh.SetDefaultQuery(pq)

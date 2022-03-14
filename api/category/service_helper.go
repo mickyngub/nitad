@@ -34,6 +34,28 @@ func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Cate
 
 }
 
+func FilterCatesWithSids2(categories []CategoryLookup, subcategories []subcategory.Subcategory) ([]Category, errors.CustomError) {
+	finalCate := []Category{}
+
+	for _, cate := range categories {
+		subcateThatIsInCate := []*subcategory.Subcategory{}
+		for _, subcate := range subcategories {
+			if subcate.CategoryId == cate.ID {
+				subcateThatIsInCate = append(subcateThatIsInCate, &subcate)
+			}
+		}
+		finalCate = append(finalCate, Category{
+			ID:          cate.ID,
+			Title:       cate.Title,
+			CreatedAt:   cate.CreatedAt,
+			UpdatedAt:   cate.UpdatedAt,
+			Subcategory: subcateThatIsInCate,
+		})
+	}
+
+	return finalCate, nil
+}
+
 // TODO: this function is written in O(n^3), should find a better way to handle this later.
 // merge multiple categories with multiple sids
 // such that the finalCate will result in

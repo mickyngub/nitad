@@ -1,5 +1,5 @@
 dev:
-	./air run main.go
+	air run main.go
 
 
 test-api:

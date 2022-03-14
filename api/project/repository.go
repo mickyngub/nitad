@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/paginate"
+	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,16 +53,17 @@ func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, s
 
 	count, err := p.CountDocuments(ctx, pipe)
 	if err != nil {
-		return projects, nil, err
+		return nil, nil, err
 	}
 
+	pipe = p.helper.AppendGetProjectStage(pipe)
 	queryPipe := p.helper.AppendQueryStage(pipe, pq)
 	cursor, aggregateErr := p.collection.Aggregate(ctx, queryPipe)
 	if aggregateErr != nil {
-		return projects, nil, errors.NewBadRequestError(aggregateErr.Error())
+		return nil, nil, errors.NewBadRequestError(aggregateErr.Error())
 	}
 	if curErr := cursor.All(ctx, &projects); curErr != nil {
-		return projects, nil, errors.NewBadRequestError(curErr.Error())
+		return nil, nil, errors.NewBadRequestError(curErr.Error())
 	}
 
 	return projects, paginate.New(pq.Limit, pq.Page, count), nil
@@ -74,19 +77,21 @@ func (p *projectRepository) GetProjectById(ctx context.Context, id string) (*Pro
 
 	pipe := mongo.Pipeline{}
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
+	pipe = p.helper.AppendGetProjectStage(pipe)
 
-	cursor, mongoErr := p.collection.Aggregate(ctx, pipe)
 	projects := []Project{}
+	cursor, mongoErr := p.collection.Aggregate(ctx, pipe)
 	if mongoErr != nil {
-		return &Project{}, errors.NewBadRequestError(mongoErr.Error())
+		return nil, errors.NewBadRequestError(mongoErr.Error())
 	}
 	if mongoErr = cursor.All(ctx, &projects); mongoErr != nil {
-		return &Project{}, errors.NewBadRequestError(mongoErr.Error())
+		return nil, errors.NewBadRequestError(mongoErr.Error())
 	}
 
-	if len(projects) == 0 {
-		return &Project{}, errors.NewNotFoundError("projectId")
+	if len(projects) <= 0 {
+		return nil, errors.NewBadRequestError("Get Project by Id went wrong...")
 	}
+
 	return &projects[0], nil
 }
 
@@ -96,6 +101,20 @@ func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Pro
 	proj.UpdatedAt = now
 	proj.Views = 0
 
+	cateDBs := []category.Category{}
+
+	for _, cate := range proj.Category {
+		subcateDBs := []*subcategory.Subcategory{}
+		for _, subcate := range cate.Subcategory {
+			subcateDB := subcategory.Subcategory{ID: subcate.ID}
+			subcateDBs = append(subcateDBs, &subcateDB)
+		}
+		cateDB := category.Category{ID: cate.ID}
+		cateDB.Subcategory = subcateDBs
+		cateDBs = append(cateDBs, cateDB)
+	}
+
+	proj.Category = cateDBs
 	insertRes, insertErr := p.collection.InsertOne(ctx, proj)
 	if insertErr != nil {
 		return proj, errors.NewBadRequestError(insertErr.Error())
