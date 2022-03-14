@@ -58,10 +58,7 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 
 // add a category
 func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
-	// cateDTO, ok := ctx.Locals("cateDTO").(*CategoryDTO)
-	// if !ok {
-	// 	return errors.Throw(ctx, errors.NewBadRequestError("Add category went wrong!"))
-	// }
+
 	cateDTO := new(CategoryDTO)
 	ctx.BodyParser(cateDTO)
 

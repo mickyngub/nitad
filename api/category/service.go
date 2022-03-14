@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
@@ -10,7 +11,6 @@ import (
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -84,6 +84,7 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 			return cateDTO, err
 		}
 	}
+	fmt.Println("DTc", cateDTO)
 	return cateDTO, err
 }
 
@@ -150,14 +151,10 @@ func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.
 		return err
 	}
 
-	zap.S().Info("check 2", cate)
-
+	// unbind subcategory
 	for _, subcate := range cate.Subcategory {
-		// unset subcate
 		c.subcategoryService.InsertToCategory(ctx, subcate, primitive.NilObjectID)
 	}
-
-	zap.S().Info("check 3")
 
 	return c.repository.DeleteCategory(ctx, cate.ID)
 }
