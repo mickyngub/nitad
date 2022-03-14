@@ -9,7 +9,6 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/birdglove2/nitad-backend/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -47,7 +46,6 @@ func NewRepository(client *mongo.Client) Repository {
 func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, sids []primitive.ObjectID) ([]*Project, *paginate.Paginate, errors.CustomError) {
 	pipe := mongo.Pipeline{}
 	projects := []*Project{}
-	projectLookups := []*ProjectLookup{}
 
 	for _, sid := range sids {
 		pipe = database.AppendMatchStage(pipe, "category.subcategory._id", sid)
@@ -64,20 +62,8 @@ func (p *projectRepository) ListProject(ctx context.Context, pq *ProjectQuery, s
 	if aggregateErr != nil {
 		return nil, nil, errors.NewBadRequestError(aggregateErr.Error())
 	}
-	if curErr := cursor.All(ctx, &projectLookups); curErr != nil {
+	if curErr := cursor.All(ctx, &projects); curErr != nil {
 		return nil, nil, errors.NewBadRequestError(curErr.Error())
-	}
-
-	for _, projectLookup := range projectLookups {
-		finalCates, err := category.FilterCatesWithSids2(projectLookup.CategoryLookup, projectLookup.SubcategoryLookup)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		project := new(Project)
-		utils.CopyStruct(projectLookup, project)
-		project.Category = finalCates
-		projects = append(projects, project)
 	}
 
 	return projects, paginate.New(pq.Limit, pq.Page, count), nil
@@ -93,36 +79,21 @@ func (p *projectRepository) GetProjectById(ctx context.Context, id string) (*Pro
 	pipe = database.AppendMatchStage(pipe, "_id", oid)
 	pipe = p.helper.AppendGetProjectStage(pipe)
 
-	projectLookups := []ProjectLookup{}
+	projects := []Project{}
 	cursor, mongoErr := p.collection.Aggregate(ctx, pipe)
 	if mongoErr != nil {
 		return nil, errors.NewBadRequestError(mongoErr.Error())
 	}
-	if mongoErr = cursor.All(ctx, &projectLookups); mongoErr != nil {
+	if mongoErr = cursor.All(ctx, &projects); mongoErr != nil {
 		return nil, errors.NewBadRequestError(mongoErr.Error())
 	}
 
-	if len(projectLookups) <= 0 {
+	if len(projects) <= 0 {
 		return nil, errors.NewBadRequestError("Get Project by Id went wrong...")
 	}
 
-	projectLookup := projectLookups[0]
-
-	finalCates, err := category.FilterCatesWithSids2(projectLookup.CategoryLookup, projectLookup.SubcategoryLookup)
-	if err != nil {
-		return nil, err
-	}
-
-	project := new(Project)
-	utils.CopyStruct(projectLookup, project)
-	project.Category = finalCates
-
-	return project, nil
-
+	return &projects[0], nil
 }
-
-// cate 6229a2de46d2549a174d3d5b
-// subcate 6229a32bfce6c3d0848a3835
 
 func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
 	now := time.Now()
