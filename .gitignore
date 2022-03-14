@@ -3,5 +3,5 @@
 .env.production
 google-credentials.json
 tmp
-
+nitad-prod-credentials.json
 credentials.json

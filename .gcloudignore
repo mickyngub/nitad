@@ -14,6 +14,7 @@
 .gitignore
 
 .env.template
+nitad-prod-credentials.json
 
 tmp 
 
