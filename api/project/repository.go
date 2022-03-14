@@ -89,7 +89,7 @@ func (p *projectRepository) GetProjectById(ctx context.Context, id string) (*Pro
 	}
 
 	if len(projects) <= 0 {
-		return nil, errors.NewBadRequestError("Get Project by Id went wrong...")
+		return nil, errors.NewNotFoundError("projectId")
 	}
 
 	return &projects[0], nil

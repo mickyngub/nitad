@@ -1,10 +1,13 @@
-### Requirement
+### Infrastructure
 
-- Golang
+- Database - MongoDB
+- Cache - Redis
+- Bucket - Cloud Storage
+- Server - App Engine
 
 ### Environment setup
 
-- Nothing yet
+-
 
 ### Run
 
