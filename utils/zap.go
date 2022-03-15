@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 func getFile(f string) *os.File {
 	r, err := os.OpenFile(f, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
-		panic(err)
+		log.Println("Get file error: ", err)
 	}
 	return r
 }
