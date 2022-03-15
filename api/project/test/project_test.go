@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/birdglove2/nitad-backend/api/project"
@@ -143,6 +144,182 @@ func TestAddProject(t *testing.T) {
 			setup.DeleteMockProject(t, proj)
 		})
 	}
+	setup.DeleteMockCategory(t, cate1)
+	setup.DeleteMockCategory(t, cate2)
+	setup.DeleteMockSubcategory(t, subcate1)
+	setup.DeleteMockSubcategory(t, subcate2)
+
+}
+
+func TestEditProjectFiles(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	collectionName := "project"
+
+	subcate1 := setup.AddMockSubcategory(t)
+	subcate2 := setup.AddMockSubcategory(t)
+	cate1 := setup.AddMockCategory(t, subcate1)
+	cate2 := setup.AddMockCategory(t, subcate2)
+
+	deleteImages := os.Getenv("GCP_PREFIX") + "/" + os.Getenv("GCP_BUCKETNAME") + "/" + collectionName + "/images/" + "dummy proj images" //proj.Images[0]
+
+	app, gcpService := setup.NewTestApp(t)
+
+	testCases := []struct {
+		name           string
+		method         string
+		body           map[string]interface{}
+		buildMock      func(gcpService *setup.MockUploader, collectionName string)
+		checkResponse  func(*testing.T, *http.Response)
+		expectedImages []string
+		expectedReport string
+	}{
+		{
+			name:   "OK",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title":       "test add project",
+				"description": "add project description",
+				"authors":     "add project authors",
+				"emails":      "add project emails",
+				"inspiration": "add project inspiration",
+				"abstract":    "add project abstract",
+				"videos":      "add project videos",
+				"keywords":    "add project keywords",
+				"virtualLink": "add project virtualLink",
+				"status":      "add project status",
+				"category":    []string{cate1.ID.Hex(), cate2.ID.Hex()},
+				"subcategory": []string{subcate1.ID.Hex(), subcate2.ID.Hex()},
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+			expectedImages: []string{"project/images/dummy proj images"},
+			expectedReport: "project/report/dummy proj report",
+		},
+		{
+			name:   "OK new images",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title":       "test add project",
+				"description": "add project description",
+				"authors":     "add project authors",
+				"emails":      "add project emails",
+				"inspiration": "add project inspiration",
+				"abstract":    "add project abstract",
+				"videos":      "add project videos",
+				"keywords":    "add project keywords",
+				"virtualLink": "add project virtualLink",
+				"status":      "add project status",
+				"images":      setup.OpenFileFromPath("dummy_image.jpg"),
+				"category":    []string{cate1.ID.Hex(), cate2.ID.Hex()},
+				"subcategory": []string{subcate1.ID.Hex(), subcate2.ID.Hex()},
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
+				gcpService.EXPECT().UploadFiles(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return([]string{"dummy image url"}, nil)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+			expectedImages: []string{"project/images/dummy proj images", "dummy image url"},
+			expectedReport: "project/report/dummy proj report",
+		},
+		{
+			name:   "OK new images and deleteImages",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title":        "test add project",
+				"description":  "add project description",
+				"authors":      "add project authors",
+				"emails":       "add project emails",
+				"inspiration":  "add project inspiration",
+				"abstract":     "add project abstract",
+				"videos":       "add project videos",
+				"keywords":     "add project keywords",
+				"virtualLink":  "add project virtualLink",
+				"status":       "add project status",
+				"images":       setup.OpenFileFromPath("dummy_image.jpg"),
+				"category":     []string{cate1.ID.Hex(), cate2.ID.Hex()},
+				"subcategory":  []string{subcate1.ID.Hex(), subcate2.ID.Hex()},
+				"deleteImages": deleteImages,
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
+				gcpService.EXPECT().UploadFiles(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return([]string{"dummy image url"}, nil)
+				gcpService.EXPECT().DeleteFiles(gomock.Any(), gomock.Any()).Times(1)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+			expectedImages: []string{"dummy image url"},
+			expectedReport: "project/report/dummy proj report",
+		},
+		{
+			name:   "OK new images and deleteImages and new report",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title":        "test add project",
+				"description":  "add project description",
+				"authors":      "add project authors",
+				"emails":       "add project emails",
+				"inspiration":  "add project inspiration",
+				"abstract":     "add project abstract",
+				"videos":       "add project videos",
+				"keywords":     "add project keywords",
+				"virtualLink":  "add project virtualLink",
+				"status":       "add project status",
+				"images":       setup.OpenFileFromPath("dummy_image.jpg"),
+				"report":       setup.OpenFileFromPath("dummy_report.pdf"),
+				"category":     []string{cate1.ID.Hex(), cate2.ID.Hex()},
+				"subcategory":  []string{subcate1.ID.Hex(), subcate2.ID.Hex()},
+				"deleteImages": deleteImages,
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
+				gcpService.EXPECT().UploadFiles(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return([]string{"dummy image url"}, nil)
+				gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy report url", nil)
+				gcpService.EXPECT().DeleteFiles(gomock.Any(), gomock.Any()).Times(1)
+				gcpService.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Times(1)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+			expectedImages: []string{"dummy image url"},
+			expectedReport: "dummy report url",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			proj := setup.AddMockProject(t, cate1)
+			url := "/api/v1/project/" + proj.ID.Hex()
+
+			tc.buildMock(gcpService, collectionName)
+			request, err := setup.Upload(tc.method, url, tc.body)
+			request.Header.Add("Authorization", "bearer "+setup.Token)
+			require.Nil(t, err)
+
+			resp, err := app.Test(request)
+			require.Nil(t, err)
+			tc.checkResponse(t, resp)
+
+			projResponse := new(ProjectResponse)
+			bodyBytes, err := io.ReadAll(resp.Body)
+			require.Nil(t, err)
+			json.Unmarshal(bodyBytes, projResponse)
+
+			editedProj, err := setup.ProjectRepo.GetProjectById(context.Background(), projResponse.Result.ID.Hex())
+			require.Nil(t, err)
+
+			require.Equal(t, tc.expectedImages, editedProj.Images)
+			require.Equal(t, tc.expectedReport, editedProj.Report)
+
+			setup.DeleteMockProject(t, proj)
+
+		})
+
+	}
+
 	setup.DeleteMockCategory(t, cate1)
 	setup.DeleteMockCategory(t, cate2)
 	setup.DeleteMockSubcategory(t, subcate1)

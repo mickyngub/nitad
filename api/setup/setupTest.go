@@ -88,17 +88,17 @@ func AddMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.C
 func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 	dummyProj := project.Project{
 		Title:       "dummy proj title",
-		Description: "dumym proj description",
-		Authors:     []string{"dumym proj Authors"},
-		Emails:      []string{"dumym proj Emails"},
-		Inspiration: "dumym proj Inspiration",
-		Abstract:    "dumym proj Abstract",
-		Images:      []string{"dumym proj Images"},
-		Videos:      []string{"dumym proj Videos"},
-		Keywords:    []string{"dumym proj Keywords"},
-		Report:      "dumym proj Report",
-		VirtualLink: "dumym proj VirtualLink",
-		Status:      "dumym proj Status",
+		Description: "dummy proj description",
+		Authors:     []string{"dummy proj Authors"},
+		Emails:      []string{"dummy proj Emails"},
+		Inspiration: "dummy proj Inspiration",
+		Abstract:    "dummy proj Abstract",
+		Images:      []string{"project/images/dummy proj images"},
+		Videos:      []string{"dummy proj Videos"},
+		Keywords:    []string{"dummy proj Keywords"},
+		Report:      "project/report/dummy proj report",
+		VirtualLink: "dummy proj VirtualLink",
+		Status:      "dummy proj Status",
 		Category:    []category.Category{*cate},
 	}
 
