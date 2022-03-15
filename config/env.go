@@ -17,7 +17,7 @@ func Loadenv() {
 		err = godotenv.Load()
 	}
 	if err != nil {
-		zap.S().Warn("Error loading .env", err.Error())
+		zap.S().Warn("Error loading .env: ", err.Error())
 	}
 	checkenv()
 }
@@ -49,9 +49,6 @@ func checkenv() {
 	}
 	if os.Getenv("JWT_SECRET") == "" {
 		zap.S().Fatal("JWT_SECRET required")
-	}
-	if os.Getenv("ALLOW_ORIGINS_ENDPOINT") == "" {
-		zap.S().Fatal("ALLOW_ORIGINS_ENDPOINT required")
 	}
 
 }
