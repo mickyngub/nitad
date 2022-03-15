@@ -30,6 +30,7 @@ func InitApp() *fiber.App {
 		StrictRouting: true,
 		ServerHeader:  "Fiber",
 		AppName:       "Nitad",
+		BodyLimit:     100 * 1024 * 1024, // 100 mb
 	})
 
 	allowOrigins := "https://nitad-admin-web-app-palmmy2542.vercel.app, https://nitad-web-app.vercel.app"
