@@ -126,8 +126,6 @@ func (p *projectRepository) AddProject(ctx context.Context, proj *Project) (*Pro
 }
 
 func (p *projectRepository) EditProject(ctx context.Context, proj *Project) (*Project, errors.CustomError) {
-	zap.S().Info("pass 8", proj.Images)
-
 	now := time.Now()
 	proj.UpdatedAt = now
 	_, updateErr := p.collection.UpdateByID(

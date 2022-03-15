@@ -1,2 +1,0 @@
-{"level":"\u001b[33mwarn\u001b[0m","time":"15-Mar-2022 20:19:04","caller":"nitad-backend/main.go:52","key":"Listen to 3000 Failed!"}
-{"level":"\u001b[33mwarn\u001b[0m","time":"15-Mar-2022 20:19:04","caller":"nitad-backend/main.go:53","key":"Error: listen tcp4 :3000: bind: address already in use"}

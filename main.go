@@ -15,8 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var PORT = os.Getenv("PORT")
-
 func main() {
 	utils.InitZap()
 
@@ -41,6 +39,7 @@ func main() {
 		return errors.Throw(c, errors.NewNotFoundError("Page"))
 	})
 
+	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "3000"
 	}
