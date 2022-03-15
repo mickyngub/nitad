@@ -23,9 +23,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var subcateRepo subcategory.Repository
-var cateRepo category.Repository
-var projectRepo project.Repository
+var SubcateRepo subcategory.Repository
+var CateRepo category.Repository
+var ProjectRepo project.Repository
 var app *fiber.App
 
 var Token string
@@ -34,9 +34,9 @@ func NewTestApp(t *testing.T) (*fiber.App, *MockUploader) {
 	config.Loadenv()
 
 	client := database.ConnectDb(os.Getenv("MONGO_URI"))
-	subcateRepo = subcategory.NewRepository(client)
-	cateRepo = category.NewRepository(client)
-	projectRepo = project.NewRepository(client)
+	SubcateRepo = subcategory.NewRepository(client)
+	CateRepo = category.NewRepository(client)
+	ProjectRepo = project.NewRepository(client)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -58,7 +58,7 @@ func AddMockSubcategory(t *testing.T) *subcategory.Subcategory {
 		Image: "dummy subcate image url",
 	}
 
-	adddedSubcategory, err := subcateRepo.AddSubcategory(context.Background(), &dummySubcate)
+	adddedSubcategory, err := SubcateRepo.AddSubcategory(context.Background(), &dummySubcate)
 	require.Nil(t, err)
 	require.Equal(t, dummySubcate.Title, adddedSubcategory.Title)
 	require.Equal(t, dummySubcate.Image, adddedSubcategory.Image)
@@ -73,13 +73,13 @@ func AddMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.C
 	}
 
 	dummyCate.Subcategory = []string{subcate.ID.Hex()}
-	addedCategory, err := cateRepo.AddCategory(context.Background(), &dummyCate)
+	addedCategory, err := CateRepo.AddCategory(context.Background(), &dummyCate)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummyCate.Title, addedCategory.Title)
 	require.Equal(t, dummyCate.Subcategory, addedCategory.Subcategory)
 	require.NotEqual(t, nil, addedCategory.ID)
 
-	cate, err := cateRepo.GetCategoryById(context.Background(), addedCategory.ID)
+	cate, err := CateRepo.GetCategoryById(context.Background(), addedCategory.ID)
 	require.Equal(t, err, nil)
 
 	return cate
@@ -102,7 +102,7 @@ func AddMockProject(t *testing.T, cate *category.Category) *project.Project {
 		Category:    []category.Category{*cate},
 	}
 
-	addedProject, err := projectRepo.AddProject(context.Background(), &dummyProj)
+	addedProject, err := ProjectRepo.AddProject(context.Background(), &dummyProj)
 	require.Equal(t, err, nil)
 	require.Equal(t, dummyProj.Title, addedProject.Title)
 	require.Equal(t, dummyProj.Category, addedProject.Category)
@@ -117,17 +117,17 @@ func DeleteMock(t *testing.T, proj *project.Project, cate *category.Category, su
 }
 
 func DeleteMockSubcategory(t *testing.T, subcate *subcategory.Subcategory) {
-	err := subcateRepo.DeleteSubcategory(context.Background(), subcate.ID)
+	err := SubcateRepo.DeleteSubcategory(context.Background(), subcate.ID)
 	require.Nil(t, err, "Delete subcate failed")
 }
 
 func DeleteMockCategory(t *testing.T, cate *category.Category) {
-	err := cateRepo.DeleteCategory(context.Background(), cate.ID)
+	err := CateRepo.DeleteCategory(context.Background(), cate.ID)
 	require.Nil(t, err, "Delete cate failed")
 }
 
 func DeleteMockProject(t *testing.T, proj *project.Project) {
-	err := projectRepo.DeleteProject(context.Background(), proj.ID)
+	err := ProjectRepo.DeleteProject(context.Background(), proj.ID)
 	require.Nil(t, err, "Delete proj failed")
 }
 
