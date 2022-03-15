@@ -2,7 +2,6 @@ package gcp
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -111,7 +110,7 @@ func (u uploader) DeleteFile(ctx context.Context, filepath string) {
 	if err := o.Delete(ctx); err != nil {
 		zap.S().Warn("gcp deletion error, file= ", filepath, " ", err.Error())
 	}
-	fmt.Println("Deleting..", filepath)
+	zap.S().Info("Deleting..", filepath)
 }
 
 func GetURL(filepath string) string {

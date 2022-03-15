@@ -2,7 +2,7 @@ dev:
 	air run main.go
 
 
-test-api:
+test:
 	APP_ENV=test go test -v ./.../.../test/...
 
 mock-build:

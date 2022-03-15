@@ -3,7 +3,6 @@ package setup
 import (
 	"bytes"
 	context "context"
-	"fmt"
 	"io"
 	multipart "mime/multipart"
 	"net/http"
@@ -29,6 +28,8 @@ var cateRepo category.Repository
 var projectRepo project.Repository
 var app *fiber.App
 
+var Token string
+
 func NewTestApp(t *testing.T) (*fiber.App, *MockUploader) {
 	config.Loadenv()
 
@@ -46,6 +47,8 @@ func NewTestApp(t *testing.T) (*fiber.App, *MockUploader) {
 
 	api.CreateAPI(app, gcpService)
 
+	Token = Login(t, app)
+
 	return app, gcpService
 }
 
@@ -56,10 +59,10 @@ func AddMockSubcategory(t *testing.T) *subcategory.Subcategory {
 	}
 
 	adddedSubcategory, err := subcateRepo.AddSubcategory(context.Background(), &dummySubcate)
-	require.Equal(t, err, nil)
+	require.Nil(t, err)
 	require.Equal(t, dummySubcate.Title, adddedSubcategory.Title)
 	require.Equal(t, dummySubcate.Image, adddedSubcategory.Image)
-	require.NotEqual(t, nil, adddedSubcategory.ID)
+	require.NotNil(t, adddedSubcategory.ID)
 
 	return adddedSubcategory
 }
@@ -166,7 +169,6 @@ func Upload(method string, url string, values map[string]interface{}) (req *http
 
 		} else {
 
-			fmt.Println(key, "=", val, reflect.TypeOf(val), reflect.TypeOf(val).Kind() == reflect.Slice)
 			// if slice, use for loop to add
 			if reflect.TypeOf(val).Kind() == reflect.Slice {
 				for _, v := range val.([]string) {
