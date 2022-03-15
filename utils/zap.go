@@ -8,16 +8,30 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+func getFile(f string) *os.File {
+	r, err := os.OpenFile(f, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
 func InitZap() {
-	encoder := getEncoder()
-	core := zapcore.NewCore(encoder, os.Stdout, zapcore.InfoLevel)
+	consoleEncoder, fileEncoder := getEncoder()
+
+	f := getFile("logs/errors.log")
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, zapcore.AddSync(f), zap.WarnLevel),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zap.InfoLevel),
+	)
 	logg := zap.New(core, zap.AddCaller())
 
 	zap.ReplaceGlobals(logg)
 	defer logg.Sync()
 }
 
-func getEncoder() zapcore.Encoder {
+func getEncoder() (zapcore.Encoder, zapcore.Encoder) {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.LevelKey = "level"
 	encoderConfig.TimeKey = "time"
@@ -32,5 +46,8 @@ func getEncoder() zapcore.Encoder {
 	encoderConfig.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 	encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 
-	return zapcore.NewConsoleEncoder(encoderConfig)
+	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
+	fileEncoder := zapcore.NewJSONEncoder(encoderConfig)
+
+	return consoleEncoder, fileEncoder
 }

@@ -16,16 +16,10 @@ func Loadenv() {
 	} else {
 		err = godotenv.Load()
 	}
-
 	if err != nil {
 		zap.S().Warn("Error loading .env", err.Error())
 	}
-
-	zap.S().Info("loading .env2...")
-
 	checkenv()
-	zap.S().Info("loading .env3...")
-
 }
 
 func checkenv() {

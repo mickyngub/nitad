@@ -10,7 +10,7 @@ type CustomError interface {
 	Error() string
 }
 
-func Throw(c *fiber.Ctx, ce CustomError) error {
-	zap.S().Warn("Error Throw: ", ce.Code(), ": ", ce.Error())
-	return c.Status(ce.Code()).JSON(fiber.Map{"success": false, "result": ce.Error()})
+func Throw(ctx *fiber.Ctx, ce CustomError) error {
+	zap.S().Warn("Error Throw: ", ctx.Path(), ": ", ce.Code(), ": ", ce.Error())
+	return ctx.Status(ce.Code()).JSON(fiber.Map{"success": false, "result": ce.Error()})
 }
