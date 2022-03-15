@@ -123,3 +123,64 @@ func TestAddSubcategory(t *testing.T) {
 		})
 	}
 }
+
+func TestEditSubcategory(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	subcate := setup.AddMockSubcategory(t)
+	collectionName := "subcategory"
+
+	app, gcpService := setup.NewTestApp(t)
+	url := "/api/v1/connection/subcategory/" + subcate.ID.Hex()
+
+	testCases := []struct {
+		name          string
+		method        string
+		body          map[string]interface{}
+		buildMock     func(gcpService *setup.MockUploader, collectionName string)
+		checkResponse func(*testing.T, *http.Response)
+	}{
+		{
+			name:   "Ok with new image",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title": "test edit subcate",
+				"image": setup.OpenFileFromPath("dummy_image.jpg"),
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
+				gcpService.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Times(1)
+				gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy image url", nil)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+		},
+		{
+			name:   "Ok with no new image",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title": "test edit subcate",
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.buildMock(gcpService, collectionName)
+			request, err := setup.Upload(tc.method, url, tc.body)
+			request.Header.Add("Authorization", "bearer "+setup.Token)
+			require.Nil(t, err)
+
+			resp, err := app.Test(request)
+			require.Nil(t, err)
+			tc.checkResponse(t, resp)
+
+		})
+	}
+	setup.DeleteMockSubcategory(t, subcate)
+}
