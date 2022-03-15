@@ -17,19 +17,22 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestGetSubcategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	server, _ := setup.NewTestApp(t)
+
 	testCases := []struct {
 		name          string
+		url           string
 		checkResponse func(*testing.T, *http.Response)
 	}{
 		{
 			name: "OK",
+			url:  "/api/v1/subcategory",
 			checkResponse: func(t *testing.T, resp *http.Response) {
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 			},
@@ -39,13 +42,8 @@ func TestGetSubcategory(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			server, _ := setup.NewTestApp(t)
-			url := "/api/v1/subcategory"
-
-			request, err := http.NewRequest(http.MethodGet, url, nil)
-			if err != nil {
-				zap.S().Fatal("error", err.Error())
-			}
+			request, err := http.NewRequest(http.MethodGet, tc.url, nil)
+			require.Nil(t, err)
 
 			resp, err := server.Test(request)
 			require.Nil(t, err)
@@ -66,33 +64,76 @@ func TestAddSubcategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	app, gcpService := setup.NewTestApp(t)
 	collectionName := "subcategory"
-	token := login(t, app)
-	gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy image url", nil)
-	URL := "/api/v1/connection/subcategory"
+	url := "/api/v1/connection/subcategory"
 
-	values := map[string]io.Reader{
-		"title": strings.NewReader("subcate add 2"),
-		"image": mustOpen("bear_test.jpg"),
+	app, gcpService := setup.NewTestApp(t)
+	token := login(t, app)
+
+	testCases := []struct {
+		name          string
+		method        string
+		body          map[string]io.Reader
+		buildMock     func(gcpService *setup.MockUploader, collectionName string)
+		checkResponse func(*testing.T, *http.Response)
+	}{
+		{
+			name:   "OK",
+			method: http.MethodPost,
+			body: map[string]io.Reader{
+				"title": strings.NewReader("test add subcate"),
+				"image": mustOpen("dummy_image.jpg"),
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
+				gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy image url", nil)
+			},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+		},
+		{
+			name:   "No require title",
+			method: http.MethodPost,
+			body: map[string]io.Reader{
+				"image": mustOpen("dummy_image.jpg"),
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			},
+		},
+		{
+			name:   "No require image",
+			method: http.MethodPost,
+			body: map[string]io.Reader{
+				"title": strings.NewReader("test add subcate"),
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			},
+		},
 	}
 
-	request, err := Upload(URL, values)
-	require.Nil(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.buildMock(gcpService, collectionName)
+			request, err := CreateMultipartFormDataRequest(tc.method, url, tc.body)
+			request.Header.Add("Authorization", "bearer "+token)
+			require.Nil(t, err)
 
-	request.Header.Add("Authorization", "bearer "+token)
+			resp, err := app.Test(request)
+			require.Nil(t, err)
+			tc.checkResponse(t, resp)
 
-	require.Nil(t, err)
+			subcate := new(AddSubcategoryResult)
+			bodyBytes, err := io.ReadAll(resp.Body)
+			require.Nil(t, err)
+			json.Unmarshal(bodyBytes, subcate)
 
-	resp, err := app.Test(request)
-	require.Nil(t, err)
-
-	subcate := new(AddSubcategoryResult)
-	bodyBytes, err := io.ReadAll(resp.Body)
-	require.Nil(t, err)
-	json.Unmarshal(bodyBytes, subcate)
-
-	setup.DeleteMockSubcategory(t, &subcate.Result)
+			setup.DeleteMockSubcategory(t, &subcate.Result)
+		})
+	}
 }
 
 type AddSubcategoryResult struct {
@@ -103,7 +144,7 @@ type AddCategoryResult struct {
 	Result category.Category
 }
 
-func Upload(url string, values map[string]io.Reader) (req *http.Request, err error) {
+func CreateMultipartFormDataRequest(method string, url string, values map[string]io.Reader) (req *http.Request, err error) {
 
 	// Prepare a form that you will submit to that URL.
 	var b bytes.Buffer
@@ -141,7 +182,7 @@ func Upload(url string, values map[string]io.Reader) (req *http.Request, err err
 	w.Close()
 
 	// Now that you have a form, you can submit it to your handler.
-	req, err = http.NewRequest("POST", url, &b)
+	req, err = http.NewRequest(method, url, &b)
 	if err != nil {
 		return nil, err
 	}
@@ -154,22 +195,6 @@ func TestAddCategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// bs, err := ioutil.ReadFile("bear_test.jpg")
-	// if err != nil {
-	// 	fmt.Println("Error file:", err)
-	// 	os.Exit(1)
-	// }
-
-	// fmt.Println("images", images)
-	// image, err := getImageFromFilePath("bear_test")
-	// if err != nil {
-	// 	fmt.Println("get image error", err)
-	// }
-	// image, err := os.Open("bear_test.jpg")
-	// if err != nil {
-	// 	zap.S().Fatal("error", err.Error())
-	// }
-	// fmt.Println("image", image)
 	testCases := []struct {
 		name           string
 		body           fiber.Map
@@ -202,11 +227,7 @@ func TestAddCategory(t *testing.T) {
 			tc.buildMock(gcpService, tc.collectionName)
 
 			form := url.Values{}
-			// 	for key, val := range tc.body {
 
-			// 		fmt.Printf("key[%s] value[%s]\n", k, v)
-			// 		form.Add(key, val)
-			// }
 			token := login(t, app)
 			form.Add("title", "test add cate 1")
 			form.Add("subcategory", "622f61bed0570c74dfbef2a5")
@@ -232,14 +253,6 @@ func TestAddCategory(t *testing.T) {
 		})
 	}
 }
-
-// // it should add a subcategory successfully
-
-// // it should not add a subcategory if required fields are not provided correctly
-
-// // it should list all added subcategories
-
-// // it should get the subcategory by valid id
 
 type AuthResult struct {
 	Result AuthResponse
