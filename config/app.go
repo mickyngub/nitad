@@ -32,7 +32,7 @@ func InitApp() *fiber.App {
 		AppName:       "Nitad",
 	})
 
-	allowOrigins := "*"
+	allowOrigins := "https://nitad-admin-web-app-palmmy2542.vercel.app, https://nitad-web-app.vercel.app"
 	if os.Getenv("ALLOW_ORIGINS_ENDPOINT") != "" {
 		allowOrigins = os.Getenv("ALLOW_ORIGINS_ENDPOINT")
 	}
