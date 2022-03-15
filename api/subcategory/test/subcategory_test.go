@@ -3,8 +3,8 @@ package subcategory
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -52,14 +52,6 @@ func TestGetSubcategory(t *testing.T) {
 	}
 }
 
-func mustOpen(f string) *os.File {
-	r, err := os.Open(f)
-	if err != nil {
-		panic(err)
-	}
-	return r
-}
-
 func TestAddSubcategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -73,16 +65,16 @@ func TestAddSubcategory(t *testing.T) {
 	testCases := []struct {
 		name          string
 		method        string
-		body          map[string]io.Reader
+		body          map[string]interface{}
 		buildMock     func(gcpService *setup.MockUploader, collectionName string)
 		checkResponse func(*testing.T, *http.Response)
 	}{
 		{
 			name:   "OK",
 			method: http.MethodPost,
-			body: map[string]io.Reader{
-				"title": strings.NewReader("test add subcate"),
-				"image": mustOpen("dummy_image.jpg"),
+			body: map[string]interface{}{
+				"title": "test add subcate 121313",
+				"image": setup.OpenFileFromPath("dummy_image.jpg"),
 			},
 			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
 				gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy image url", nil)
@@ -94,8 +86,8 @@ func TestAddSubcategory(t *testing.T) {
 		{
 			name:   "No require title",
 			method: http.MethodPost,
-			body: map[string]io.Reader{
-				"image": mustOpen("dummy_image.jpg"),
+			body: map[string]interface{}{
+				"image": setup.OpenFileFromPath("dummy_image.jpg"),
 			},
 			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
 			checkResponse: func(t *testing.T, resp *http.Response) {
@@ -105,8 +97,8 @@ func TestAddSubcategory(t *testing.T) {
 		{
 			name:   "No require image",
 			method: http.MethodPost,
-			body: map[string]io.Reader{
-				"title": strings.NewReader("test add subcate"),
+			body: map[string]interface{}{
+				"title": "test add subcate",
 			},
 			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
 			checkResponse: func(t *testing.T, resp *http.Response) {
@@ -118,7 +110,7 @@ func TestAddSubcategory(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.buildMock(gcpService, collectionName)
-			request, err := CreateMultipartFormDataRequest(tc.method, url, tc.body)
+			request, err := setup.Upload(tc.method, url, tc.body)
 			request.Header.Add("Authorization", "bearer "+token)
 			require.Nil(t, err)
 
@@ -144,74 +136,41 @@ type AddCategoryResult struct {
 	Result category.Category
 }
 
-func CreateMultipartFormDataRequest(method string, url string, values map[string]io.Reader) (req *http.Request, err error) {
-
-	// Prepare a form that you will submit to that URL.
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-	for key, r := range values {
-
-		var fw io.Writer
-		if x, ok := r.(io.Closer); ok {
-			defer x.Close()
-		}
-
-		// Add an image file
-		if x, ok := r.(*os.File); ok {
-
-			if fw, err = w.CreateFormFile(key, x.Name()); err != nil {
-
-				return nil, err
-			}
-
-		} else {
-			// Add other fields
-			if fw, err = w.CreateFormField(key); err != nil {
-				return nil, err
-			}
-
-		}
-
-		if _, err = io.Copy(fw, r); err != nil {
-			return nil, err
-		}
-
-	}
-	// Don't forget to close the multipart writer.
-	// If you don't close it, your request will be missing the terminating boundary.
-	w.Close()
-
-	// Now that you have a form, you can submit it to your handler.
-	req, err = http.NewRequest(method, url, &b)
-	if err != nil {
-		return nil, err
-	}
-	// Don't forget to set the content type, this will contain the boundary.
-	req.Header.Set("Content-Type", w.FormDataContentType())
-
-	return req, nil
-}
 func TestAddCategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	subcate1 := setup.AddMockSubcategory(t)
+	// subcate2 := setup.AddMockSubcategory(t)
+
+	// fmt.Println("subcate1", subcate1.ID.Hex())
+	buf := new(bytes.Buffer)
+	sids := []string{"623082745043756f707e5674", "623082745043756f707e5675"}
+	// json.NewEncoder(buf).Encode([]string{subcate1.ID.Hex(), subcate2.ID.Hex()})
+	json.NewEncoder(buf).Encode(sids)
+
+	x := buf.Bytes()
+	buffer := new(bytes.Buffer)
+	if err := json.Compact(buffer, x); err != nil {
+		fmt.Println(err)
+	}
+
 	testCases := []struct {
 		name           string
-		body           fiber.Map
+		body           map[string]interface{}
 		collectionName string
 		buildMock      func(gcpService *setup.MockUploader, collectionName string)
 		checkResponse  func(*testing.T, *http.Response)
 	}{
 		{
 			name: "OK",
-			body: fiber.Map{
-				"title":       "test add cate",
-				"subcategory": []string{"622f61bed0570c74dfbef2a5"},
+			body: map[string]interface{}{
+				"title": "test add cate",
+				// "subcategory": strings.NewReader(subcate1.ID.Hex()),
+				"subcategory": sids,
 			},
 			collectionName: "category",
-			buildMock: func(gcpService *setup.MockUploader, collectionName string) {
-				// gcpService.EXPECT().UploadFile(gomock.Any(), gomock.Any(), gomock.Eq(collectionName)).Times(1).Return("dummy image url", nil)
-			},
+			buildMock:      func(gcpService *setup.MockUploader, collectionName string) {},
 			checkResponse: func(t *testing.T, resp *http.Response) {
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 			},
@@ -226,17 +185,22 @@ func TestAddCategory(t *testing.T) {
 
 			tc.buildMock(gcpService, tc.collectionName)
 
-			form := url.Values{}
+			// form := url.Values{}
 
 			token := login(t, app)
-			form.Add("title", "test add cate 1")
-			form.Add("subcategory", "622f61bed0570c74dfbef2a5")
-			form.Add("subcategory", "622f1c453f5016e3e450ccbd")
 
-			// form.Add("image", asString)
-			request, err := http.NewRequest("POST", URL, strings.NewReader(form.Encode()))
-			request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			// request, err := setup.CreateMultipartFormDataRequest("POST", URL, tc.body)
+			request, err := setup.Upload("POST", URL, tc.body)
+			require.Nil(t, err)
 			request.Header.Add("Authorization", "bearer "+token)
+
+			// form.Add("title", "test add cate 1")
+			// form.Add("subcategory", "622f61bed0570c74dfbef2a5")
+			// form.Add("subcategory", "622f1c453f5016e3e450ccbd")
+
+			// request, err := http.NewRequest("POST", URL, strings.NewReader(form.Encode()))
+			// request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			// request.Header.Add("Authorization", "bearer "+token)
 
 			require.Nil(t, err)
 
@@ -250,6 +214,7 @@ func TestAddCategory(t *testing.T) {
 
 			tc.checkResponse(t, resp)
 			setup.DeleteMockCategory(t, &cate.Result)
+			setup.DeleteMockSubcategory(t, subcate1)
 		})
 	}
 }

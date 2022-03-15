@@ -1,11 +1,15 @@
 package setup
 
 import (
+	"bytes"
 	context "context"
 	"fmt"
-	"image"
+	"io"
 	multipart "mime/multipart"
+	"net/http"
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/birdglove2/nitad-backend/api"
@@ -24,20 +28,6 @@ var subcateRepo subcategory.Repository
 var cateRepo category.Repository
 var projectRepo project.Repository
 var app *fiber.App
-
-// func TestMain(m *testing.M) {
-// 	config.Loadenv()
-
-// 	client := database.ConnectDb(os.Getenv("MONGO_URI"))
-
-// 	fmt.Println("first", client)
-
-// 	subcateRepo = subcategory.NewRepository(client)
-// 	cateRepo = category.NewRepository(client)
-// 	projectRepo = project.NewRepository(client)
-
-// 	os.Exit(m.Run())
-// }
 
 func NewTestApp(t *testing.T) (*fiber.App, *MockUploader) {
 	config.Loadenv()
@@ -130,7 +120,6 @@ func DeleteMockSubcategory(t *testing.T, subcate *subcategory.Subcategory) {
 
 func DeleteMockCategory(t *testing.T, cate *category.Category) {
 	err := cateRepo.DeleteCategory(context.Background(), cate.ID)
-	fmt.Println("delete err", err)
 	require.Nil(t, err, "Delete cate failed")
 }
 
@@ -149,12 +138,109 @@ func RandomImages(n int) []*multipart.FileHeader {
 	return results
 }
 
-func GetImageFromFilePath(filePath string) (image.Image, error) {
-	f, err := os.Open(filePath)
+func OpenFileFromPath(f string) *os.File {
+	r, err := os.Open(f)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
+func Upload(method string, url string, values map[string]interface{}) (req *http.Request, err error) {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	for key, val := range values {
+		// if file upload as file
+		if key == "image" || key == "images" || key == "report" {
+			if osFile, ok := val.(*os.File); ok {
+				fw, err := w.CreateFormFile(key, osFile.Name())
+				if err != nil {
+					return nil, err
+				}
+
+				if _, err = io.Copy(fw, val.(io.Reader)); err != nil {
+					return nil, err
+				}
+			}
+
+		} else {
+
+			fmt.Println(key, "=", val, reflect.TypeOf(val), reflect.TypeOf(val).Kind() == reflect.Slice)
+			// if slice, use for loop to add
+			if reflect.TypeOf(val).Kind() == reflect.Slice {
+				for _, v := range val.([]string) {
+					fw, err := w.CreateFormField(key)
+					if err != nil {
+						return nil, err
+					}
+					if _, err = io.Copy(fw, strings.NewReader(v)); err != nil {
+						return nil, err
+					}
+				}
+
+				// others are all string type
+			} else {
+				fw, err := w.CreateFormField(key)
+				if err != nil {
+					return nil, err
+				}
+				if _, err = io.Copy(fw, strings.NewReader(val.(string))); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	w.Close()
+
+	req, err = http.NewRequest(method, url, &b)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	image, _, err := image.Decode(f)
-	return image, err
+
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req, nil
+
+}
+
+func CreateMultipartFormDataRequest(method string, url string, values map[string]io.Reader) (req *http.Request, err error) {
+	// Prepare a form that you will submit to that URL.
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for key, r := range values {
+		var fw io.Writer
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+
+		// Add an image file
+		if x, ok := r.(*os.File); ok {
+			if fw, err = w.CreateFormFile(key, x.Name()); err != nil {
+				return nil, err
+			}
+		} else {
+			// Add other fields
+			if fw, err = w.CreateFormField(key); err != nil {
+				return nil, err
+			}
+		}
+
+		if _, err = io.Copy(fw, r); err != nil {
+			return nil, err
+		}
+	}
+
+	// Don't forget to close the multipart writer.
+	// If you don't close it, your request will be missing the terminating boundary.
+	w.Close()
+
+	// Now that you have a form, you can submit it to your handler.
+	req, err = http.NewRequest(method, url, &b)
+	if err != nil {
+		return nil, err
+	}
+
+	// Don't forget to set the content type, this will contain the boundary.
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req, nil
 }

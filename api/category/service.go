@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
@@ -84,7 +83,6 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 			return cateDTO, err
 		}
 	}
-	fmt.Println("DTc", cateDTO)
 	return cateDTO, err
 }
 
