@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"time"
 
 	"github.com/birdglove2/nitad-backend/api/project"
@@ -11,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"go.uber.org/zap"
 )
 
 var app *fiber.App
@@ -30,9 +32,13 @@ func InitApp() *fiber.App {
 		AppName:       "Nitad",
 	})
 
+	allowOrigins := "*"
+	if os.Getenv("ALLOW_ORIGINS_ENDPOINT") != "" {
+		allowOrigins = os.Getenv("ALLOW_ORIGINS_ENDPOINT")
+	}
+	zap.S().Info("allow origin ", allowOrigins)
 	app.Use(cors.New(cors.Config{
-		// AllowOrigins: os.Getenv("ALLOW_ORIGINS_ENDPOINT"),
-		AllowOrigins: "*",
+		AllowOrigins: allowOrigins,
 		AllowHeaders: "*",
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
