@@ -1,6 +1,7 @@
 package subcategory
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -129,10 +130,13 @@ func TestEditSubcategory(t *testing.T) {
 	defer ctrl.Finish()
 
 	subcate := setup.AddMockSubcategory(t)
+	subcate2 := setup.AddMockSubcategory(t)
 	collectionName := "subcategory"
 
 	app, gcpService := setup.NewTestApp(t)
 	url := "/api/v1/connection/subcategory/" + subcate.ID.Hex()
+
+	cate := setup.AddMockCategory(t, subcate2)
 
 	testCases := []struct {
 		name          string
@@ -167,6 +171,18 @@ func TestEditSubcategory(t *testing.T) {
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 			},
 		},
+		{
+			name:   "Ok bind category",
+			method: http.MethodPut,
+			body: map[string]interface{}{
+				"title":      "test edit subcate",
+				"categoryId": cate.ID.Hex(),
+			},
+			buildMock: func(gcpService *setup.MockUploader, collectionName string) {},
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -180,7 +196,17 @@ func TestEditSubcategory(t *testing.T) {
 			require.Nil(t, err)
 			tc.checkResponse(t, resp)
 
+			checkSubcate, err := setup.SubcateRepo.GetSubcategoryById(context.Background(), subcate.ID.Hex())
+			require.Equal(t, checkSubcate.Title, tc.body["title"].(string))
+			require.Equal(t, checkSubcate.Image, "dummy image url")
+
+			if tc.name == "Ok bind category" {
+				require.Equal(t, checkSubcate.CategoryId.Hex(), tc.body["categoryId"].(string))
+			}
+
 		})
 	}
+	setup.DeleteMockCategory(t, cate)
 	setup.DeleteMockSubcategory(t, subcate)
+	setup.DeleteMockSubcategory(t, subcate2)
 }
