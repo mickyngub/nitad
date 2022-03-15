@@ -147,5 +147,54 @@ func TestEditCategory(t *testing.T) {
 	setup.DeleteMockCategory(t, cate)
 	setup.DeleteMockSubcategory(t, subcate1)
 	setup.DeleteMockSubcategory(t, subcate2)
+}
 
+func TestAddSubcateToCate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	app, _ := setup.NewTestApp(t)
+
+	subcate1 := setup.AddMockSubcategory(t)
+	subcate2 := setup.AddMockSubcategory(t)
+
+	cate := setup.AddMockCategory(t, subcate1)
+
+	url := "/api/v1/category/" + cate.ID.Hex() + "/add/" + subcate2.ID.Hex()
+
+	testCases := []struct {
+		name          string
+		checkResponse func(*testing.T, *http.Response)
+	}{
+		{
+			name: "OK add subcate to cate",
+			checkResponse: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			request, err := http.NewRequest(http.MethodPost, url, nil)
+			require.Nil(t, err)
+			request.Header.Add("Authorization", "bearer "+setup.Token)
+
+			resp, err := app.Test(request)
+			require.Nil(t, err)
+			tc.checkResponse(t, resp)
+
+			checkCate, err := setup.CateRepo.GetCategoryById(context.Background(), cate.ID)
+			require.Nil(t, err)
+
+			require.Equal(t, checkCate.Subcategory[0].ID.Hex(), subcate1.ID.Hex())
+			require.Equal(t, checkCate.Subcategory[1].ID.Hex(), subcate2.ID.Hex())
+
+		})
+	}
+
+	setup.DeleteMockCategory(t, cate)
+	setup.DeleteMockSubcategory(t, subcate1)
+	setup.DeleteMockSubcategory(t, subcate2)
 }
