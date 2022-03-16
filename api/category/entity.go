@@ -14,7 +14,7 @@ type Category struct {
 	ID           primitive.ObjectID         `bson:"_id,omitempty" json:"id,omitempty"`
 	Title        string                     `bson:"title" json:"title"`
 	Subcategory  []*subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
-	ProductCount int                        `bson:"productCount" json:"productCount"`
+	ProjectCount int                        `bson:"projectCount" json:"projectCount"`
 	CreatedAt    time.Time                  `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
 	UpdatedAt    time.Time                  `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }

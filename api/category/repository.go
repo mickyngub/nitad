@@ -23,6 +23,8 @@ type Repository interface {
 	BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
+
+	IncrementProjectCount(ctx context.Context, oid primitive.ObjectID) errors.CustomError
 }
 
 type categoryRepository struct {
@@ -200,6 +202,22 @@ func (c *categoryRepository) BindSubcategory(ctx context.Context, coid primitive
 
 	if updateErr != nil {
 		return errors.NewBadRequestError(updateErr.Error())
+	}
+	return nil
+}
+
+func (c *categoryRepository) IncrementProjectCount(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+	_, err := c.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": oid},
+		bson.D{
+			{Key: "$inc", Value: bson.D{{Key: "projectCount", Value: 1}}},
+		},
+	)
+
+	if err != nil {
+		return errors.NewBadRequestError("Increment project count error: " + err.Error())
+
 	}
 	return nil
 }

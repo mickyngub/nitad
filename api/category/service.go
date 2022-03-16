@@ -24,6 +24,8 @@ type Service interface {
 	BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	AddSubcategory(ctx context.Context, cid string, sid string) (*CategoryDTO, errors.CustomError)
+
+	IncrementProjectCount(ctx context.Context, cate *Category) errors.CustomError
 }
 
 type categoryService struct {
@@ -173,7 +175,7 @@ func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.
 		return err
 	}
 
-	if cate.ProductCount > 0 {
+	if cate.ProjectCount > 0 {
 		return errors.NewBadRequestError("Cannot delete: Category " + cate.Title + " is still being used in some projects.")
 	}
 
@@ -232,4 +234,8 @@ func (c *categoryService) AddSubcategory(ctx context.Context, cid string, sid st
 
 	return cateDTO, err
 
+}
+
+func (c *categoryService) IncrementProjectCount(ctx context.Context, cate *Category) errors.CustomError {
+	return c.repository.IncrementProjectCount(ctx, cate.ID)
 }
