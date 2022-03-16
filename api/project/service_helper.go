@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/category"
@@ -53,8 +52,6 @@ func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []
 		}
 		imageFilenames = append(imageFilenames, newImageFilenames...)
 	}
-
-	fmt.Println("return imageFilenames ", imageFilenames)
 
 	return imageFilenames, nil
 }
