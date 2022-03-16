@@ -7,13 +7,12 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Service interface {
-	AddSubcategory(ctx *fiber.Ctx, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError)
-	EditSubcategory(ctx *fiber.Ctx, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError)
+	AddSubcategory(ctx context.Context, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError)
+	EditSubcategory(ctx context.Context, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError)
 }
 
 type connectionService struct {
@@ -28,32 +27,46 @@ func NewService(subcategoryService subcategory.Service, categoryService category
 	}
 }
 
-func (c *connectionService) AddSubcategory(ctx *fiber.Ctx, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+func (c *connectionService) AddSubcategory(ctx context.Context, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
 
-	addedSubcate, err := c.subcategoryService.AddSubcategory(ctx.Context(), subcateDTO)
+	addedSubcate := new(subcategory.Subcategory)
+	err := database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
+		var txErr errors.CustomError
+		addedSubcate, txErr = c.addSubcategory(sessionContext, subcateDTO)
+		return txErr
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	if subcateDTO.CategoryId != primitive.NilObjectID {
-		// if there is parse categoryId, check if the cate exists
-		cate, err := c.categoryService.GetCategoryById(ctx.Context(), subcateDTO.CategoryId.Hex())
-		if err != nil {
-			return nil, err
-		}
-		err = c.categoryService.BindSubcategory(ctx.Context(), cate.ID, addedSubcate.ID)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return addedSubcate, nil
 
 }
 
-func (c *connectionService) EditSubcategory(ctx *fiber.Ctx, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+func (c *connectionService) addSubcategory(ctx context.Context, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+	addedSubcate, err := c.subcategoryService.AddSubcategory(ctx, subcateDTO)
+	if err != nil {
+		return nil, err
+	}
+
+	if subcateDTO.CategoryId != primitive.NilObjectID {
+		// if there is parse categoryId, check if the cate exists
+		cate, err := c.categoryService.GetCategoryById(ctx, subcateDTO.CategoryId.Hex())
+		if err != nil {
+			return nil, err
+		}
+		err = c.categoryService.BindSubcategory(ctx, cate.ID, addedSubcate.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return addedSubcate, nil
+
+}
+
+func (c *connectionService) EditSubcategory(ctx context.Context, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
 	editedSubcate := new(subcategory.Subcategory)
-	err := database.ExecTx(ctx.Context(), func(sessionContext context.Context) errors.CustomError {
+	err := database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
 		var txErr errors.CustomError
 		editedSubcate, txErr = c.editSubcategory(sessionContext, id, subcateDTO)
 		return txErr

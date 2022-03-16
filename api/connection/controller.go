@@ -36,7 +36,7 @@ func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
 	}
 	subcategoryDTO.Image = files[0]
 
-	addedSubcate, err := c.service.AddSubcategory(ctx, subcategoryDTO)
+	addedSubcate, err := c.service.AddSubcategory(ctx.Context(), subcategoryDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -62,7 +62,7 @@ func (c *Controller) EditSubcategory(ctx *fiber.Ctx) error {
 		subcategoryDTO.Image = images[0]
 	}
 
-	editedSubcate, err := c.service.EditSubcategory(ctx, subcategoryId, subcategoryDTO)
+	editedSubcate, err := c.service.EditSubcategory(ctx.Context(), subcategoryId, subcategoryDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
