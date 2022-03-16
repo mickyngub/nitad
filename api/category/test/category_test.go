@@ -68,6 +68,7 @@ func TestAddCategory(t *testing.T) {
 			tc.checkResponse(t, resp)
 			setup.DeleteMockCategory(t, &cate.Result)
 			setup.DeleteMockSubcategory(t, subcate1)
+			setup.DeleteMockSubcategory(t, subcate2)
 		})
 	}
 }

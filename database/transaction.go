@@ -43,7 +43,7 @@ func ExecTx(ctx context.Context, callback func(context.Context) errors.CustomErr
 	}
 
 	if err != nil {
-		return errors.NewInternalServerError("error executing transaction - " + err.Error())
+		return errors.NewInternalServerError("error executing transaction - " + err.Error() + ", transaction aborted.")
 	}
 
 	return nil
