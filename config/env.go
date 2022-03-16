@@ -44,7 +44,7 @@ func checkenv() {
 	if os.Getenv("REDIS_PORT") == "" {
 		zap.S().Fatal("REDIS_PORT required")
 	}
-	if os.Getenv("REDIS_DB_PASSWORD") == "" && os.Getenv("APP_ENV") != "development" && os.Getenv("APP_ENV") != "test" {
+	if os.Getenv("REDIS_DB_PASSWORD") == "" && os.Getenv("APP_ENV") == "production" {
 		zap.S().Fatal("REDIS_DB_PASSWORD required")
 	}
 	if os.Getenv("JWT_SECRET") == "" {
