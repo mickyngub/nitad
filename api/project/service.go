@@ -120,7 +120,7 @@ func (p *projectService) AddProject(ctx context.Context, projectDTO *ProjectDTO)
 
 func (p *projectService) addProject(ctx context.Context, project *Project) (*Project, errors.CustomError) {
 	for _, cate := range project.Category {
-		p.categoryService.IncrementProjectCount(ctx, &cate)
+		p.categoryService.UpdateProjectCount(ctx, &cate, 1)
 	}
 
 	return p.repository.AddProject(ctx, project)
@@ -177,7 +177,7 @@ func (p *projectService) EditProject(ctx context.Context, id string, projectDTO 
 
 func (p *projectService) editProject(ctx context.Context, project *Project) (*Project, errors.CustomError) {
 	for _, cate := range project.Category {
-		p.categoryService.IncrementProjectCount(ctx, &cate)
+		p.categoryService.UpdateProjectCount(ctx, &cate, 1)
 	}
 
 	return p.repository.EditProject(ctx, project)
@@ -192,5 +192,16 @@ func (p *projectService) DeleteProject(ctx context.Context, id string) errors.Cu
 	p.gcpService.DeleteFile(ctx, project.Report)
 	p.gcpService.DeleteFiles(ctx, project.Images)
 
+	return database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
+		return p.deleteProject(sessionContext, project)
+	})
+}
+
+func (p *projectService) deleteProject(ctx context.Context, project *Project) errors.CustomError {
+	for _, cate := range project.Category {
+		p.categoryService.UpdateProjectCount(ctx, &cate, -1)
+	}
+
 	return p.repository.DeleteProject(ctx, project.ID)
+
 }
