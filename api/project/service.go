@@ -6,6 +6,7 @@ import (
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/paginate"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
@@ -102,15 +103,27 @@ func (p *projectService) AddProject(ctx context.Context, projectDTO *ProjectDTO)
 	project.Report = reportURL
 	project.Category = finalCategories
 
-	addedProject, err := p.repository.AddProject(ctx, project)
+	err = database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
+		var txErr errors.CustomError
+		project, txErr = p.addProject(sessionContext, project)
+		return txErr
+	})
 	if err != nil {
 		// if there is any error, remove the uploaded files from gcp
 		URLs := append(imageURLs, reportURL)
 		p.gcpService.DeleteFiles(ctx, URLs)
-		return project, err
+		return nil, err
+	}
+	return project, nil
+
+}
+
+func (p *projectService) addProject(ctx context.Context, project *Project) (*Project, errors.CustomError) {
+	for _, cate := range project.Category {
+		p.categoryService.IncrementProjectCount(ctx, &cate)
 	}
 
-	return addedProject, nil
+	return p.repository.AddProject(ctx, project)
 }
 
 func (p *projectService) EditProject(ctx context.Context, id string, projectDTO *ProjectDTO) (*Project, errors.CustomError) {
