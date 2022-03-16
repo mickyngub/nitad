@@ -105,6 +105,7 @@ func (c *categoryRepository) AddCategory(ctx context.Context, cate *CategoryDTO)
 		{Key: "subcategory", Value: soids},
 		{Key: "createdAt", Value: now},
 		{Key: "updatedAt", Value: now},
+		{Key: "productCount", Value: 0},
 	})
 	if insertErr != nil {
 		return cate, errors.NewBadRequestError(insertErr.Error())
