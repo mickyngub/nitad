@@ -1,0 +1,1 @@
+{"level":"\u001b[33mwarn\u001b[0m","time":"17-Mar-2022 01:49:54","caller":"redis/redis.go:48","key":"dial tcp [::1]:6379: connect: connection refused"}
