@@ -174,12 +174,23 @@ func (c *categoryService) DeleteCategory(ctx context.Context, id string) errors.
 		return err
 	}
 
+	if cate.ProductCount > 0 {
+		return errors.NewBadRequestError("Cannot delete: Category " + cate.Title + " is still being used in some projects.")
+	}
+
+	return database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
+		return c.deleteCategory(sessionContext, cate)
+	})
+}
+
+func (c *categoryService) deleteCategory(ctx context.Context, cate *Category) errors.CustomError {
 	// unbind subcategory
 	for _, subcate := range cate.Subcategory {
 		c.subcategoryService.InsertToCategory(ctx, subcate, primitive.NilObjectID)
 	}
 
 	return c.repository.DeleteCategory(ctx, cate.ID)
+
 }
 
 func (c *categoryService) SearchCategory(ctx *fiber.Ctx) ([]CategorySearch, errors.CustomError) {
