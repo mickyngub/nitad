@@ -1,22 +1,22 @@
 package project
 
 import (
+	"context"
 	"mime/multipart"
 
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/gcp"
 	"github.com/birdglove2/nitad-backend/utils"
-	"github.com/gofiber/fiber/v2"
 )
 
-func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
-	_, soids, err := p.subcategoryService.FindByIds3(ctx.Context(), projectDTO.Subcategory)
+func (p *projectService) HandleSubcateAndCateConnection(ctx context.Context, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
+	_, soids, err := p.subcategoryService.FindByIds3(ctx, projectDTO.Subcategory)
 	if err != nil {
 		return []category.Category{}, err
 	}
 
-	categories, _, err := p.categoryService.FindByIds2(ctx.Context(), projectDTO.Category)
+	categories, _, err := p.categoryService.FindByIds2(ctx, projectDTO.Category)
 	if err != nil {
 		return []category.Category{}, err
 	}
@@ -28,7 +28,7 @@ func (p *projectService) HandleSubcateAndCateConnection(ctx *fiber.Ctx, projectD
 	return finalCategories, nil
 }
 
-func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
+func (p *projectService) HandleUpdateImages(ctx context.Context, oldImageFilenames []string, newUploadImages []*multipart.FileHeader, deleteImages []string) ([]string, errors.CustomError) {
 	imageFilenames := oldImageFilenames
 
 	// DELETE IMAGES
@@ -39,14 +39,15 @@ func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []
 			deleteFilenames = append(deleteFilenames, deleteFilename)
 		}
 		imageFilenames = utils.RemoveSliceFromSlice(imageFilenames, deleteFilenames)
-		p.gcpService.DeleteFiles(ctx.Context(), deleteFilenames)
+		p.gcpService.DeleteFiles(ctx, deleteFilenames)
+
 	}
 
 	// UPLOAD NEW IMAGE FILES
 	if len(newUploadImages) > 0 {
-		newImageFilenames, err := p.gcpService.UploadFiles(ctx.Context(), newUploadImages, collectionName)
+		newImageFilenames, err := p.gcpService.UploadFiles(ctx, newUploadImages, collectionName)
 		if err != nil {
-			p.gcpService.DeleteFiles(ctx.Context(), newImageFilenames)
+			p.gcpService.DeleteFiles(ctx, newImageFilenames)
 			return imageFilenames, err
 		}
 		imageFilenames = append(imageFilenames, newImageFilenames...)
@@ -55,15 +56,15 @@ func (p *projectService) HandleUpdateImages(ctx *fiber.Ctx, oldImageFilenames []
 	return imageFilenames, nil
 }
 
-func (p *projectService) HandleUpdateReport(ctx *fiber.Ctx, oldReportURL string, newReportFile *multipart.FileHeader) (string, errors.CustomError) {
+func (p *projectService) HandleUpdateReport(ctx context.Context, oldReportURL string, newReportFile *multipart.FileHeader) (string, errors.CustomError) {
 	if newReportFile == nil {
 		return oldReportURL, nil
 	}
 
-	p.gcpService.DeleteFile(ctx.Context(), oldReportURL)
-	newUploadReportURL, err := p.gcpService.UploadFile(ctx.Context(), newReportFile, collectionName)
+	p.gcpService.DeleteFile(ctx, oldReportURL)
+	newUploadReportURL, err := p.gcpService.UploadFile(ctx, newReportFile, collectionName)
 	if err != nil {
-		p.gcpService.DeleteFile(ctx.Context(), newUploadReportURL)
+		p.gcpService.DeleteFile(ctx, newUploadReportURL)
 		return oldReportURL, err
 	}
 	return newUploadReportURL, nil

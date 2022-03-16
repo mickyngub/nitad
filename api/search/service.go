@@ -1,14 +1,15 @@
 package search
 
 import (
+	"context"
+
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/project"
 	"github.com/birdglove2/nitad-backend/errors"
-	"github.com/gofiber/fiber/v2"
 )
 
 type Service interface {
-	SearchAll(ctx *fiber.Ctx) (Search, errors.CustomError)
+	SearchAll(ctx context.Context) (Search, errors.CustomError)
 }
 
 type searchService struct {
@@ -23,7 +24,7 @@ func NewService(categoryService category.Service, projectService project.Service
 	}
 }
 
-func (s *searchService) SearchAll(ctx *fiber.Ctx) (Search, errors.CustomError) {
+func (s *searchService) SearchAll(ctx context.Context) (Search, errors.CustomError) {
 	search := Search{}
 
 	categorySearch, err := s.categoryService.SearchCategory(ctx)

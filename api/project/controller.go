@@ -1,8 +1,11 @@
 package project
 
 import (
+	"os"
+
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -35,7 +38,7 @@ func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	projects, paginate, err := c.service.ListProject(ctx, pq)
+	projects, paginate, err := c.service.ListProject(ctx.Context(), pq)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -46,9 +49,21 @@ func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
 
-	project, err := c.service.GetProjectById(ctx, projectId)
+	//TODO: remove this
+	if os.Getenv("APP_ENV") != "test" {
+		cacheProject := HandleCacheGetProjectById(ctx, projectId)
+		if cacheProject != nil {
+			return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
+		}
+	}
+
+	project, err := c.service.GetProjectById(ctx.Context(), projectId)
 	if err != nil {
 		return errors.Throw(ctx, err)
+	}
+
+	if os.Getenv("APP_ENV") != "test" {
+		redis.SetCache(ctx.Path(), project)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": project})
@@ -72,7 +87,7 @@ func (c *Controller) AddProject(ctx *fiber.Ctx) error {
 	projectDTO.Images = images
 	projectDTO.Report = reports[0]
 
-	addedProject, err := c.service.AddProject(ctx, projectDTO)
+	addedProject, err := c.service.AddProject(ctx.Context(), projectDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -103,7 +118,7 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 		projectDTO.Report = reports[0]
 	}
 
-	editedProject, err := c.service.EditProject(ctx, projectId, projectDTO)
+	editedProject, err := c.service.EditProject(ctx.Context(), projectId, projectDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -115,7 +130,7 @@ func (c *Controller) EditProject(ctx *fiber.Ctx) error {
 func (c *Controller) DeleteProject(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
 
-	if err := c.service.DeleteProject(ctx, projectId); err != nil {
+	if err := c.service.DeleteProject(ctx.Context(), projectId); err != nil {
 		return errors.Throw(ctx, err)
 	}
 

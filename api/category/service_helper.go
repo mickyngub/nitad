@@ -90,3 +90,11 @@ func remove(slice []primitive.ObjectID, i int) []primitive.ObjectID {
 	slice[i] = slice[len(slice)-1]
 	return slice[:len(slice)-1]
 }
+
+func (c *categoryService) BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
+	return c.repository.BindSubcategory(ctx, coid, soid)
+}
+
+func (c *categoryService) UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
+	return c.repository.UnbindSubcategory(ctx, coid, soid)
+}

@@ -11,11 +11,12 @@ import (
 var collectionName = database.COLLECTIONS["CATEGORY"]
 
 type Category struct {
-	ID          primitive.ObjectID         `bson:"_id,omitempty" json:"id,omitempty"`
-	Title       string                     `bson:"title" json:"title"`
-	Subcategory []*subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
-	CreatedAt   time.Time                  `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
-	UpdatedAt   time.Time                  `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
+	ID           primitive.ObjectID         `bson:"_id,omitempty" json:"id,omitempty"`
+	Title        string                     `bson:"title" json:"title"`
+	Subcategory  []*subcategory.Subcategory `bson:"subcategory" json:"subcategory"`
+	ProjectCount int                        `bson:"projectCount" json:"projectCount"`
+	CreatedAt    time.Time                  `bson:"createdAt,omitempty" json:"createdAt,omitempty"`
+	UpdatedAt    time.Time                  `bson:"updatedAt,omitempty" json:"updatedAt,omitempty"`
 }
 
 type CategoryDTO struct {
