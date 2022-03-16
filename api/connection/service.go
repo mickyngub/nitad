@@ -1,8 +1,11 @@
 package connection
 
 import (
+	"context"
+
 	"github.com/birdglove2/nitad-backend/api/category"
 	"github.com/birdglove2/nitad-backend/api/subcategory"
+	"github.com/birdglove2/nitad-backend/database"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -49,16 +52,29 @@ func (c *connectionService) AddSubcategory(ctx *fiber.Ctx, subcateDTO *subcatego
 }
 
 func (c *connectionService) EditSubcategory(ctx *fiber.Ctx, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
-	oldSubcate, err := c.subcategoryService.GetSubcategoryById(ctx.Context(), id)
+	editedSubcate := new(subcategory.Subcategory)
+	err := database.ExecTx(ctx.Context(), func(sessionContext context.Context) errors.CustomError {
+		var txErr errors.CustomError
+		editedSubcate, txErr = c.editSubcategory(sessionContext, id, subcateDTO)
+		return txErr
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	//TODO: tx these two service in case one is broken -> revert all
+	return editedSubcate, nil
+}
+
+func (c *connectionService) editSubcategory(ctx context.Context, id string, subcateDTO *subcategory.SubcategoryDTO) (*subcategory.Subcategory, errors.CustomError) {
+	oldSubcate, err := c.subcategoryService.GetSubcategoryById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
 	if oldSubcate.CategoryId != primitive.NilObjectID {
 		// meaning that there was category binded to
 		// need to unbind from category
-		err = c.categoryService.UnbindSubcategory(ctx.Context(), oldSubcate.CategoryId, oldSubcate.ID)
+		err = c.categoryService.UnbindSubcategory(ctx, oldSubcate.CategoryId, oldSubcate.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -70,10 +86,9 @@ func (c *connectionService) EditSubcategory(ctx *fiber.Ctx, id string, subcateDT
 		return nil, err
 	}
 
-	err = c.categoryService.BindSubcategory(ctx.Context(), subcateDTO.CategoryId, editedSubcate.ID)
+	err = c.categoryService.BindSubcategory(ctx, subcateDTO.CategoryId, editedSubcate.ID)
 	if err != nil {
 		return nil, err
 	}
-
 	return editedSubcate, nil
 }
