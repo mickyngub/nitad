@@ -159,14 +159,28 @@ func (p *projectService) EditProject(ctx context.Context, id string, projectDTO 
 	editedProject.Report = reportURL
 	editedProject.Category = finalCategories
 
-	editedProject, err = p.repository.EditProject(ctx, editedProject)
+	err = database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
+		var txErr errors.CustomError
+		editedProject, txErr = p.editProject(sessionContext, editedProject)
+		return txErr
+	})
+
 	if err != nil {
 		// if there is any error, remove the uploaded files from gcp
 		URLs := append(imageURLs, reportURL)
 		p.gcpService.DeleteFiles(ctx, URLs)
-		return editedProject, err
+		return nil, err
 	}
+
 	return editedProject, nil
+}
+
+func (p *projectService) editProject(ctx context.Context, project *Project) (*Project, errors.CustomError) {
+	for _, cate := range project.Category {
+		p.categoryService.IncrementProjectCount(ctx, &cate)
+	}
+
+	return p.repository.EditProject(ctx, project)
 }
 
 func (p *projectService) DeleteProject(ctx context.Context, id string) errors.CustomError {
