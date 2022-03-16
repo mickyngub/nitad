@@ -71,14 +71,27 @@ func (c *categoryService) AddCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*Ca
 		return cateDTO, err
 	}
 
-	cateDTO, err = c.repository.AddCategory(ctx.Context(), cateDTO)
+	result := new(CategoryDTO)
+	err = database.ExecTx(ctx.Context(), func(sessionContext context.Context) errors.CustomError {
+		var txErr errors.CustomError
+		result, txErr = c.addCategoryAndBindSubcategory(sessionContext, cateDTO, subcategories)
+		return txErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+
+}
+
+func (c *categoryService) addCategoryAndBindSubcategory(ctx context.Context, cateDTO *CategoryDTO, subcategories []subcategory.Subcategory) (*CategoryDTO, errors.CustomError) {
+	cateDTO, err := c.repository.AddCategory(ctx, cateDTO)
 	if err != nil {
 		return cateDTO, err
 	}
 
-	//TODO: tx this
 	for _, subcate := range subcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), &subcate, cateDTO.ID)
+		_, err = c.subcategoryService.InsertToCategory(ctx, &subcate, cateDTO.ID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -117,15 +130,27 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 		}
 	}
 
-	cateDTO, err = c.repository.EditCategory(ctx.Context(), cateDTO)
+	result := new(CategoryDTO)
+	err = database.ExecTx(ctx.Context(), func(sessionContext context.Context) errors.CustomError {
+		var txErr errors.CustomError
+		result, txErr = c.editCategoryAndBindSubcategory(sessionContext, cateDTO, subcategories, removeSubcategories)
+		return txErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *categoryService) editCategoryAndBindSubcategory(ctx context.Context, cateDTO *CategoryDTO, subcategories []subcategory.Subcategory, removeSubcategories []*subcategory.Subcategory) (*CategoryDTO, errors.CustomError) {
+	cateDTO, err := c.repository.EditCategory(ctx, cateDTO)
 	if err != nil {
 		return cateDTO, err
 	}
 
 	// set categoryId to the updated ones
-	//TODO: tx this
 	for _, subcate := range subcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), &subcate, cateDTO.ID)
+		_, err = c.subcategoryService.InsertToCategory(ctx, &subcate, cateDTO.ID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -133,7 +158,7 @@ func (c *categoryService) EditCategory(ctx *fiber.Ctx, cateDTO *CategoryDTO) (*C
 
 	// unset the remove ones
 	for _, removeSubcate := range removeSubcategories {
-		_, err = c.subcategoryService.InsertToCategory(ctx.Context(), removeSubcate, primitive.NilObjectID)
+		_, err = c.subcategoryService.InsertToCategory(ctx, removeSubcate, primitive.NilObjectID)
 		if err != nil {
 			return cateDTO, err
 		}
@@ -197,12 +222,4 @@ func (c *categoryService) AddSubcategory(ctx *fiber.Ctx, cid string, sid string)
 
 	return cateDTO, err
 
-}
-
-func (c *categoryService) BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
-	return c.repository.BindSubcategory(ctx, coid, soid)
-}
-
-func (c *categoryService) UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
-	return c.repository.UnbindSubcategory(ctx, coid, soid)
 }
