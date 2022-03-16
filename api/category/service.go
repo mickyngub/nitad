@@ -25,7 +25,7 @@ type Service interface {
 	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	AddSubcategory(ctx context.Context, cid string, sid string) (*CategoryDTO, errors.CustomError)
 
-	IncrementProjectCount(ctx context.Context, cate *Category) errors.CustomError
+	UpdateProjectCount(ctx context.Context, cate *Category, val int) errors.CustomError
 }
 
 type categoryService struct {
@@ -236,6 +236,6 @@ func (c *categoryService) AddSubcategory(ctx context.Context, cid string, sid st
 
 }
 
-func (c *categoryService) IncrementProjectCount(ctx context.Context, cate *Category) errors.CustomError {
-	return c.repository.IncrementProjectCount(ctx, cate.ID)
+func (c *categoryService) UpdateProjectCount(ctx context.Context, cate *Category, val int) errors.CustomError {
+	return c.repository.UpdateProjectCount(ctx, cate.ID, val)
 }

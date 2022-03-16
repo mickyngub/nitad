@@ -24,7 +24,7 @@ type Repository interface {
 	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
 
-	IncrementProjectCount(ctx context.Context, oid primitive.ObjectID) errors.CustomError
+	UpdateProjectCount(ctx context.Context, oid primitive.ObjectID, val int) errors.CustomError
 }
 
 type categoryRepository struct {
@@ -206,12 +206,12 @@ func (c *categoryRepository) BindSubcategory(ctx context.Context, coid primitive
 	return nil
 }
 
-func (c *categoryRepository) IncrementProjectCount(ctx context.Context, oid primitive.ObjectID) errors.CustomError {
+func (c *categoryRepository) UpdateProjectCount(ctx context.Context, oid primitive.ObjectID, val int) errors.CustomError {
 	_, err := c.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": oid},
 		bson.D{
-			{Key: "$inc", Value: bson.D{{Key: "projectCount", Value: 1}}},
+			{Key: "$inc", Value: bson.D{{Key: "projectCount", Value: val}}},
 		},
 	)
 
