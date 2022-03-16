@@ -62,7 +62,7 @@ func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 	cateDTO := new(CategoryDTO)
 	ctx.BodyParser(cateDTO)
 
-	addedCate, err := c.service.AddCategory(ctx, cateDTO)
+	addedCate, err := c.service.AddCategory(ctx.Context(), cateDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -86,7 +86,7 @@ func (c *Controller) EditCategory(ctx *fiber.Ctx) error {
 	ctx.BodyParser(cateDTO)
 	cateDTO.ID = objectId
 
-	editedCate, err := c.service.EditCategory(ctx, cateDTO)
+	editedCate, err := c.service.EditCategory(ctx.Context(), cateDTO)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
@@ -110,7 +110,7 @@ func (c *Controller) AddSubcategory(ctx *fiber.Ctx) error {
 	cid := ctx.Params("categoryId")
 	sid := ctx.Params("subcategoryId")
 
-	editedCate, err := c.service.AddSubcategory(ctx, cid, sid)
+	editedCate, err := c.service.AddSubcategory(ctx.Context(), cid, sid)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}

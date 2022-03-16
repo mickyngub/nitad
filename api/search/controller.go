@@ -20,7 +20,7 @@ type Controller struct {
 // list all neccessary components: project/ category/ subcategory
 func (c *Controller) SearchAll(ctx *fiber.Ctx) error {
 
-	searchResult, err := c.service.SearchAll(ctx)
+	searchResult, err := c.service.SearchAll(ctx.Context())
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
