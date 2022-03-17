@@ -19,9 +19,8 @@ type Service interface {
 	DeleteCategory(ctx context.Context, id string) errors.CustomError
 
 	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
-	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
+	FindByIds(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
 
-	FilterCatesWithSubcates(categories []Category, subcategories []subcategory.Subcategory) ([]Category, errors.CustomError)
 	FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError)
 	BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
@@ -69,7 +68,7 @@ func (c *categoryService) GetCategoryById(ctx context.Context, id string) (*Cate
 
 func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO) (*CategoryDTO, errors.CustomError) {
 	cateDTO.Subcategory = utils.RemoveDuplicateIds(cateDTO.Subcategory)
-	subcategories, _, err := c.subcategoryService.FindByIds3(ctx, cateDTO.Subcategory)
+	subcategories, _, err := c.subcategoryService.FindByIds(ctx, cateDTO.Subcategory)
 	if err != nil {
 		return cateDTO, err
 	}
@@ -119,7 +118,7 @@ func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO
 
 	cateDTO.Subcategory = utils.RemoveDuplicateIds(cateDTO.Subcategory)
 	// check if parse subcategoryIds exist
-	subcategories, _, err := c.subcategoryService.FindByIds3(ctx, cateDTO.Subcategory)
+	subcategories, _, err := c.subcategoryService.FindByIds(ctx, cateDTO.Subcategory)
 	if err != nil {
 		return cateDTO, err
 	}

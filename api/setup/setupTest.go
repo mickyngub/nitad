@@ -3,6 +3,7 @@ package setup
 import (
 	"bytes"
 	context "context"
+	"fmt"
 	"io"
 	multipart "mime/multipart"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/config"
 	"github.com/birdglove2/nitad-backend/database"
+	"github.com/birdglove2/nitad-backend/redis"
 	"github.com/birdglove2/nitad-backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang/mock/gomock"
@@ -43,6 +45,8 @@ func NewTestApp(t *testing.T) (*fiber.App, *MockUploader) {
 
 	gcpService := NewMockUploader(ctrl)
 
+	redis.Init()
+	fmt.Println("redis", redis.GetStore())
 	app = fiber.New()
 
 	api.CreateAPI(app, gcpService)

@@ -11,12 +11,12 @@ import (
 )
 
 func (p *projectService) HandleSubcateAndCateConnection(ctx context.Context, projectDTO *ProjectDTO) ([]category.Category, errors.CustomError) {
-	_, sids, err := p.subcategoryService.FindByIds3(ctx, projectDTO.Subcategory)
+	_, sids, err := p.subcategoryService.FindByIds(ctx, projectDTO.Subcategory)
 	if err != nil {
 		return []category.Category{}, err
 	}
 
-	categories, _, err := p.categoryService.FindByIds2(ctx, projectDTO.Category)
+	categories, _, err := p.categoryService.FindByIds(ctx, projectDTO.Category)
 	if err != nil {
 		return []category.Category{}, err
 	}

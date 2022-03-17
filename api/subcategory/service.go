@@ -20,8 +20,7 @@ type Service interface {
 
 	InsertToCategory(ctx context.Context, subcate *Subcategory, categoryId primitive.ObjectID) (*Subcategory, errors.CustomError)
 	HandleUpdateImage(ctx context.Context, oldImageURL string, newImageFile *multipart.FileHeader) (string, errors.CustomError)
-	// FindByIds2(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
-	FindByIds3(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
+	FindByIds(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError)
 }
 
 type subcategoryService struct {
@@ -151,7 +150,7 @@ func (p *subcategoryService) HandleUpdateImage(ctx context.Context, oldImageURL 
 	return newUploadImageURL, nil
 }
 
-func (s *subcategoryService) FindByIds3(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
+func (s *subcategoryService) FindByIds(ctx context.Context, sids []string) ([]Subcategory, []primitive.ObjectID, errors.CustomError) {
 	var subcategories []Subcategory
 	var objectIDs []primitive.ObjectID
 

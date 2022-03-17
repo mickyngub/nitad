@@ -13,7 +13,7 @@ import (
 // receive array of categoryIds, then
 // find and return non-duplicated categories, and their ids
 // return []Category
-func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError) {
+func (c *categoryService) FindByIds(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError) {
 	var objectIds []primitive.ObjectID
 	var categories []Category
 

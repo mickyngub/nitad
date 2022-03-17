@@ -1,8 +1,6 @@
 package project
 
 import (
-	"os"
-
 	"github.com/birdglove2/nitad-backend/api/admin"
 	"github.com/birdglove2/nitad-backend/errors"
 	"github.com/birdglove2/nitad-backend/redis"
@@ -50,21 +48,21 @@ func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
 
 	//TODO: remove this
-	if os.Getenv("APP_ENV") != "test" {
-		cacheProject := HandleCacheGetProjectById(ctx, projectId)
-		if cacheProject != nil {
-			return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
-		}
+	// if os.Getenv("APP_ENV") != "test" {
+	cacheProject := HandleCacheGetProjectById(ctx, projectId)
+	if cacheProject != nil {
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": cacheProject})
 	}
+	// }
 
 	project, err := c.service.GetProjectById(ctx.Context(), projectId)
 	if err != nil {
 		return errors.Throw(ctx, err)
 	}
 
-	if os.Getenv("APP_ENV") != "test" {
-		redis.SetCache(ctx.Path(), project)
-	}
+	// if os.Getenv("APP_ENV") != "test" {
+	redis.SetCache(ctx.Path(), project)
+	// }
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "result": project})
 }

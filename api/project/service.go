@@ -43,10 +43,8 @@ func (p *projectService) SearchProject(ctx context.Context) ([]ProjectSearch, er
 	return p.repository.SearchProject(ctx)
 }
 
-//TODO: just ignore findbyIds subcate
-// if not found then nothing happen
 func (p *projectService) ListProject(ctx context.Context, pq *ProjectQuery) ([]*Project, *paginate.Paginate, errors.CustomError) {
-	_, sids, err := p.subcategoryService.FindByIds3(ctx, pq.SubcategoryId)
+	_, sids, err := p.subcategoryService.FindByIds(ctx, pq.SubcategoryId)
 	if err != nil {
 		return nil, nil, err
 	}
