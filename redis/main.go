@@ -20,6 +20,8 @@ func GetStore() *Storage {
 func Init() *Storage {
 	port, _ := strconv.Atoi(os.Getenv("REDIS_PORT"))
 
+	fmt.Println("ss1", os.Getenv("REDIS_PORT"))
+
 	store = New(Config{
 		Host:      os.Getenv("REDIS_ENDPOINT"),
 		Port:      port,
