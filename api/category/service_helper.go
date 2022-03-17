@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -34,7 +35,12 @@ func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Cate
 
 }
 
-func FilterCatesWithSids2(categories []CategoryLookup, subcategories []subcategory.Subcategory) ([]Category, errors.CustomError) {
+// merge multiple categories with multiple sids
+// such that the finalCate will result in
+// multiple categories that contain only relevant subcategories
+// need to do this because the GetById of category return all subcategories
+// that are in the category, so we need to filter some out
+func (c *categoryService) FilterCatesWithSubcates(categories []Category, subcategories []subcategory.Subcategory) ([]Category, errors.CustomError) {
 	finalCate := []Category{}
 
 	for _, cate := range categories {
@@ -44,25 +50,16 @@ func FilterCatesWithSids2(categories []CategoryLookup, subcategories []subcatego
 				subcateThatIsInCate = append(subcateThatIsInCate, &subcate)
 			}
 		}
-		finalCate = append(finalCate, Category{
-			ID:          cate.ID,
-			Title:       cate.Title,
-			CreatedAt:   cate.CreatedAt,
-			UpdatedAt:   cate.UpdatedAt,
-			Subcategory: subcateThatIsInCate,
-		})
+		cate.Subcategory = subcateThatIsInCate
+		finalCate = append(finalCate, cate)
 	}
 
+	fmt.Println("check", finalCate)
+	fmt.Println("check2", subcategories)
 	return finalCate, nil
 }
 
-// TODO: this function is written in O(n^3), should find a better way to handle this later.
-// merge multiple categories with multiple sids
-// such that the finalCate will result in
-// multiple categories that contain only relevant subcategories
-// need to do this because the GetById of category return all subcategories
-// that are in the category, so we need to filter some out
-func FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
+func (c *categoryService) FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
 	finalCate := []Category{}
 	for _, cate := range categories {
 		subcateThatIsInCate := []*subcategory.Subcategory{}

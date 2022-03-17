@@ -21,6 +21,8 @@ type Service interface {
 	SearchCategory(ctx context.Context) ([]CategorySearch, errors.CustomError)
 	FindByIds2(ctx context.Context, cids []string) ([]Category, []primitive.ObjectID, errors.CustomError)
 
+	FilterCatesWithSubcates(categories []Category, subcategories []subcategory.Subcategory) ([]Category, errors.CustomError)
+	FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError)
 	BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError
 	AddSubcategory(ctx context.Context, cid string, sid string) (*CategoryDTO, errors.CustomError)
