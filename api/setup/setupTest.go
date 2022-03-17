@@ -79,6 +79,9 @@ func AddMockCategory(t *testing.T, subcate *subcategory.Subcategory) *category.C
 	require.Equal(t, dummyCate.Subcategory, addedCategory.Subcategory)
 	require.NotEqual(t, nil, addedCategory.ID)
 
+	_, err = SubcateRepo.InsertToCategory(context.Background(), subcate, addedCategory.ID)
+	require.Nil(t, err)
+
 	cate, err := CateRepo.GetCategoryById(context.Background(), addedCategory.ID)
 	require.Equal(t, err, nil)
 

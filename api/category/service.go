@@ -77,7 +77,7 @@ func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO)
 	result := new(CategoryDTO)
 	err = database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
 		var txErr errors.CustomError
-		result, txErr = c.addCategoryAndBindSubcategory(sessionContext, cateDTO, subcategories)
+		result, txErr = c.addCategoryAndInsertSubcategoryToCategory(sessionContext, cateDTO, subcategories)
 		return txErr
 	})
 	if err != nil {
@@ -87,7 +87,7 @@ func (c *categoryService) AddCategory(ctx context.Context, cateDTO *CategoryDTO)
 
 }
 
-func (c *categoryService) addCategoryAndBindSubcategory(ctx context.Context, cateDTO *CategoryDTO, subcategories []subcategory.Subcategory) (*CategoryDTO, errors.CustomError) {
+func (c *categoryService) addCategoryAndInsertSubcategoryToCategory(ctx context.Context, cateDTO *CategoryDTO, subcategories []subcategory.Subcategory) (*CategoryDTO, errors.CustomError) {
 	cateDTO, err := c.repository.AddCategory(ctx, cateDTO)
 	if err != nil {
 		return cateDTO, err
@@ -136,7 +136,7 @@ func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO
 	result := new(CategoryDTO)
 	err = database.ExecTx(ctx, func(sessionContext context.Context) errors.CustomError {
 		var txErr errors.CustomError
-		result, txErr = c.editCategoryAndBindSubcategory(sessionContext, cateDTO, subcategories, removeSubcategories)
+		result, txErr = c.editCategoryAndInsertSubcategoryToCategory(sessionContext, cateDTO, subcategories, removeSubcategories)
 		return txErr
 	})
 	if err != nil {
@@ -145,7 +145,7 @@ func (c *categoryService) EditCategory(ctx context.Context, cateDTO *CategoryDTO
 	return result, nil
 }
 
-func (c *categoryService) editCategoryAndBindSubcategory(ctx context.Context, cateDTO *CategoryDTO, subcategories []subcategory.Subcategory, removeSubcategories []*subcategory.Subcategory) (*CategoryDTO, errors.CustomError) {
+func (c *categoryService) editCategoryAndInsertSubcategoryToCategory(ctx context.Context, cateDTO *CategoryDTO, subcategories []subcategory.Subcategory, removeSubcategories []*subcategory.Subcategory) (*CategoryDTO, errors.CustomError) {
 	cateDTO, err := c.repository.EditCategory(ctx, cateDTO)
 	if err != nil {
 		return cateDTO, err

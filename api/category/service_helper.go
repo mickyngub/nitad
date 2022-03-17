@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/birdglove2/nitad-backend/api/subcategory"
 	"github.com/birdglove2/nitad-backend/errors"
@@ -40,25 +39,6 @@ func (c *categoryService) FindByIds2(ctx context.Context, cids []string) ([]Cate
 // multiple categories that contain only relevant subcategories
 // need to do this because the GetById of category return all subcategories
 // that are in the category, so we need to filter some out
-func (c *categoryService) FilterCatesWithSubcates(categories []Category, subcategories []subcategory.Subcategory) ([]Category, errors.CustomError) {
-	finalCate := []Category{}
-
-	for _, cate := range categories {
-		subcateThatIsInCate := []*subcategory.Subcategory{}
-		for _, subcate := range subcategories {
-			if subcate.CategoryId == cate.ID {
-				subcateThatIsInCate = append(subcateThatIsInCate, &subcate)
-			}
-		}
-		cate.Subcategory = subcateThatIsInCate
-		finalCate = append(finalCate, cate)
-	}
-
-	fmt.Println("check", finalCate)
-	fmt.Println("check2", subcategories)
-	return finalCate, nil
-}
-
 func (c *categoryService) FilterCatesWithSids(categories []Category, sids []primitive.ObjectID) ([]Category, errors.CustomError) {
 	finalCate := []Category{}
 	for _, cate := range categories {
@@ -88,10 +68,12 @@ func remove(slice []primitive.ObjectID, i int) []primitive.ObjectID {
 	return slice[:len(slice)-1]
 }
 
+// Bind subcategoryId into the categoryId
 func (c *categoryService) BindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
 	return c.repository.BindSubcategory(ctx, coid, soid)
 }
 
+// Unbind subcategoryId out of the categoryId
 func (c *categoryService) UnbindSubcategory(ctx context.Context, coid primitive.ObjectID, soid primitive.ObjectID) errors.CustomError {
 	return c.repository.UnbindSubcategory(ctx, coid, soid)
 }
