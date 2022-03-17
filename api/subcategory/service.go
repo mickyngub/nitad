@@ -92,7 +92,6 @@ func (s *subcategoryService) AddSubcategory(ctx context.Context, subcategoryDTO 
 	return addedSubcate, nil
 }
 
-//TODO fix logic oldSubcate and newSubcate
 func (s *subcategoryService) EditSubcategory(ctx context.Context, subcateDTO *SubcategoryDTO) (*Subcategory, errors.CustomError) {
 	editedSubcate := new(Subcategory)
 	oldSubcate, err := s.repository.GetSubcategoryById(ctx, subcateDTO.ID.Hex())

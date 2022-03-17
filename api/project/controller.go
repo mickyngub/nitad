@@ -47,7 +47,6 @@ func (c *Controller) ListProject(ctx *fiber.Ctx) error {
 func (c *Controller) GetProjectById(ctx *fiber.Ctx) error {
 	projectId := ctx.Params("projectId")
 
-	//TODO: remove this
 	// if os.Getenv("APP_ENV") != "test" {
 	cacheProject := HandleCacheGetProjectById(ctx, projectId)
 	if cacheProject != nil {
