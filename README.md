@@ -8,9 +8,18 @@
 
 ### Environment setup
 
-- Create a `.env` file in the root directory of the project
-- Copy the contents of `.env.example` to `.env`
-- Update the values in `.env` with your own values
+1. Create a `.env` file in the root directory of the project
+2. Copy the contents of `.env.example` to `.env`
+3. Update the values in `.env` with your own values
+
+- `APP_ENV` = `development` or `production`
+- `MONGO_URI` = your mongodb uri e.g. `mongodb://localhost:27017`
+- `MONGO_DB` = your mongodb database name
+- `REDIS_ENDPOINT` = your redis endpoint, e.g. `localhost:6379`
+- `REDIS_PASSWORD` = your redis password
+
+- For these 4 `GCP_SERVICE_ACCOUNT`, `GCP_WORKLOAD_IDENTITY_PROVIDER` `GCP_PROJECTID`, `GCP_BUCKETNAME`
+  you need to create your project on google cloud console then you will get all of this information.
 
 ### Run
 
