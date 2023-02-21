@@ -9,7 +9,7 @@
 ## Environment setup
 
 1. Create a `.env` file in the root directory of the project
-2. Copy the contents of `.env.example` to `.env`
+2. Copy the contents of `.env.template` to `.env`
 3. Update the values in `.env` with your own values
 
 - `APP_ENV` = `development` or `production`
