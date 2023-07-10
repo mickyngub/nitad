@@ -1,0 +1,47 @@
+.banner {
+  overflow: hidden;
+  width: 100%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  background-image: url(../../assets/banner.png);
+  min-height: 880px;
+}
+
+.banner-bg {
+  background: rgba(54, 55, 53, 0.31);
+
+}
+
+.banner-qoute-wrapper {
+  width: 70%;
+}
+
+.banner-qoute {
+  font-size: 2rem;
+  font-weight: 600;
+  font-family: "Alone In Space", sans-serif;
+}
+
+@media only screen and (max-width: 992px) {
+  .banner {
+    min-height: 500px;
+  }
+  .banner-qoute {
+    font-size: 1.5rem;
+  }
+}
+
+
+@media only screen and (max-width: 768px) {
+  .banner-qoute {
+    font-size: 1.2rem;
+  }
+}
+
+@media only screen and (max-width: 576px) {
+
+  .banner-qoute {
+    font-size: 0.8rem;
+  }
+}

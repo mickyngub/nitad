@@ -1,0 +1,234 @@
+.readmore {
+  position: relative;
+  max-height: 250px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  transition: max-height 2s ease-out;
+}
+
+.readmore.expand {
+  max-height: 100% !important;
+  transition: max-height 2s ease-in !important;
+
+}
+
+.readmore-btn {
+  color: #ffff !important;
+  order: 100;
+}
+.readmore-btn:hover {
+  color: rgb(124, 124, 124) !important;
+}
+
+.readmore-link {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: block;
+  width: 100%;
+  height: 60px;
+  text-align: center;
+  color: blue;
+  font-weight: bold;
+  font-size: 1rem;
+  padding-top: 40px;
+  cursor: pointer;
+  color: #ffff;
+}
+
+.break-item {
+  flex-basis: 100%;
+  height: 0px;
+}
+
+.view-amount {
+  font-weight: 300;
+}
+
+.custom-carousel-wrapper {
+  width: 100%;
+  aspect-ratio: auto 16/9;
+}
+
+.custom-carousel-wrapper > .carousel,
+.custom-carousel-wrapper .carousel-inner,
+.custom-carousel-wrapper .carousel-item {
+  height: 100%;
+}
+
+.custom-carousel-wrapper .carousel > .carousel-inner > .carousel-item > img {
+  aspect-ratio: 4 / 3;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.custom-carousel-wrapper .carousel .carousel-control-prev,
+.custom-carousel-wrapper .carousel .carousel-control-next {
+  height: 15%;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.project-owner {
+  width: clamp(250px, 30%, 400px);
+  font-size: 1rem;
+  display: none;
+}
+
+.project-owner-image-wrapper {
+  width: 100%;
+}
+
+.project-owner-image-wrapper img {
+  display: block;
+  border-radius: 50%;
+  width: min(130px, 100%);
+  margin-inline: auto;
+}
+
+.project-owner-authors-email {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.project-owner-authors-email p {
+  padding: 0;
+  margin: 0;
+}
+.project-owner-authors-paragraph {
+  border-bottom: 0.6px solid white;
+}
+
+.project-owner-authors-paragraph-span:not(:last-child):after {
+  content: ", ";
+}
+
+.project-owner-inspiration :first-child {
+  border-bottom: 0.6px solid white;
+}
+
+.project-owner-inspiration :not(:first-child) {
+  text-align: center;
+}
+
+.project-carousel {
+  order: 3;
+  /* height: 500px; */
+}
+
+.project-breadcrumb {
+  order: 2;
+}
+
+.project-title {
+  order: 1;
+}
+
+.project-tag-and-view {
+  width: 70%;
+}
+
+.project-content {
+  order: 5;
+}
+
+.project-wrapper-under-carousel {
+  order: 4;
+  align-items: center;
+}
+
+.btn-download-slide {
+  display: flex;
+  align-items: center;
+}
+
+.btn-download-slide .btn {
+  background-color: rgba(255, 255, 255, 0.52) !important;
+  border: 0;
+  margin-left: auto;
+  color: #434542;
+  text-decoration: none !important;
+}
+
+.btn-download-slide .btn:hover {
+  color: #ffff;
+}
+
+.btn-download-slide img {
+  margin-right: 8px;
+  width: 26px;
+  height: 26px;
+}
+
+@media (min-width: 992px) {
+  .project-owner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.project-content-container {
+  width: 75%;
+}
+
+@media only screen and (max-width: 992px) {
+  .project-carousel {
+    margin-top: 16px;
+    /* height: 400px; */
+    order: 1;
+  }
+  .project-title {
+    order: 2;
+  }
+  .project-tag-and-view {
+    width: 100%;
+  }
+  .project-content {
+    order: 4;
+  }
+  .project-content-container {
+    width: 100%;
+  }
+  .project-wrapper-under-carousel {
+    flex-direction: column;
+    order: 3;
+  }
+
+  .project-download-on-mobile-device > .btn-download-slide > .btn,
+  span > img {
+    background-color: transparent !important;
+    color: #c4c4c4;
+    text-decoration: none;
+    margin-right: 16px;
+    padding: 0;
+  }
+  .project-owner-inspiration :not(:first-child) {
+    text-align: left;
+  }
+  .project-content-title {
+    border-bottom: 0.6px solid #ffff;
+  }
+}
+
+.project-section-container {
+  backdrop-filter: grayscale(1) opacity(0.5)
+}
+
+.project-section-container-inner {
+  padding: 128px 0;
+  display: flex;
+}
+
+.project-image-container {
+
+}
+
+/* @media only screen and (max-width: 992px) {
+  .project-image-container {
+    background-image: url(../../assets/bgs_mobile.png);
+  }
+} */

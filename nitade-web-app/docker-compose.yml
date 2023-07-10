@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: nitade_web_app
+    image: nitade_web_app
+    build:
+      context: .
+    ports:
+      - 3000:80

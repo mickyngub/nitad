@@ -1,0 +1,58 @@
+@font-face {
+  font-family: "FC Minimal";
+  src: url("./fonts/FC\ Minimal\ Bold.ttf") format("ttf"),
+    url("./fonts/FC\ Minimal\ Italic.ttf") format("ttf"),
+    url("./fonts/FC\ Minimal\ Regular.ttf") format("ttf"),
+    url("./fonts/FC\ Minimal\ Regular.otf") format("opentype"),
+    url("./fonts/FC\ Minimal\ Bold.otf") format("opentype"),
+    url("./fonts/FC\ Minimal\ Italic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: 'Alone In Space';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Alone In Space'), url('https://fonts.cdnfonts.com/s/57490/AloneInSpaceReguler-qZ2xr.woff') format('woff');
+}
+
+
+body {
+  margin: 0;
+  font-family: "FC Minimal", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+p,
+a,
+label {
+  font-size: 1.3rem;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+.btn,
+.accordion-button {
+  font-size: 1.4rem;
+}
+
+@media only screen and (max-width: 768px) {
+  p,
+  a,
+  label {
+    font-size: 1.3rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+}

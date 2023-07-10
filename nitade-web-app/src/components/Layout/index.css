@@ -1,0 +1,54 @@
+.layout-wrapper {
+  background-color: #0b0914;
+  color: #ffff;
+}
+
+.layout-wrapper-about-us {
+  background-color: #0b0914;
+  color: #ffff;
+}
+
+.mobile-background {
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  background-image: url(../../assets/bgs_mobile.png);
+}
+
+.project-background {
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  background-image: url(../../assets/bg_project.png);
+}
+
+.category-background {
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  background-image: url(../../assets/subcate.png);
+}
+
+.about-background {
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  background-image: url(../../assets/bg_about.jpg);
+}
+
+.home-background {
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  background-image: url(../../assets/bg_home.png);
+}
