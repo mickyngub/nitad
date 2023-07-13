@@ -15,8 +15,19 @@ services:
       - "8080:8080"
     env_file:
       - ./nitad-backend/.env
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
   nginx:
     build:
       context: .
     ports:
       - "80:80"
+    depends_on:
+      - frontend
+      - backend
