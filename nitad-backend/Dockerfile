@@ -4,7 +4,7 @@ WORKDIR /opt/code/
 
 ADD ./ /opt/code/
 
-RUN go build -o nitad server.go
+RUN go build -o nitad main.go
 
 ENTRYPOINT ["./nitad"]
 
