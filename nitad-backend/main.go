@@ -41,7 +41,7 @@ func main() {
 
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
-		PORT = "3000"
+		PORT = "8080"
 	}
 
 	zap.S().Info("===== Listening to port ", PORT, " ======")
